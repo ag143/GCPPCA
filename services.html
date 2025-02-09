@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud Services Comparison</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+        }
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        th {
+            background: #007BFF;
+            color: #fff;
+        }
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Cloud Services Comparison: AWS vs GCP vs Azure</h1>
+
+    <table id="servicesTable">
+        <thead>
+            <tr>
+                <th>Category</th>
+                <th>AWS</th>
+                <th>Google Cloud</th>
+                <th>Azure</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Data will be inserted here dynamically -->
+        </tbody>
+    </table>
+
+    <script>
+        // JSON Data for Cloud Services
+        const cloudServices = [
+            {
+                "category": "Compute",
+                "AWS": "EC2, Lambda, ECS, EKS",
+                "GCP": "Compute Engine, App Engine, Cloud Functions, GKE",
+                "Azure": "Virtual Machines, Azure Functions, AKS"
+            },
+            {
+                "category": "Storage",
+                "AWS": "S3, EBS, EFS, Glacier",
+                "GCP": "Cloud Storage, Filestore",
+                "Azure": "Blob Storage, Azure Files"
+            },
+            {
+                "category": "Networking",
+                "AWS": "VPC, Route 53, CloudFront",
+                "GCP": "VPC, Cloud Load Balancing",
+                "Azure": "VNet, Traffic Manager"
+            },
+            {
+                "category": "AI/ML",
+                "AWS": "SageMaker, Rekognition",
+                "GCP": "Vertex AI, AutoML",
+                "Azure": "Azure AI, Cognitive Services"
+            },
+            {
+                "category": "Databases",
+                "AWS": "RDS, DynamoDB, Aurora",
+                "GCP": "Cloud SQL, Firestore, Bigtable",
+                "Azure": "Azure SQL, Cosmos DB"
+            },
+            {
+                "category": "Security",
+                "AWS": "IAM, Shield, WAF",
+                "GCP": "IAM, Security Command Center",
+                "Azure": "Azure Active Directory, Defender"
+            },
+            {
+                "category": "Developer Tools",
+                "AWS": "CodeDeploy, CodePipeline",
+                "GCP": "Cloud Build, Cloud Source Repos",
+                "Azure": "Azure DevOps, GitHub Actions"
+            }
+        ];
+
+        // Function to populate the table
+        function loadTableData() {
+            const tableBody = document.querySelector("#servicesTable tbody");
+            cloudServices.forEach(service => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td><b>${service.category}</b></td>
+                    <td>${service.AWS}</td>
+                    <td>${service.GCP}</td>
+                    <td>${service.Azure}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Load data when the page is ready
+        document.addEventListener("DOMContentLoaded", loadTableData);
+    </script>
+
+</body>
+</html>
