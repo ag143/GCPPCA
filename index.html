@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GCP Services Tree View</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        header {
+            background-color: #4285F4;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        main {
+            display: flex;
+            flex-direction: row;
+            flex: 1;
+            overflow: hidden;
+        }
+        #services-container {
+            width: 30%;
+            overflow-y: auto;
+            padding: 20px;
+            background-color: #F1F3F4;
+            border-right: 1px solid #ccc;
+        }
+        .service-category {
+            margin-bottom: 20px;
+        }
+        .service-category h2 {
+            cursor: pointer;
+            font-size: 1.2em;
+            padding: 10px;
+            background-color: #E8F0FE;
+            border-radius: 5px;
+        }
+        .service {
+            display: none;
+            padding-left: 20px;
+        }
+        .service h3 {
+            cursor: pointer;
+            font-size: 1em;
+            padding: 8px;
+            background-color: #FFF;
+            border-radius: 5px;
+            margin: 5px 0;
+            display: flex;
+            align-items: center;
+        }
+        #detail-section {
+            width: 70%;
+            overflow-y: auto;
+            padding: 20px;
+            background-color: #FFF;
+        }
+        #detail-section h2 {
+            color: #4285F4;
+        }
+        #service-detail img {
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .diagram-link, .use-case-link {
+            margin-top: 10px;
+            display: block;
+            color: #4285F4;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .diagram-link:hover, .use-case-link:hover {
+            text-decoration: underline;
+        }
+        .diagram-section, .use-case-section {
+            margin-top: 20px;
+        }
+        footer {
+            background-color: #4285F4;
+            color: white;
+            text-align: center;
+            padding: 10px;
+        }
+        .search-container {
+            margin-bottom: 20px;
+        }
+        .search-container input {
+            width: 100%;
+            padding: 10px;
+            font-size: 1em;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        /* Responsive design */
+        @media (max-width: 768px) {
+            main {
+                flex-direction: column;
+            }
+            #services-container {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #ccc;
+            }
+            #detail-section {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Google Cloud Platform (GCP) Services</h1>
+</header>
+
+<main>
+    <div id="services-container">
+        <div class="search-container">
+            <input type="text" id="search" placeholder="Search services...">
+        </div>
+    </div>
+
+    <div id="detail-section">
+        <h2>Service Details</h2>
+        <div id="service-detail"></div>
+    </div>
+</main>
+
+<footer>
+    &copy; 2025 GCP Services. All rights reserved.
+</footer>
+
+<script>
+    const gcpServices = {
+        "Compute": [
+            {
+                "name": "Compute Engine",
+                "description": "Scalable, high-performance virtual machines.",
+                "icon": "computer",
+                "diagram": "compute_engine_diagram.png",
+                "diagramLink": "https://cloud.google.com/architecture/best-practices-using-google-compute-engine",
+                "useCaseLink": "https://cloud.google.com/compute/docs"
+            },
+            {
+                "name": "App Engine",
+                "description": "Platform for building scalable web applications and mobile backends.",
+                "icon": "cloud_queue",
+                "diagram": "app_engine_diagram.png",
+                "diagramLink": "https://cloud.google.com/architecture/architecture-web-app-gcp",
+                "useCaseLink": "https://cloud.google.com/appengine/docs"
+            },
+            {
+                "name": "Kubernetes Engine",
+                "description": "Managed Kubernetes service for deploying containerized applications.",
+                "icon": "widgets",
+                "diagram": "kubernetes_engine_diagram.png",
+                "diagramLink": "https://cloud.google.com/architecture/best-practices-for-running-applications-in-google-kubernetes-engine",
+                "useCaseLink": "https://cloud.google.com/kubernetes-engine/docs"
+            },
+            {
+                "name": "Cloud Functions",
+                "description": "Event-driven serverless compute platform.",
+                "icon": "functions",
+                "diagram": "cloud_functions_diagram.png",
+                "diagramLink": "https://cloud.google.com/architecture/event-driven-systems-with-cloud-functions",
+                "useCaseLink": "https://cloud.google.com/functions/docs"
+            }
+        ],
+        "Storage and Databases": [
+            {
+                "name": "Cloud Storage",
+                "description": "Scalable and secure object storage.",
+                "icon": "cloud",
+                "diagram": "cloud_storage_diagram.png",
+                "diagramLink": "https://cloud.google.com/architecture/using-cloud-storage-according-to-best-practices",
+                "useCaseLink": "https://cloud.google.com/storage/docs"
+            },
+            {
+                "name": "Cloud SQL",
+                "description": "Fully-managed relational database service.",
+                "icon": "storage",
+                "diagram": "cloud_sql_diagram.png",
+                "diagramLink": "https://cloud.google.com/architecture/using-cloud-sql",
+                "useCaseLink": "https://cloud.google.com/sql/docs"
+            },
+            {
+                "name": "Cloud Spanner",
+                "description": "Globally distributed, horizontally scalable relational database.",
+                "icon": "dns",
+                "diagram": "cloud_spanner_diagram.png",
+                "diagramLink": "https://cloud.google.com/architecture/best-practices-cloud-spanner",
+                "useCaseLink": "https://cloud.google.com/spanner/docs"
+            },
+            {
+                "name": "Cloud Bigtable",
+                "description": "Fully-managed, scalable NoSQL database service.",
+                "icon": "table_chart",
+                "diagram": "cloud_bigtable_diagram.png",
+                "diagramLink": "https://cloud.google.com/architecture/bigtable-deployment-models",
+                "useCaseLink": "https://cloud.google.com/bigtable/docs"
+            },
+            {
+                "name": "Firestore",
+                "description": "NoSQL document database for mobile and web applications.",
+                "icon": "library_books",
+                "diagram": "firestore_diagram.png",
+                "diagramLink": "https://cloud.google.com/architecture/firestore-deployment-models",
+                "useCaseLink": "https://cloud.google.com/firestore/docs"
+            },
+            {
+                "name": "Memorystore",
+                "description": "Managed in-memory data store service.",
+                "icon": "memory",
+                "diagram": "memorystore_diagram.png",
+                "diagramLink": "https://cloud.google.com/architecture/using-cloud-memorystore",
+                "useCaseLink": "https://cloud.google.com/memorystore/docs"
+            }
+        ],
+        "Networking": [
+            {
+                "name": "Virtual Private Cloud (VPC)",
+                "description": "Configurable private network for your cloud resources.",
+                "icon": "router",
+                "diagram": "vpc_diagram.png",
+                "diagramLink": "https://cloud.google.com/architecture/vpc",
+                "useCaseLink": "https://cloud.google.com/vpc/docs"
+            },
+            {
+                "name": "Cloud Load Balancing",
+                "description": "Scalable load balancing for applications.",
+                "icon": "swap_calls",
+                "diagram": "cloud_load_balancing_diagram.png",
+                "diagramLink": "https://cloud.google.com/architecture/load-balancing",
+                "useCaseLink": "https://cloud.google.com/load-balancing/docs"
+            },
+            {
+                "name": "Cloud CDN",
+                "description": "Content delivery network for faster web and video content.",
+                "icon": "network_check",
+                "diagram": "cloud_cdn_diagram.png",
+                "diagramLink": "https://cloud.google.com/architecture/cdn",
+                "useCaseLink": "https://cloud.google.com/cdn/docs"
+            },
+            {
+                "name": "Cloud DNS",
+                "description": "Scalable, reliable, and managed DNS service.",
+                "icon": "language",
+                "diagram": "cloud_dns_diagram.png",
+                "diagramLink": "https://cloud.google.com/architecture/dns",
+                "useCaseLink": "https://cloud.google.com/dns/docs"
+            }
+        ],
+        "Big Data and Analytics": [
+            {
+                "name": "BigQuery",
+                "description": "Fully-managed, serverless data warehouse for analytics.",
+                "icon": "assessment",
+                "diagram": "bigquery_diagram.png",
+                "diagramLink": "https://cloud.google.com/architecture/best-practices-for-using-bigquery",
+                "useCaseLink": "https://cloud.google.com/bigquery/docs"
+            },
+            {
+                "name": "Dataproc",
+                "description": "Fast, easy-to-use, fully-managed cloud service for running Apache Spark and Apache Hadoop clusters.",
+                "icon": "equalizer",
+                "diagram": "dataproc_diagram.png",
+                "diagramLink": "https://cloud.google.com/architecture/best-practices-for-using-dataproc",
+                "useCaseLink": "https://cloud.google.com/dataproc/docs"
+            },
+            {
+                "name": "Dataflow",
+                "description": "Unified stream and batch data processing that's serverless, fast, and cost-effective.",
+                "icon": "sync_alt",
+                "diagram": "dataflow_diagram.png",
+                "diagramLink": "https://cloud.google.com/architecture/dataflow-pipelines-best-practices",
+                "useCaseLink": "https://cloud.google.com/dataflow/docs"
+            },
+            {
+                "name": "Pub/Sub",
+                "description": "Messaging service for event-driven systems and streaming analytics.",
+                "icon": "message",
+                "diagram": "pubsub_diagram.png",
+                "diagramLink": "https://cloud.google.com/architecture/event-driven-systems-with-pubsub",
+                "useCaseLink": "https://cloud.google.com/pubsub/docs"
+            },
+            {
+                "name": "Data Catalog",
+                "description": "Fully managed and scalable metadata management service for data discovery.",
+                "icon": "inventory",
+                "diagram": "data_catalog_diagram.png",
+                "diagramLink": "https://cloud.google.com/architecture/data-catalog",
+                "useCaseLink": "https://cloud.google.com/data-catalog/docs"
+            }
+        ],
+        "AI and Machine Learning": [
+            {
+                "name": "AI Platform",
+                "description": "Unified platform to build, deploy, and manage machine learning models.",
+                "icon": "extension",
+                "diagram": "ai_platform_diagram.png",
+                "diagramLink": "https://cloud.google.com/architecture/building-on-ai-platform",
+                "useCaseLink": "https://cloud.google.com/ai-platform/docs"
+            },
+            {
+                "name": "AutoML",
+                "description": "Custom machine learning models with minimal effort and expertise.",
+                "icon": "autorenew",
+                "diagram": "automl_diagram.png",
+                "diagramLink": "https://cloud.google.com/architecture/building-on-automl",
+                "useCaseLink": "https://cloud.google.com/automl/docs"
+            },
+            {
+                "name": "Vision AI",
+                "description": "Powerful image analysis capabilities.",
+                "icon": "image_search",
+                "diagram": "vision_ai_diagram.png",
+                "diagramLink": "https://cloud.google.com/architecture/building-on-vision-ai",
+                "useCaseLink": "https://cloud.google.com/vision/docs"
+            },
+            {
+                "name": "Natural Language AI",
+                "description": "Machine learning models for analyzing and understanding text.",
+                "icon": "translate",
+                "diagram": "natural_language_ai_diagram.png",
+                "diagramLink": "https://cloud.google.com/architecture/building-on-natural-language-ai",
+                "useCaseLink": "https://cloud.google.com/natural-language/docs"
+            },
+            {
+                "name": "Speech-to-Text",
+                "description": "Converts audio to text using machine learning.",
+                "icon": "mic",
+                "diagram": "speech_to_text_diagram.png",
+                "diagramLink": "https://cloud.google.com/architecture/building-on-speech-to-text",
+                "useCaseLink": "https://cloud.google.com/speech-to-text/docs"
+            },
+            {
+                "name": "Text-to-Speech",
+                "description": "Converts text to natural-sounding speech using machine learning.",
+                "icon": "record_voice_over",
+                "diagram": "text_to_speech_diagram.png",
+                "diagramLink": "https://cloud.google.com/architecture/building-on-text-to-speech",
+                "useCaseLink": "https://cloud.google.com/text-to-speech/docs"
+            }
+        ],
+        "Identity and Security": [
+            {
+                "name": "Cloud IAM",
+                "description": "Identity and access management for Google Cloud resources.",
+                "icon": "security",
+                "diagram": "cloud_iam_diagram.png",
+                "diagramLink": "https://cloud.google.com/architecture/building-on-cloud-iam",
+                "useCaseLink": "https://cloud.google.com/iam/docs"
+            },
+            {
+                "name": "Cloud Identity-Aware Proxy",
+                "description": "Provides secure application access for your workforce.",
+                "icon": "verified_user",
+                "diagram": "identity_aware_proxy_diagram.png",
+                "diagramLink": "https://cloud.google.com/architecture/building-on-cloud-identity-aware-proxy",
+                "useCaseLink": "https://cloud.google.com/iap/docs"
+            },
+            {
+                "name": "Cloud Key Management Service",
+                "description": "Manages encryption keys for your cloud services.",
+                "icon": "vpn_key",
+                "diagram": "key_management_service_diagram.png",
+                "diagramLink": "https://cloud.google.com/architecture/building-on-cloud-key-management-service",
+                "useCaseLink": "https://cloud.google.com/kms/docs"
+            },
+            {
+                "name": "Security Command Center",
+                "description": "Security and risk management for Google Cloud resources.",
+                "icon": "shield",
+                "diagram": "security_command_center_diagram.png",
+                "diagramLink": "https://cloud.google.com/architecture/building-on-security-command-center",
+                "useCaseLink": "https://cloud.google.com/security-command-center/docs"
+            },
+            {
+                "name": "Cloud Armor",
+                "description": "Provides security policies to protect your applications from DDoS and application attacks.",
+                "icon": "security",
+                "diagram": "cloud_armor_diagram.png",
+                "diagramLink": "https://cloud.google.com/architecture/building-on-cloud-armor",
+                "useCaseLink": "https://cloud.google.com/armor/docs"
+            }
+        ]
+    };
+
+    const servicesContainer = document.getElementById('services-container');
+    const serviceDetail = document.getElementById('service-detail');
+
+    Object.keys(gcpServices).forEach(category => {
+        const categoryDiv = document.createElement('div');
+        categoryDiv.classList.add('service-category');
+
+        const categoryTitle = document.createElement('h2');
+        categoryTitle.textContent = category;
+        categoryTitle.addEventListener('click', () => {
+            // Collapse other sections
+            document.querySelectorAll('.service-category').forEach(div => {
+                if (div !== categoryDiv) {
+                    div.querySelectorAll('.service').forEach(service => {
+                        service.style.display = 'none';
+                    });
+                }
+            });
+            const services = categoryDiv.querySelectorAll('.service');
+            services.forEach(service => {
+                service.style.display = service.style.display === 'block' ? 'none' : 'block';
+            });
+        });
+        categoryDiv.appendChild(categoryTitle);
+
+        gcpServices[category].forEach(service => {
+            const serviceDiv = document.createElement('div');
+            serviceDiv.classList.add('service');
+
+            const serviceName = document.createElement('h3');
+            serviceName.innerHTML = `<span class="material-icons">${service.icon}</span>${service.name}`;
+            serviceName.addEventListener('click', () => {
+                serviceDetail.innerHTML = `
+                    <h3>${service.name}</h3>
+                    <p>${service.description}</p>
+                    <div class="diagram-section">
+                        <h4>Diagram</h4>
+                        <img src="${service.diagram}" alt="${service.name} diagram" width="100%" height="auto">
+                        <a href="${service.diagramLink}" target="_blank" class="diagram-link">View Google Diagram Example</a>
+                    </div>
+                    <div class="use-case-section">
+                        <h4>Use Case</h4>
+                        <a href="${service.useCaseLink}" target="_blank" class="use-case-link">View Use Case Documentation</a>
+                    </div>
+                `;
+            });
+            serviceDiv.appendChild(serviceName);
+
+            categoryDiv.appendChild(serviceDiv);
+        });
+
+        servicesContainer.appendChild(categoryDiv);
+    });
+
+    // Add search functionality
+    document.getElementById('search').addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        document.querySelectorAll('.service-category').forEach(categoryDiv => {
+            let categoryMatches = false;
+            categoryDiv.querySelectorAll('.service').forEach(serviceDiv => {
+                const serviceName = serviceDiv.querySelector('h3').textContent.toLowerCase();
+                if (serviceName.includes(searchTerm)) {
+                    serviceDiv.style.display = 'block';
+                    categoryMatches = true;
+                } else {
+                    serviceDiv.style.display = 'none';
+                }
+            });
+            categoryDiv.style.display = categoryMatches ? 'block' : 'none';
+        });
+    });
+</script>
+
+</body>
+</html>
