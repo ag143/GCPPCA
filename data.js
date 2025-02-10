@@ -1,4 +1,13 @@
 Date,Month,Team,Count
+2024-10-05,Oct,Team A,25
+2024-10-15,Oct,Team B,20
+2024-10-27,Oct,Team C,18
+2024-11-09,Nov,Team A,28
+2024-11-18,Nov,Team B,22
+2024-11-29,Nov,Team C,19
+2024-12-05,Dec,Team A,12
+2024-12-10,Dec,Team B,10
+2024-12-15,Dec,Team C,11
 2025-01-05,Jan,Team A,5
 2025-01-10,Jan,Team A,3
 2025-01-15,Jan,Team B,4
@@ -27,12 +36,3 @@ Date,Month,Team,Count
 2025-09-06,Sep,Team A,22
 2025-09-14,Sep,Team B,19
 2025-09-25,Sep,Team C,16
-2025-10-05,Oct,Team A,25
-2025-10-15,Oct,Team B,20
-2025-10-27,Oct,Team C,18
-2025-11-09,Nov,Team A,28
-2025-11-18,Nov,Team B,22
-2025-11-29,Nov,Team C,19
-2025-12-05,Dec,Team A,12
-2025-12-10,Dec,Team B,10
-2025-12-15,Dec,Team C,11
