@@ -152,6 +152,8 @@
             myDiagram.nodes.each(node => {
                 if (node instanceof go.Group && node.data.key !== selectedGroupKey) {
                     node.isSubGraphExpanded = false;
+                } else if (node instanceof go.Group && node.data.key === selectedGroupKey) {
+                    node.isSubGraphExpanded = true;
                 }
             });
             myDiagram.commitTransaction("collapse");
