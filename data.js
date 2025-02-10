@@ -1,0 +1,13 @@
+Month,Sales
+Jan,100
+Feb,120
+Mar,150
+Apr,170
+May,130
+Jun,180
+Jul,200
+Aug,210
+Sep,190
+Oct,220
+Nov,230
+Dec,250
