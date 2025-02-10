@@ -17,23 +17,14 @@
         async function fetchData() {
             const response = await fetch('data.csv'); // Load CSV file
             const data = await response.text();
-            if (err) {
-                    console.error(err);
-                    return;
-                }
             const rows = data.split("\n").slice(1); // Skip header row
-            
+
             let aggregatedData = {}; // Store aggregated counts
 
             rows.forEach(row => {
-                if (err) {
-                    console.error(err);
-                    return;
-                }
                 const [date, month, team, count] = row.split(",");
                 const monthTrimmed = month.trim();
                 const teamTrimmed = team.trim();
-                
                 const countValue = parseInt(count.trim());
 
                 if (!aggregatedData[monthTrimmed]) {
