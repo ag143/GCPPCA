@@ -35,29 +35,20 @@
 
             rows.forEach(row => {
                 let [date, team, count] = row.split(",").map(col => col.trim());
-                if (!date || !team) return; // Ensure date and team exist
+                if (!date || !team || isNaN(count)) return; // Ensure valid data
 
                 let dateObj = new Date(date);
                 let monthYear = `${dateObj.toLocaleString('default', { month: 'short' })}-${dateObj.getFullYear()}`;
                 count = parseInt(count) || 0; // Default count to 0 if missing or invalid
 
-                if (!totalCounts[monthYear]) {
-                    totalCounts[monthYear] = 0;
-                }
-                totalCounts[monthYear] += count;
-
-                if (!teamMonthlyTotals[monthYear]) {
-                    teamMonthlyTotals[monthYear] = {};
-                }
-                if (!teamMonthlyTotals[monthYear][team]) {
-                    teamMonthlyTotals[monthYear][team] = 0;
-                }
-                teamMonthlyTotals[monthYear][team] += count;
+                totalCounts[monthYear] = (totalCounts[monthYear] || 0) + count;
+                teamMonthlyTotals[monthYear] = teamMonthlyTotals[monthYear] || {};
+                teamMonthlyTotals[monthYear][team] = (teamMonthlyTotals[monthYear][team] || 0) + count;
                 teamsSet.add(team);
             });
 
-            const labels = Object.keys(totalCounts).sort(); // Sort Month-Year values
-            return { labels, totalCounts, teamMonthlyTotals, teams: [...teamsSet] };
+            const labels = Object.keys(totalCounts).sort((a, b) => new Date("01-" + a) - new Date("01-" + b));
+            return { labels, totalCounts, teamMonthlyTotals, teams: [...teamsSet].sort() };
         }
 
         async function populateTable() {
@@ -67,16 +58,8 @@
 
             // Clear existing headers
             tableHead.innerHTML = '<tr><th>Month-Year</th></tr>';
-
-            // Add team headers to the table
             teams.forEach(team => {
-                const th = document.createElement("th");
-                th.textContent = team;
-                tableHead.children[0].appendChild(th);
-
-                const percentTh = document.createElement("th");
-                percentTh.textContent = team + " %";
-                tableHead.children[0].appendChild(percentTh);
+                tableHead.children[0].innerHTML += `<th>${team}</th><th>${team} %</th>`;
             });
 
             teamMonthlyTableBody.innerHTML = '';
@@ -94,38 +77,26 @@
         }
 
         async function createCharts() {
-            const { labels, totalCounts, teamMonthlyTotals, teams } = await fetchData();
+            const { labels, teamMonthlyTotals, teams } = await fetchData();
 
-            // Bar Chart
+            const datasets = teams.map((team, index) => ({
+                label: team,
+                data: labels.map(monthYear => teamMonthlyTotals[monthYear]?.[team] || 0),
+                backgroundColor: `rgba(${index * 60}, ${100 + index * 30}, ${200 - index * 40}, 0.6)`,
+                borderColor: `rgba(${index * 60}, ${100 + index * 30}, ${200 - index * 40}, 1)`,
+                borderWidth: 2,
+                fill: false
+            }));
+
             new Chart(document.getElementById("barChart"), {
                 type: "bar",
-                data: {
-                    labels,
-                    datasets: teams.map((team, index) => ({
-                        label: team,
-                        data: labels.map(monthYear => teamMonthlyTotals[monthYear]?.[team] || 0),
-                        backgroundColor: `rgba(${index * 60}, ${100 + index * 30}, ${200 - index * 40}, 0.6)`,
-                        borderColor: `rgba(${index * 60}, ${100 + index * 30}, ${200 - index * 40}, 1)`,
-                        borderWidth: 2,
-                        fill: false
-                    }))
-                },
+                data: { labels, datasets },
                 options: { responsive: true }
             });
 
-            // Line Chart
             new Chart(document.getElementById("lineChart"), {
                 type: "line",
-                data: {
-                    labels,
-                    datasets: teams.map((team, index) => ({
-                        label: team,
-                        data: labels.map(monthYear => teamMonthlyTotals[monthYear]?.[team] || 0),
-                        borderColor: `rgba(${index * 60}, ${100 + index * 30}, ${200 - index * 40}, 1)`,
-                        borderWidth: 2,
-                        fill: false
-                    }))
-                },
+                data: { labels, datasets },
                 options: { responsive: true }
             });
         }
