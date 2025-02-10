@@ -13,6 +13,18 @@
     <h2>Line Chart (Aggregated Monthly Count by Team)</h2>
     <canvas id="lineChart"></canvas>
 
+    <h2>Monthly Aggregated Data</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Month</th>
+                <th>Total Count</th>
+                <th>Percentage</th>
+            </tr>
+        </thead>
+        <tbody id="dataTable"></tbody>
+    </table>
+
     <script>
         async function fetchData() {
             const response = await fetch('data.csv'); // Load CSV file
@@ -21,20 +33,25 @@
 
             let aggregatedData = {}; // Store aggregated counts
             let teamsSet = new Set(); // Store unique teams
+            let totalCounts = {}; // Store total count per month
+            let grandTotal = 0; // Store total of all months
 
             rows.forEach(row => {
                 let [date, month, team, count] = row.split(",").map(col => col.trim());
                 if (!month || !team) return; // Ensure month and team exist
 
                 count = parseInt(count) || 0; // Default count to 0 if missing or invalid
+                grandTotal += count;
 
                 if (!aggregatedData[month]) {
                     aggregatedData[month] = {};
+                    totalCounts[month] = 0;
                 }
                 if (!aggregatedData[month][team]) {
                     aggregatedData[month][team] = 0;
                 }
                 aggregatedData[month][team] += count;
+                totalCounts[month] += count;
                 teamsSet.add(team);
             });
 
@@ -50,11 +67,11 @@
                 fill: false
             }));
 
-            return { labels, datasets };
+            return { labels, datasets, totalCounts, grandTotal };
         }
 
         async function createCharts() {
-            const { labels, datasets } = await fetchData();
+            const { labels, datasets, totalCounts, grandTotal } = await fetchData();
 
             // Bar Chart
             new Chart(document.getElementById("barChart"), {
@@ -68,6 +85,16 @@
                 type: "line",
                 data: { labels, datasets },
                 options: { responsive: true }
+            });
+
+            // Populate Data Table
+            const tableBody = document.getElementById("dataTable");
+            labels.forEach(month => {
+                const row = document.createElement("tr");
+                const total = totalCounts[month] || 0;
+                const percentage = grandTotal ? ((total / grandTotal) * 100).toFixed(2) + "%" : "0%";
+                row.innerHTML = `<td>${month}</td><td>${total}</td><td>${percentage}</td>`;
+                tableBody.appendChild(row);
             });
         }
 
