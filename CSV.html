@@ -17,20 +17,15 @@
         async function fetchData() {
             const response = await fetch('data.csv'); // Load CSV file
             const data = await response.text();
-            const rows = data.split("\n").slice(1); // Skip header row
+            const rows = data.split("\n").slice(1).filter(row => row.trim() && row.split(",").length >= 4); // Skip empty and malformed rows
 
             let aggregatedData = {}; // Store aggregated counts
+            let teamsSet = new Set(); // Store unique teams
 
             rows.forEach(row => {
-                if (!row.trim()) return; // Skip empty lines
+                let [date, month, team, count] = row.split(",").map(col => col.trim());
+                if (!month || !team) return; // Ensure month and team exist
 
-                const cols = row.split(",");
-                if (cols.length < 4) return; // Skip malformed rows
-
-                let [date, month, team, count] = cols.map(col => col.trim());
-
-                if (!month) return; // Skip rows without a valid month
-                team = team || "Unknown Team"; // Default team name if missing
                 count = parseInt(count) || 0; // Default count to 0 if missing or invalid
 
                 if (!aggregatedData[month]) {
@@ -40,10 +35,11 @@
                     aggregatedData[month][team] = 0;
                 }
                 aggregatedData[month][team] += count;
+                teamsSet.add(team);
             });
 
             const labels = Object.keys(aggregatedData); // Months
-            const teams = [...new Set(rows.map(row => row.split(",")[2]?.trim() || "Unknown Team"))]; // Unique teams
+            const teams = [...teamsSet]; // Unique teams
 
             let datasets = teams.map((team, index) => ({
                 label: team,
