@@ -1,13 +1,38 @@
-Month,Sales
-Jan,100
-Feb,120
-Mar,150
-Apr,170
-May,130
-Jun,180
-Jul,200
-Aug,210
-Sep,190
-Oct,220
-Nov,230
-Dec,250
+Date,Month,Team,Count
+2025-01-05,Jan,Team A,5
+2025-01-10,Jan,Team A,3
+2025-01-15,Jan,Team B,4
+2025-01-20,Jan,Team C,6
+2025-02-03,Feb,Team A,7
+2025-02-12,Feb,Team B,5
+2025-02-18,Feb,Team C,6
+2025-03-08,Mar,Team A,10
+2025-03-15,Mar,Team B,8
+2025-03-22,Mar,Team C,7
+2025-04-05,Apr,Team A,12
+2025-04-14,Apr,Team B,9
+2025-04-21,Apr,Team C,8
+2025-05-03,May,Team A,15
+2025-05-11,May,Team B,10
+2025-05-19,May,Team C,9
+2025-06-07,Jun,Team A,14
+2025-06-16,Jun,Team B,12
+2025-06-24,Jun,Team C,10
+2025-07-02,Jul,Team A,18
+2025-07-13,Jul,Team B,15
+2025-07-22,Jul,Team C,13
+2025-08-04,Aug,Team A,20
+2025-08-12,Aug,Team B,17
+2025-08-23,Aug,Team C,14
+2025-09-06,Sep,Team A,22
+2025-09-14,Sep,Team B,19
+2025-09-25,Sep,Team C,16
+2025-10-05,Oct,Team A,25
+2025-10-15,Oct,Team B,20
+2025-10-27,Oct,Team C,18
+2025-11-09,Nov,Team A,28
+2025-11-18,Nov,Team B,22
+2025-11-29,Nov,Team C,19
+2025-12-05,Dec,Team A,12
+2025-12-10,Dec,Team B,10
+2025-12-15,Dec,Team C,11
