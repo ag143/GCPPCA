@@ -15,12 +15,9 @@
 
     <h2>Team-wise Monthly Aggregated Data</h2>
     <table border="1">
-        <thead>
+        <thead id="tableHead">
             <tr>
                 <th>Month</th>
-                <th>Team</th>
-                <th>Total Count</th>
-                <th>Percentage</th>
             </tr>
         </thead>
         <tbody id="teamMonthlyTable"></tbody>
@@ -34,7 +31,6 @@
 
             let totalCounts = {}; // Store total count per month
             let teamMonthlyTotals = {}; // Store team-wise total per month
-            let grandTotal = 0; // Store total of all months
             let teamsSet = new Set();
 
             rows.forEach(row => {
@@ -42,7 +38,6 @@
                 if (!month || !team) return; // Ensure month and team exist
 
                 count = parseInt(count) || 0; // Default count to 0 if missing or invalid
-                grandTotal += count;
 
                 if (!totalCounts[month]) {
                     totalCounts[month] = 0;
@@ -60,60 +55,33 @@
             });
 
             const labels = Object.keys(totalCounts); // Months
-            return { labels, totalCounts, grandTotal, teamMonthlyTotals, teams: [...teamsSet] };
+            return { labels, totalCounts, teamMonthlyTotals, teams: [...teamsSet] };
         }
 
-        async function createCharts() {
-            const { labels, totalCounts, grandTotal, teamMonthlyTotals, teams } = await fetchData();
-
-            // Populate Team-wise Monthly Data Table
+        async function populateTable() {
+            const { labels, teamMonthlyTotals, teams } = await fetchData();
+            const tableHead = document.getElementById("tableHead");
             const teamMonthlyTableBody = document.getElementById("teamMonthlyTable");
+
+            // Add team headers to the table
+            teams.forEach(team => {
+                const th = document.createElement("th");
+                th.textContent = team;
+                tableHead.children[0].appendChild(th);
+            });
+
             labels.forEach(month => {
-                if (teamMonthlyTotals[month]) {
-                    Object.entries(teamMonthlyTotals[month]).forEach(([team, count]) => {
-                        const row = document.createElement("tr");
-                        const percentage = totalCounts[month] ? ((count / totalCounts[month]) * 100).toFixed(2) + "%" : "0%";
-                        row.innerHTML = `<td>${month}</td><td>${team}</td><td>${count}</td><td>${percentage}</td>`;
-                        teamMonthlyTableBody.appendChild(row);
-                    });
-                }
-            });
-
-            // Bar Chart
-            new Chart(document.getElementById("barChart"), {
-                type: "bar",
-                data: {
-                    labels,
-                    datasets: teams.map((team, index) => ({
-                        label: team,
-                        data: labels.map(month => teamMonthlyTotals[month]?.[team] || 0),
-                        backgroundColor: `rgba(${index * 60}, ${100 + index * 30}, ${200 - index * 40}, 0.6)`,
-                        borderColor: `rgba(${index * 60}, ${100 + index * 30}, ${200 - index * 40}, 1)`,
-                        borderWidth: 2,
-                        fill: false
-                    }))
-                },
-                options: { responsive: true }
-            });
-
-            // Line Chart
-            new Chart(document.getElementById("lineChart"), {
-                type: "line",
-                data: {
-                    labels,
-                    datasets: teams.map((team, index) => ({
-                        label: team,
-                        data: labels.map(month => teamMonthlyTotals[month]?.[team] || 0),
-                        borderColor: `rgba(${index * 60}, ${100 + index * 30}, ${200 - index * 40}, 1)`,
-                        borderWidth: 2,
-                        fill: false
-                    }))
-                },
-                options: { responsive: true }
+                const row = document.createElement("tr");
+                row.innerHTML = `<td>${month}</td>`;
+                teams.forEach(team => {
+                    const teamCount = teamMonthlyTotals[month]?.[team] || 0;
+                    row.innerHTML += `<td>${teamCount}</td>`;
+                });
+                teamMonthlyTableBody.appendChild(row);
             });
         }
 
-        createCharts(); // Call function to load and display charts
+        populateTable();
     </script>
 </body>
 </html>
