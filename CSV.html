@@ -25,16 +25,17 @@
         <tbody id="dataTable"></tbody>
     </table>
 
-    <h2>Team-wise Aggregated Data</h2>
+    <h2>Team-wise Monthly Aggregated Data</h2>
     <table border="1">
         <thead>
             <tr>
+                <th>Month</th>
                 <th>Team</th>
                 <th>Total Count</th>
                 <th>Percentage</th>
             </tr>
         </thead>
-        <tbody id="teamTable"></tbody>
+        <tbody id="teamMonthlyTable"></tbody>
     </table>
 
     <script>
@@ -45,7 +46,7 @@
 
             let aggregatedData = {}; // Store aggregated counts by month
             let totalCounts = {}; // Store total count per month
-            let teamTotals = {}; // Store total count per team
+            let teamMonthlyTotals = {}; // Store team-wise total per month
             let grandTotal = 0; // Store total of all months
             let teamsSet = new Set();
 
@@ -66,10 +67,13 @@
                 aggregatedData[month][team] += count;
                 totalCounts[month] += count;
 
-                if (!teamTotals[team]) {
-                    teamTotals[team] = 0;
+                if (!teamMonthlyTotals[month]) {
+                    teamMonthlyTotals[month] = {};
                 }
-                teamTotals[team] += count;
+                if (!teamMonthlyTotals[month][team]) {
+                    teamMonthlyTotals[month][team] = 0;
+                }
+                teamMonthlyTotals[month][team] += count;
                 teamsSet.add(team);
             });
 
@@ -85,11 +89,11 @@
                 fill: false
             }));
 
-            return { labels, datasets, totalCounts, grandTotal, teamTotals, teams };
+            return { labels, datasets, totalCounts, grandTotal, teamMonthlyTotals, teams };
         }
 
         async function createCharts() {
-            const { labels, datasets, totalCounts, grandTotal, teamTotals, teams } = await fetchData();
+            const { labels, datasets, totalCounts, grandTotal, teamMonthlyTotals, teams } = await fetchData();
 
             // Bar Chart
             new Chart(document.getElementById("barChart"), {
@@ -115,14 +119,17 @@
                 tableBody.appendChild(row);
             });
 
-            // Populate Team-wise Data Table
-            const teamTableBody = document.getElementById("teamTable");
-            teams.forEach(team => {
-                const row = document.createElement("tr");
-                const total = teamTotals[team] || 0;
-                const percentage = grandTotal ? ((total / grandTotal) * 100).toFixed(2) + "%" : "0%";
-                row.innerHTML = `<td>${team}</td><td>${total}</td><td>${percentage}</td>`;
-                teamTableBody.appendChild(row);
+            // Populate Team-wise Monthly Data Table
+            const teamMonthlyTableBody = document.getElementById("teamMonthlyTable");
+            labels.forEach(month => {
+                if (teamMonthlyTotals[month]) {
+                    Object.entries(teamMonthlyTotals[month]).forEach(([team, count]) => {
+                        const row = document.createElement("tr");
+                        const percentage = totalCounts[month] ? ((count / totalCounts[month]) * 100).toFixed(2) + "%" : "0%";
+                        row.innerHTML = `<td>${month}</td><td>${team}</td><td>${count}</td><td>${percentage}</td>`;
+                        teamMonthlyTableBody.appendChild(row);
+                    });
+                }
             });
         }
 
