@@ -34,9 +34,10 @@
             let teamsSet = new Set();
 
             rows.forEach(row => {
-                let [date, yearMonth, team, count] = row.split(",").map(col => col.trim());
-                if (!yearMonth || !team) return; // Ensure year-month and team exist
+                let [date, year, month, team, count] = row.split(",").map(col => col.trim());
+                if (!year || !month || !team) return; // Ensure year, month, and team exist
 
+                let yearMonth = `${year}-${month}`;
                 count = parseInt(count) || 0; // Default count to 0 if missing or invalid
 
                 if (!totalCounts[yearMonth]) {
@@ -54,7 +55,7 @@
                 teamsSet.add(team);
             });
 
-            const labels = Object.keys(totalCounts); // Year-Months
+            const labels = Object.keys(totalCounts).sort(); // Sort Year-Months
             return { labels, totalCounts, teamMonthlyTotals, teams: [...teamsSet] };
         }
 
@@ -62,6 +63,9 @@
             const { labels, totalCounts, teamMonthlyTotals, teams } = await fetchData();
             const tableHead = document.getElementById("tableHead");
             const teamMonthlyTableBody = document.getElementById("teamMonthlyTable");
+
+            // Clear existing headers
+            tableHead.innerHTML = '<tr><th>Year-Month</th></tr>';
 
             // Add team headers to the table
             teams.forEach(team => {
@@ -74,6 +78,7 @@
                 tableHead.children[0].appendChild(percentTh);
             });
 
+            teamMonthlyTableBody.innerHTML = '';
             labels.forEach(yearMonth => {
                 const row = document.createElement("tr");
                 row.innerHTML = `<td>${yearMonth}</td>`;
