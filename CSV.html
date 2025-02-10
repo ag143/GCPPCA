@@ -68,11 +68,11 @@
                 const th = document.createElement("th");
                 th.textContent = team;
                 tableHead.children[0].appendChild(th);
-            });
 
-            const percentageHeader = document.createElement("th");
-            percentageHeader.textContent = "Percentage";
-            tableHead.children[0].appendChild(percentageHeader);
+                const percentTh = document.createElement("th");
+                percentTh.textContent = team + " %";
+                tableHead.children[0].appendChild(percentTh);
+            });
 
             labels.forEach(month => {
                 const row = document.createElement("tr");
@@ -80,9 +80,9 @@
                 let rowTotal = totalCounts[month];
                 teams.forEach(team => {
                     const teamCount = teamMonthlyTotals[month]?.[team] || 0;
-                    row.innerHTML += `<td>${teamCount}</td>`;
+                    const percentage = rowTotal ? ((teamCount / rowTotal) * 100).toFixed(2) + "%" : "0%";
+                    row.innerHTML += `<td>${teamCount}</td><td>${percentage}</td>`;
                 });
-                row.innerHTML += `<td>${rowTotal}</td>`;
                 teamMonthlyTableBody.appendChild(row);
             });
         }
