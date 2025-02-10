@@ -57,14 +57,9 @@
                 count = parseInt(count) || 0; // Default count to 0 if missing or invalid
                 grandTotal += count;
 
-                if (!aggregatedData[month]) {
-                    aggregatedData[month] = {};
+                if (!totalCounts[month]) {
                     totalCounts[month] = 0;
                 }
-                if (!aggregatedData[month][team]) {
-                    aggregatedData[month][team] = 0;
-                }
-                aggregatedData[month][team] += count;
                 totalCounts[month] += count;
 
                 if (!teamMonthlyTotals[month]) {
@@ -77,12 +72,12 @@
                 teamsSet.add(team);
             });
 
-            const labels = Object.keys(aggregatedData); // Months
+            const labels = Object.keys(totalCounts); // Months
             const teams = [...teamsSet]; // Unique teams
 
             let datasets = teams.map((team, index) => ({
                 label: team,
-                data: labels.map(month => aggregatedData[month][team] || 0),
+                data: labels.map(month => teamMonthlyTotals[month]?.[team] || 0),
                 backgroundColor: `rgba(${index * 60}, ${100 + index * 30}, ${200 - index * 40}, 0.6)`,
                 borderColor: `rgba(${index * 60}, ${100 + index * 30}, ${200 - index * 40}, 1)`,
                 borderWidth: 2,
