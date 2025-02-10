@@ -45,8 +45,12 @@
 
         myDiagram.nodeTemplate = $(go.Node, "Auto",
             { click: (e, obj) => showDetails(obj.part.data) },
-            $(go.Shape, "Rectangle", { fill: "lightblue", stroke: "black" }),
-            $(go.TextBlock, { margin: 5 }, new go.Binding("text", "name"))
+            $(go.Panel, "Horizontal",
+                $(go.Picture, { width: 30, height: 30, margin: 5 },
+                    new go.Binding("source", "icon")
+                ),
+                $(go.TextBlock, { margin: 5 }, new go.Binding("text", "name"))
+            )
         );
 
         myDiagram.linkTemplate = $(go.Link,
@@ -69,23 +73,29 @@
             { key: "Compute", name: "Compute", group: "Cloud Services", isGroup: true },
             { key: "Storage", name: "Storage", group: "Cloud Services", isGroup: true },
             { key: "Security", name: "Security", group: "Cloud Services", isGroup: true },
+            { key: "Networking", name: "Networking", group: "Cloud Services", isGroup: true },
 
-            { key: "Compute Engine", name: "Compute Engine", group: "Compute" },
-            { key: "Kubernetes Engine", name: "Kubernetes Engine", group: "Compute" },
-            { key: "Cloud Run", name: "Cloud Run", group: "Compute" },
+            { key: "Compute Engine", name: "Compute Engine", group: "Compute", icon: "compute-engine.png" },
+            { key: "Kubernetes Engine", name: "Kubernetes Engine", group: "Compute", icon: "kubernetes.png" },
+            { key: "Cloud Run", name: "Cloud Run", group: "Compute", icon: "cloud-run.png" },
 
-            { key: "Cloud Storage", name: "Cloud Storage", group: "Storage" },
-            { key: "BigQuery", name: "BigQuery", group: "Storage" },
-            { key: "Firestore", name: "Firestore", group: "Storage" },
+            { key: "Cloud Storage", name: "Cloud Storage", group: "Storage", icon: "cloud-storage.png" },
+            { key: "BigQuery", name: "BigQuery", group: "Storage", icon: "bigquery.png" },
+            { key: "Firestore", name: "Firestore", group: "Storage", icon: "firestore.png" },
 
-            { key: "IAM", name: "IAM", group: "Security" },
-            { key: "Cloud Armor", name: "Cloud Armor", group: "Security" },
-            { key: "Cloud Identity", name: "Cloud Identity", group: "Security" },
+            { key: "IAM", name: "IAM", group: "Security", icon: "iam.png" },
+            { key: "Cloud Armor", name: "Cloud Armor", group: "Security", icon: "cloud-armor.png" },
+            { key: "Cloud Identity", name: "Cloud Identity", group: "Security", icon: "cloud-identity.png" },
+
+            { key: "Cloud Load Balancing", name: "Cloud Load Balancing", group: "Networking", icon: "load-balancing.png" },
+            { key: "Cloud VPN", name: "Cloud VPN", group: "Networking", icon: "cloud-vpn.png" },
+            { key: "Cloud CDN", name: "Cloud CDN", group: "Networking", icon: "cloud-cdn.png" },
 
             { from: "Compute Engine", to: "Cloud Storage" },
             { from: "Kubernetes Engine", to: "IAM" },
             { from: "BigQuery", to: "Cloud Storage" },
-            { from: "Firestore", to: "Cloud Identity" }
+            { from: "Firestore", to: "Cloud Identity" },
+            { from: "Cloud Load Balancing", to: "Cloud CDN" }
         ];
 
         myDiagram.model = new go.GraphLinksModel(gcpData);
@@ -96,7 +106,7 @@
 
         function populateListView() {
             const listView = document.getElementById("servicesList");
-            const categories = ["Compute", "Storage", "Security"];
+            const categories = ["Compute", "Storage", "Security", "Networking"];
 
             categories.forEach(category => {
                 const categoryTitle = document.createElement("div");
@@ -135,12 +145,6 @@
                 }
             });
             myDiagram.commitTransaction("collapse");
-        }
-
-        function toggleGroup(group) {
-            myDiagram.startTransaction("toggle");
-            group.isSubGraphExpanded = !group.isSubGraphExpanded;
-            myDiagram.commitTransaction("toggle");
         }
 
         function centerHierarchicalView() {
