@@ -15,7 +15,7 @@
 
     <script>
         async function fetchData() {
-            const response = await fetch('data.csv'); // Load CSV file
+            const response = await fetch('data.js'); // Load CSV file
             const data = await response.text();
             const rows = data.split("\n").slice(1); // Skip header row
 
