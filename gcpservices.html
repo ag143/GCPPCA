@@ -12,7 +12,7 @@
         #diagramDiv { flex-grow: 2; height: 100%; min-width: 300px; border: 1px solid black; }
         ul { list-style-type: none; padding: 0; }
         li { cursor: pointer; padding: 5px; }
-        li:hover { background: #ddd; }
+        li:hover, .highlighted { background: yellow; }
         .category { font-weight: bold; margin-top: 10px; }
         @media (max-width: 768px) {
             #container { flex-direction: column; }
@@ -44,7 +44,7 @@
         });
 
         myDiagram.nodeTemplate = $(go.Node, "Auto",
-            { click: (e, obj) => showDetails(obj.part.data) },
+            { click: (e, obj) => highlightSelection(obj.part.data) },
             $(go.Panel, "Horizontal",
                 $(go.Picture, { width: 30, height: 30, margin: 5 },
                     new go.Binding("source", "icon")
@@ -75,21 +75,21 @@
             { key: "Security", name: "Security", group: "Cloud Services", isGroup: true },
             { key: "Networking", name: "Networking", group: "Cloud Services", isGroup: true },
 
-            { key: "Compute Engine", name: "Compute Engine", group: "Compute", icon: "compute-engine.png" },
-            { key: "Kubernetes Engine", name: "Kubernetes Engine", group: "Compute", icon: "kubernetes.png" },
-            { key: "Cloud Run", name: "Cloud Run", group: "Compute", icon: "cloud-run.png" },
+            { key: "Compute Engine", name: "Compute Engine", group: "Compute", icon: "https://via.placeholder.com/30" },
+            { key: "Kubernetes Engine", name: "Kubernetes Engine", group: "Compute", icon: "https://via.placeholder.com/30" },
+            { key: "Cloud Run", name: "Cloud Run", group: "Compute", icon: "https://via.placeholder.com/30" },
 
-            { key: "Cloud Storage", name: "Cloud Storage", group: "Storage", icon: "cloud-storage.png" },
-            { key: "BigQuery", name: "BigQuery", group: "Storage", icon: "bigquery.png" },
-            { key: "Firestore", name: "Firestore", group: "Storage", icon: "firestore.png" },
+            { key: "Cloud Storage", name: "Cloud Storage", group: "Storage", icon: "https://via.placeholder.com/30" },
+            { key: "BigQuery", name: "BigQuery", group: "Storage", icon: "https://via.placeholder.com/30" },
+            { key: "Firestore", name: "Firestore", group: "Storage", icon: "https://via.placeholder.com/30" },
 
-            { key: "IAM", name: "IAM", group: "Security", icon: "iam.png" },
-            { key: "Cloud Armor", name: "Cloud Armor", group: "Security", icon: "cloud-armor.png" },
-            { key: "Cloud Identity", name: "Cloud Identity", group: "Security", icon: "cloud-identity.png" },
+            { key: "IAM", name: "IAM", group: "Security", icon: "https://via.placeholder.com/30" },
+            { key: "Cloud Armor", name: "Cloud Armor", group: "Security", icon: "https://via.placeholder.com/30" },
+            { key: "Cloud Identity", name: "Cloud Identity", group: "Security", icon: "https://via.placeholder.com/30" },
 
-            { key: "Cloud Load Balancing", name: "Cloud Load Balancing", group: "Networking", icon: "load-balancing.png" },
-            { key: "Cloud VPN", name: "Cloud VPN", group: "Networking", icon: "cloud-vpn.png" },
-            { key: "Cloud CDN", name: "Cloud CDN", group: "Networking", icon: "cloud-cdn.png" },
+            { key: "Cloud Load Balancing", name: "Cloud Load Balancing", group: "Networking", icon: "https://via.placeholder.com/30" },
+            { key: "Cloud VPN", name: "Cloud VPN", group: "Networking", icon: "https://via.placeholder.com/30" },
+            { key: "Cloud CDN", name: "Cloud CDN", group: "Networking", icon: "https://via.placeholder.com/30" },
 
             { from: "Compute Engine", to: "Cloud Storage" },
             { from: "Kubernetes Engine", to: "IAM" },
@@ -99,6 +99,21 @@
         ];
 
         myDiagram.model = new go.GraphLinksModel(gcpData);
+
+        function highlightSelection(data) {
+            myDiagram.startTransaction("highlight");
+            myDiagram.clearHighlighteds();
+
+            const node = myDiagram.findNodeForKey(data.key);
+            if (node) {
+                node.isHighlighted = true;
+                showDetails(node.data);
+                collapseOtherGroups(node.data.group);
+            }
+
+            highlightListView(data.key);
+            myDiagram.commitTransaction("highlight");
+        }
 
         function showDetails(data) {
             document.getElementById("serviceDetails").innerText = `Service: ${data.name}`;
@@ -118,23 +133,18 @@
                     if (node.group === category) {
                         const li = document.createElement("li");
                         li.textContent = node.name;
-                        li.onclick = () => highlightNode(node.key);
+                        li.setAttribute("data-key", node.key);
+                        li.onclick = () => highlightSelection(node);
                         listView.appendChild(li);
                     }
                 });
             });
         }
 
-        function highlightNode(key) {
-            myDiagram.startTransaction("highlight");
-            myDiagram.clearHighlighteds();
-            const node = myDiagram.findNodeForKey(key);
-            if (node) {
-                node.isHighlighted = true;
-                showDetails(node.data);
-                collapseOtherGroups(node.data.group);
-            }
-            myDiagram.commitTransaction("highlight");
+        function highlightListView(key) {
+            document.querySelectorAll("#servicesList li").forEach(li => {
+                li.classList.toggle("highlighted", li.getAttribute("data-key") === key);
+            });
         }
 
         function collapseOtherGroups(selectedGroupKey) {
@@ -147,15 +157,7 @@
             myDiagram.commitTransaction("collapse");
         }
 
-        function centerHierarchicalView() {
-            myDiagram.startTransaction("center");
-            const root = myDiagram.findNodeForKey("Cloud Services");
-            if (root) myDiagram.scale = 1;
-            myDiagram.commitTransaction("center");
-        }
-
         populateListView();
-        centerHierarchicalView();
     </script>
 
 </body>
