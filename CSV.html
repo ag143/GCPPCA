@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV Charts</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h2>Bar Chart</h2>
+    <canvas id="barChart"></canvas>
+
+    <h2>Line Chart</h2>
+    <canvas id="lineChart"></canvas>
+
+    <script>
+        async function fetchData() {
+            const response = await fetch('data.js'); // Load CSV file
+            const data = await response.text();
+            const rows = data.split("\n").slice(1); // Skip header
+
+            let labels = [];
+            let values = [];
+
+            rows.forEach(row => {
+                const [month, sales] = row.split(",");
+                labels.push(month.trim());
+                values.push(parseInt(sales));
+            });
+
+            return { labels, values };
+        }
+
+        async function createCharts() {
+            const { labels, values } = await fetchData();
+
+            // Bar Chart
+            new Chart(document.getElementById("barChart"), {
+                type: "bar",
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: "Sales",
+                        data: values,
+                        backgroundColor: "rgba(54, 162, 235, 0.6)",
+                        borderColor: "rgba(54, 162, 235, 1)",
+                        borderWidth: 1
+                    }]
+                },
+                options: { responsive: true }
+            });
+
+            // Line Chart
+            new Chart(document.getElementById("lineChart"), {
+                type: "line",
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: "Sales",
+                        data: values,
+                        borderColor: "rgba(255, 99, 132, 1)",
+                        backgroundColor: "rgba(255, 99, 132, 0.2)",
+                        borderWidth: 2,
+                        fill: true
+                    }]
+                },
+                options: { responsive: true }
+            });
+        }
+
+        createCharts(); // Call the function to load and display charts
+    </script>
+</body>
+</html>
