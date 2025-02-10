@@ -39,7 +39,11 @@
             });
 
             const labels = Object.keys(aggregatedData); // Months
-            const teams = [...new Set(rows.map(row => row.split(",")[2].trim()))]; // Unique teams
+            const teams = [...new Set(rows.map(row =>{ 
+                if(row.length > 0 ){
+                row.split(",")[2].trim()
+                }
+                }))]; // Unique teams
 
             let datasets = teams.map((team, index) => ({
                 label: team,
