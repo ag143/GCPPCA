@@ -61,16 +61,24 @@
                     $(go.TextBlock, { margin: 8 }, new go.Binding("text", "name"))
                 );
 
-            // Group Template
+            // Group Template with Toggle Button & Border
             myDiagram.groupTemplate =
                 $(go.Group, "Vertical",
                     {
                         layout: $(go.TreeLayout, { angle: 0, layerSpacing: 50 }),
+                        isSubGraphExpanded: false, // Groups start collapsed
                         click: onGroupClick
                     },
                     $(go.Panel, "Auto",
-                        $(go.Shape, "RoundedRectangle", { fill: "lightblue" }),
-                        $(go.TextBlock, { margin: 5 }, new go.Binding("text", "name"))
+                        $(go.Shape, "RoundedRectangle", { fill: "lightblue", stroke: "blue", strokeWidth: 2 }), // Border
+                        $(go.Panel, "Horizontal",
+                            { margin: 5 },
+                            $(go.TextBlock, { margin: 5 }, new go.Binding("text", "name")),
+                            $("Button",
+                                { click: toggleGroup },
+                                $(go.TextBlock, "+/-") // Toggle Button
+                            )
+                        )
                     ),
                     $(go.Placeholder)
                 );
@@ -121,6 +129,16 @@
 
                 group.isSubGraphExpanded = !group.isSubGraphExpanded;
                 myDiagram.commitTransaction("Collapse Other Groups");
+            }
+
+            // Toggle Group Expansion
+            function toggleGroup(event, obj) {
+                const group = obj.part.containingGroup;
+                if (group) {
+                    myDiagram.startTransaction("Toggle Group");
+                    group.isSubGraphExpanded = !group.isSubGraphExpanded;
+                    myDiagram.commitTransaction("Toggle Group");
+                }
             }
 
             // Highlight Node in Both Views
