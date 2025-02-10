@@ -8,11 +8,12 @@
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
         #container { display: flex; flex-wrap: wrap; height: 100vh; }
-        #listView, #detailsView { width: 100%; max-width: 300px; padding: 10px; border: 1px solid #ccc; flex-grow: 1; }
+        #listView, #detailsView { width: 100%; max-width: 300px; padding: 10px; border: 1px solid #ccc; flex-grow: 1; overflow-y: auto; }
         #diagramDiv { flex-grow: 2; height: 100%; min-width: 300px; border: 1px solid black; }
         ul { list-style-type: none; padding: 0; }
         li { cursor: pointer; padding: 5px; }
         li:hover { background: #ddd; }
+        .category { font-weight: bold; margin-top: 10px; }
         @media (max-width: 768px) {
             #container { flex-direction: column; }
             #diagramDiv { height: 400px; }
@@ -25,7 +26,7 @@
     <div id="container">
         <div id="listView">
             <h3>Services List</h3>
-            <ul id="servicesList"></ul>
+            <div id="servicesList"></div>
         </div>
         <div id="diagramDiv"></div>
         <div id="detailsView">
@@ -54,10 +55,7 @@
         );
 
         myDiagram.groupTemplate = $(go.Group, "Vertical",
-            { 
-                layout: $(go.GridLayout, { wrappingColumn: 1 }),
-                click: (e, group) => toggleGroup(group)
-            },
+            { layout: $(go.GridLayout, { wrappingColumn: 1 }) },
             $(go.TextBlock, { font: "Bold 12pt Arial" }, new go.Binding("text", "name")),
             $(go.Panel, "Auto",
                 $(go.Shape, { fill: "lightgray", stroke: "black" }),
@@ -67,7 +65,7 @@
 
         const gcpData = [
             { key: "Cloud Services", name: "Cloud Services", isGroup: true },
-            
+
             { key: "Compute", name: "Compute", group: "Cloud Services", isGroup: true },
             { key: "Storage", name: "Storage", group: "Cloud Services", isGroup: true },
             { key: "Security", name: "Security", group: "Cloud Services", isGroup: true },
@@ -98,13 +96,22 @@
 
         function populateListView() {
             const listView = document.getElementById("servicesList");
-            gcpData.forEach(node => {
-                if (!node.isGroup) {
-                    const li = document.createElement("li");
-                    li.textContent = node.name;
-                    li.onclick = () => highlightNode(node.key);
-                    listView.appendChild(li);
-                }
+            const categories = ["Compute", "Storage", "Security"];
+
+            categories.forEach(category => {
+                const categoryTitle = document.createElement("div");
+                categoryTitle.textContent = category;
+                categoryTitle.className = "category";
+                listView.appendChild(categoryTitle);
+
+                gcpData.forEach(node => {
+                    if (node.group === category) {
+                        const li = document.createElement("li");
+                        li.textContent = node.name;
+                        li.onclick = () => highlightNode(node.key);
+                        listView.appendChild(li);
+                    }
+                });
             });
         }
 
@@ -136,7 +143,15 @@
             myDiagram.commitTransaction("toggle");
         }
 
+        function centerHierarchicalView() {
+            myDiagram.startTransaction("center");
+            const root = myDiagram.findNodeForKey("Cloud Services");
+            if (root) myDiagram.scale = 1;
+            myDiagram.commitTransaction("center");
+        }
+
         populateListView();
+        centerHierarchicalView();
     </script>
 
 </body>
