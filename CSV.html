@@ -3,72 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CSV Charts</title>
+    <title>Monthly Aggregated Team Charts</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <h2>Bar Chart</h2>
+    <h2>Bar Chart (Aggregated Monthly Count by Team)</h2>
     <canvas id="barChart"></canvas>
 
-    <h2>Line Chart</h2>
+    <h2>Line Chart (Aggregated Monthly Count by Team)</h2>
     <canvas id="lineChart"></canvas>
 
     <script>
         async function fetchData() {
-            const response = await fetch('data.js'); // Load CSV file
+            const response = await fetch('data.csv'); // Load CSV file
             const data = await response.text();
-            const rows = data.split("\n").slice(1); // Skip header
+            const rows = data.split("\n").slice(1); // Skip header row
 
-            let labels = [];
-            let values = [];
+            let aggregatedData = {}; // Store aggregated counts
 
             rows.forEach(row => {
-                const [month, sales] = row.split(",");
-                labels.push(month.trim());
-                values.push(parseInt(sales));
+                const [date, month, team, count] = row.split(",");
+                const monthTrimmed = month.trim();
+                const teamTrimmed = team.trim();
+                const countValue = parseInt(count.trim());
+
+                if (!aggregatedData[monthTrimmed]) {
+                    aggregatedData[monthTrimmed] = {};
+                }
+                if (!aggregatedData[monthTrimmed][teamTrimmed]) {
+                    aggregatedData[monthTrimmed][teamTrimmed] = 0;
+                }
+                aggregatedData[monthTrimmed][teamTrimmed] += countValue;
             });
 
-            return { labels, values };
+            const labels = Object.keys(aggregatedData); // Months
+            const teams = [...new Set(rows.map(row => row.split(",")[2].trim()))]; // Unique teams
+
+            let datasets = teams.map((team, index) => ({
+                label: team,
+                data: labels.map(month => aggregatedData[month][team] || 0),
+                backgroundColor: `rgba(${index * 60}, ${100 + index * 30}, ${200 - index * 40}, 0.6)`,
+                borderColor: `rgba(${index * 60}, ${100 + index * 30}, ${200 - index * 40}, 1)`,
+                borderWidth: 2,
+                fill: false
+            }));
+
+            return { labels, datasets };
         }
 
         async function createCharts() {
-            const { labels, values } = await fetchData();
+            const { labels, datasets } = await fetchData();
 
             // Bar Chart
             new Chart(document.getElementById("barChart"), {
                 type: "bar",
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: "Sales",
-                        data: values,
-                        backgroundColor: "rgba(54, 162, 235, 0.6)",
-                        borderColor: "rgba(54, 162, 235, 1)",
-                        borderWidth: 1
-                    }]
-                },
+                data: { labels, datasets },
                 options: { responsive: true }
             });
 
             // Line Chart
             new Chart(document.getElementById("lineChart"), {
                 type: "line",
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: "Sales",
-                        data: values,
-                        borderColor: "rgba(255, 99, 132, 1)",
-                        backgroundColor: "rgba(255, 99, 132, 0.2)",
-                        borderWidth: 2,
-                        fill: true
-                    }]
-                },
+                data: { labels, datasets },
                 options: { responsive: true }
             });
         }
 
-        createCharts(); // Call the function to load and display charts
+        createCharts(); // Call function to load and display charts
     </script>
 </body>
 </html>
