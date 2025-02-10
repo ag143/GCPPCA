@@ -17,7 +17,7 @@
     <table border="1">
         <thead id="tableHead">
             <tr>
-                <th>Year-Month</th>
+                <th>Month-Year</th>
             </tr>
         </thead>
         <tbody id="teamMonthlyTable"></tbody>
@@ -27,34 +27,36 @@
         async function fetchData() {
             const response = await fetch('data.csv'); // Load CSV file
             const data = await response.text();
-            const rows = data.split("\n").slice(1).filter(row => row.trim() && row.split(",").length >= 4); // Skip empty and malformed rows
+            const rows = data.split("\n").slice(1).filter(row => row.trim() && row.split(",").length >= 3); // Skip empty and malformed rows
 
-            let totalCounts = {}; // Store total count per year-month
-            let teamMonthlyTotals = {}; // Store team-wise total per year-month
+            let totalCounts = {}; // Store total count per month-year
+            let teamMonthlyTotals = {}; // Store team-wise total per month-year
             let teamsSet = new Set();
 
             rows.forEach(row => {
-                let [date, yearMonth, team, count] = row.split(",").map(col => col.trim());
-                if (!yearMonth || !team) return; // Ensure year-month and team exist
+                let [date, team, count] = row.split(",").map(col => col.trim());
+                if (!date || !team) return; // Ensure date and team exist
 
+                let dateObj = new Date(date);
+                let monthYear = `${dateObj.toLocaleString('default', { month: 'short' })}-${dateObj.getFullYear()}`;
                 count = parseInt(count) || 0; // Default count to 0 if missing or invalid
 
-                if (!totalCounts[yearMonth]) {
-                    totalCounts[yearMonth] = 0;
+                if (!totalCounts[monthYear]) {
+                    totalCounts[monthYear] = 0;
                 }
-                totalCounts[yearMonth] += count;
+                totalCounts[monthYear] += count;
 
-                if (!teamMonthlyTotals[yearMonth]) {
-                    teamMonthlyTotals[yearMonth] = {};
+                if (!teamMonthlyTotals[monthYear]) {
+                    teamMonthlyTotals[monthYear] = {};
                 }
-                if (!teamMonthlyTotals[yearMonth][team]) {
-                    teamMonthlyTotals[yearMonth][team] = 0;
+                if (!teamMonthlyTotals[monthYear][team]) {
+                    teamMonthlyTotals[monthYear][team] = 0;
                 }
-                teamMonthlyTotals[yearMonth][team] += count;
+                teamMonthlyTotals[monthYear][team] += count;
                 teamsSet.add(team);
             });
 
-            const labels = Object.keys(totalCounts); // Year-Months
+            const labels = Object.keys(totalCounts).sort(); // Sort Month-Year values
             return { labels, totalCounts, teamMonthlyTotals, teams: [...teamsSet] };
         }
 
@@ -62,6 +64,9 @@
             const { labels, totalCounts, teamMonthlyTotals, teams } = await fetchData();
             const tableHead = document.getElementById("tableHead");
             const teamMonthlyTableBody = document.getElementById("teamMonthlyTable");
+
+            // Clear existing headers
+            tableHead.innerHTML = '<tr><th>Month-Year</th></tr>';
 
             // Add team headers to the table
             teams.forEach(team => {
@@ -74,12 +79,13 @@
                 tableHead.children[0].appendChild(percentTh);
             });
 
-            labels.forEach(yearMonth => {
+            teamMonthlyTableBody.innerHTML = '';
+            labels.forEach(monthYear => {
                 const row = document.createElement("tr");
-                row.innerHTML = `<td>${yearMonth}</td>`;
-                let rowTotal = totalCounts[yearMonth];
+                row.innerHTML = `<td>${monthYear}</td>`;
+                let rowTotal = totalCounts[monthYear];
                 teams.forEach(team => {
-                    const teamCount = teamMonthlyTotals[yearMonth]?.[team] || 0;
+                    const teamCount = teamMonthlyTotals[monthYear]?.[team] || 0;
                     const percentage = rowTotal ? ((teamCount / rowTotal) * 100).toFixed(2) + "%" : "0%";
                     row.innerHTML += `<td>${teamCount}</td><td>${percentage}</td>`;
                 });
@@ -97,7 +103,7 @@
                     labels,
                     datasets: teams.map((team, index) => ({
                         label: team,
-                        data: labels.map(yearMonth => teamMonthlyTotals[yearMonth]?.[team] || 0),
+                        data: labels.map(monthYear => teamMonthlyTotals[monthYear]?.[team] || 0),
                         backgroundColor: `rgba(${index * 60}, ${100 + index * 30}, ${200 - index * 40}, 0.6)`,
                         borderColor: `rgba(${index * 60}, ${100 + index * 30}, ${200 - index * 40}, 1)`,
                         borderWidth: 2,
@@ -114,7 +120,7 @@
                     labels,
                     datasets: teams.map((team, index) => ({
                         label: team,
-                        data: labels.map(yearMonth => teamMonthlyTotals[yearMonth]?.[team] || 0),
+                        data: labels.map(monthYear => teamMonthlyTotals[monthYear]?.[team] || 0),
                         borderColor: `rgba(${index * 60}, ${100 + index * 30}, ${200 - index * 40}, 1)`,
                         borderWidth: 2,
                         fill: false
