@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GCP Services Visualization</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gojs/2.3.9/go.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+        #container { display: flex; flex-wrap: wrap; height: 100vh; }
+        #listView, #detailsView { width: 100%; max-width: 300px; padding: 10px; border: 1px solid #ccc; flex-grow: 1; }
+        #diagramDiv { flex-grow: 2; height: 100%; min-width: 300px; border: 1px solid black; }
+        ul { list-style-type: none; padding: 0; }
+        li { cursor: pointer; padding: 5px; }
+        li:hover { background: #ddd; }
+        @media (max-width: 768px) {
+            #container { flex-direction: column; }
+            #diagramDiv { height: 400px; }
+        }
+    </style>
+</head>
+<body>
+
+    <h2>GCP Services Visualization</h2>
+    <div id="container">
+        <div id="listView">
+            <h3>Services List</h3>
+            <ul id="servicesList"></ul>
+        </div>
+        <div id="diagramDiv"></div>
+        <div id="detailsView">
+            <h3>Service Details</h3>
+            <p id="serviceDetails">Select a service to view details.</p>
+        </div>
+    </div>
+
+    <script>
+        const $ = go.GraphObject.make;
+
+        const myDiagram = $(go.Diagram, "diagramDiv", {
+            layout: $(go.TreeLayout, { angle: 90, layerSpacing: 50 }),
+            "undoManager.isEnabled": true
+        });
+
+        myDiagram.nodeTemplate = $(go.Node, "Auto",
+            { click: (e, obj) => showDetails(obj.part.data) },
+            $(go.Shape, "Rectangle", { fill: "lightblue", stroke: "black" }),
+            $(go.TextBlock, { margin: 5 }, new go.Binding("text", "name"))
+        );
+
+        myDiagram.linkTemplate = $(go.Link,
+            $(go.Shape),
+            $(go.Shape, { toArrow: "Standard" })
+        );
+
+        myDiagram.groupTemplate = $(go.Group, "Vertical",
+            { 
+                layout: $(go.GridLayout, { wrappingColumn: 1 }),
+                click: (e, group) => toggleGroup(group)
+            },
+            $(go.TextBlock, { font: "Bold 12pt Arial" }, new go.Binding("text", "name")),
+            $(go.Panel, "Auto",
+                $(go.Shape, { fill: "lightgray", stroke: "black" }),
+                $(go.Placeholder)
+            )
+        );
+
+        const gcpData = [
+            { key: "Cloud Services", name: "Cloud Services", isGroup: true },
+            
+            { key: "Compute", name: "Compute", group: "Cloud Services", isGroup: true },
+            { key: "Storage", name: "Storage", group: "Cloud Services", isGroup: true },
+            { key: "Security", name: "Security", group: "Cloud Services", isGroup: true },
+
+            { key: "Compute Engine", name: "Compute Engine", group: "Compute" },
+            { key: "Kubernetes Engine", name: "Kubernetes Engine", group: "Compute" },
+            { key: "Cloud Run", name: "Cloud Run", group: "Compute" },
+
+            { key: "Cloud Storage", name: "Cloud Storage", group: "Storage" },
+            { key: "BigQuery", name: "BigQuery", group: "Storage" },
+            { key: "Firestore", name: "Firestore", group: "Storage" },
+
+            { key: "IAM", name: "IAM", group: "Security" },
+            { key: "Cloud Armor", name: "Cloud Armor", group: "Security" },
+            { key: "Cloud Identity", name: "Cloud Identity", group: "Security" },
+
+            { from: "Compute Engine", to: "Cloud Storage" },
+            { from: "Kubernetes Engine", to: "IAM" },
+            { from: "BigQuery", to: "Cloud Storage" },
+            { from: "Firestore", to: "Cloud Identity" }
+        ];
+
+        myDiagram.model = new go.GraphLinksModel(gcpData);
+
+        function showDetails(data) {
+            document.getElementById("serviceDetails").innerText = `Service: ${data.name}`;
+        }
+
+        function populateListView() {
+            const listView = document.getElementById("servicesList");
+            gcpData.forEach(node => {
+                if (!node.isGroup) {
+                    const li = document.createElement("li");
+                    li.textContent = node.name;
+                    li.onclick = () => highlightNode(node.key);
+                    listView.appendChild(li);
+                }
+            });
+        }
+
+        function highlightNode(key) {
+            myDiagram.startTransaction("highlight");
+            myDiagram.clearHighlighteds();
+            const node = myDiagram.findNodeForKey(key);
+            if (node) {
+                node.isHighlighted = true;
+                showDetails(node.data);
+                collapseOtherGroups(node.data.group);
+            }
+            myDiagram.commitTransaction("highlight");
+        }
+
+        function collapseOtherGroups(selectedGroupKey) {
+            myDiagram.startTransaction("collapse");
+            myDiagram.nodes.each(node => {
+                if (node instanceof go.Group && node.data.key !== selectedGroupKey) {
+                    node.isSubGraphExpanded = false;
+                }
+            });
+            myDiagram.commitTransaction("collapse");
+        }
+
+        function toggleGroup(group) {
+            myDiagram.startTransaction("toggle");
+            group.isSubGraphExpanded = !group.isSubGraphExpanded;
+            myDiagram.commitTransaction("toggle");
+        }
+
+        populateListView();
+    </script>
+
+</body>
+</html>
