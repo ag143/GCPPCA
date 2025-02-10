@@ -4,163 +4,169 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GCP Services Visualization</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gojs/2.3.9/go.js"></script>
+    <script src="https://unpkg.com/gojs/release/go.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-        #container { display: flex; flex-wrap: wrap; height: 100vh; }
-        #listView, #detailsView { width: 100%; max-width: 300px; padding: 10px; border: 1px solid #ccc; flex-grow: 1; overflow-y: auto; }
-        #diagramDiv { flex-grow: 2; height: 100%; min-width: 300px; border: 1px solid black; }
-        ul { list-style-type: none; padding: 0; }
-        li { cursor: pointer; padding: 5px; }
-        li:hover, .highlighted { background: yellow; }
-        .category { font-weight: bold; margin-top: 10px; }
-        @media (max-width: 768px) {
-            #container { flex-direction: column; }
-            #diagramDiv { height: 400px; }
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: row;
+            height: 100vh;
+        }
+        #listView, #detailsView {
+            width: 20%;
+            padding: 10px;
+            overflow-y: auto;
+            border-right: 1px solid #ddd;
+        }
+        #groupView {
+            flex-grow: 1;
+            height: 100%;
+        }
+        .selected {
+            background-color: #d0ebff;
         }
     </style>
 </head>
 <body>
+    <!-- List View -->
+    <div id="listView">
+        <h3>GCP Services</h3>
+        <ul id="serviceList"></ul>
+    </div>
 
-    <h2>GCP Services Visualization</h2>
-    <div id="container">
-        <div id="listView">
-            <h3>Services List</h3>
-            <div id="servicesList"></div>
-        </div>
-        <div id="diagramDiv"></div>
-        <div id="detailsView">
-            <h3>Service Details</h3>
-            <p id="serviceDetails">Select a service to view details.</p>
-        </div>
+    <!-- Group View (GoJS Canvas) -->
+    <div id="groupView"></div>
+
+    <!-- Details View -->
+    <div id="detailsView">
+        <h3>Details</h3>
+        <div id="serviceDetails">Select a service to see details.</div>
     </div>
 
     <script>
-        const $ = go.GraphObject.make;
-
-        const myDiagram = $(go.Diagram, "diagramDiv", {
-            layout: $(go.TreeLayout, { angle: 90, layerSpacing: 50 }),
-            "undoManager.isEnabled": true
-        });
-
-        myDiagram.nodeTemplate = $(go.Node, "Auto",
-            { click: (e, obj) => highlightSelection(obj.part.data) },
-            $(go.Panel, "Horizontal",
-                $(go.Picture, { width: 30, height: 30, margin: 5 },
-                    new go.Binding("source", "icon")
-                ),
-                $(go.TextBlock, { margin: 5 }, new go.Binding("text", "name"))
-            )
-        );
-
-        myDiagram.linkTemplate = $(go.Link,
-            $(go.Shape),
-            $(go.Shape, { toArrow: "Standard" })
-        );
-
-        myDiagram.groupTemplate = $(go.Group, "Vertical",
-            { layout: $(go.GridLayout, { wrappingColumn: 1 }) },
-            $(go.TextBlock, { font: "Bold 12pt Arial" }, new go.Binding("text", "name")),
-            $(go.Panel, "Auto",
-                $(go.Shape, { fill: "lightgray", stroke: "black" }),
-                $(go.Placeholder)
-            )
-        );
-
-        const gcpData = [
-            { key: "Cloud Services", name: "Cloud Services", isGroup: true },
-
-            { key: "Compute", name: "Compute", group: "Cloud Services", isGroup: true },
-            { key: "Storage", name: "Storage", group: "Cloud Services", isGroup: true },
-            { key: "Security", name: "Security", group: "Cloud Services", isGroup: true },
-            { key: "Networking", name: "Networking", group: "Cloud Services", isGroup: true },
-
-            { key: "Compute Engine", name: "Compute Engine", group: "Compute", icon: "https://via.placeholder.com/30" },
-            { key: "Kubernetes Engine", name: "Kubernetes Engine", group: "Compute", icon: "https://via.placeholder.com/30" },
-            { key: "Cloud Run", name: "Cloud Run", group: "Compute", icon: "https://via.placeholder.com/30" },
-
-            { key: "Cloud Storage", name: "Cloud Storage", group: "Storage", icon: "https://via.placeholder.com/30" },
-            { key: "BigQuery", name: "BigQuery", group: "Storage", icon: "https://via.placeholder.com/30" },
-            { key: "Firestore", name: "Firestore", group: "Storage", icon: "https://via.placeholder.com/30" },
-
-            { key: "IAM", name: "IAM", group: "Security", icon: "https://via.placeholder.com/30" },
-            { key: "Cloud Armor", name: "Cloud Armor", group: "Security", icon: "https://via.placeholder.com/30" },
-            { key: "Cloud Identity", name: "Cloud Identity", group: "Security", icon: "https://via.placeholder.com/30" },
-
-            { key: "Cloud Load Balancing", name: "Cloud Load Balancing", group: "Networking", icon: "https://via.placeholder.com/30" },
-            { key: "Cloud VPN", name: "Cloud VPN", group: "Networking", icon: "https://via.placeholder.com/30" },
-            { key: "Cloud CDN", name: "Cloud CDN", group: "Networking", icon: "https://via.placeholder.com/30" },
-
-            { from: "Compute Engine", to: "Cloud Storage" },
-            { from: "Kubernetes Engine", to: "IAM" },
-            { from: "BigQuery", to: "Cloud Storage" },
-            { from: "Firestore", to: "Cloud Identity" },
-            { from: "Cloud Load Balancing", to: "Cloud CDN" }
-        ];
-
-        myDiagram.model = new go.GraphLinksModel(gcpData);
-
-        function highlightSelection(data) {
-            myDiagram.startTransaction("highlight");
-            myDiagram.clearHighlighteds();
-
-            const node = myDiagram.findNodeForKey(data.key);
-            if (node) {
-                node.isHighlighted = true;
-                showDetails(node.data);
-                collapseOtherGroups(node.data.group);
-            }
-
-            highlightListView(data.key);
-            myDiagram.commitTransaction("highlight");
-        }
-
-        function showDetails(data) {
-            document.getElementById("serviceDetails").innerText = `Service: ${data.name}`;
-        }
-
-        function populateListView() {
-            const listView = document.getElementById("servicesList");
-            const categories = ["Compute", "Storage", "Security", "Networking"];
-
-            categories.forEach(category => {
-                const categoryTitle = document.createElement("div");
-                categoryTitle.textContent = category;
-                categoryTitle.className = "category";
-                listView.appendChild(categoryTitle);
-
-                gcpData.forEach(node => {
-                    if (node.group === category) {
-                        const li = document.createElement("li");
-                        li.textContent = node.name;
-                        li.setAttribute("data-key", node.key);
-                        li.onclick = () => highlightSelection(node);
-                        listView.appendChild(li);
-                    }
+        function init() {
+            const $ = go.GraphObject.make;
+            const myDiagram = $(go.Diagram, "groupView",
+                {
+                    layout: $(go.TreeLayout, { angle: 0, layerSpacing: 100 }),
+                    "undoManager.isEnabled": true
                 });
-            });
-        }
 
-        function highlightListView(key) {
-            document.querySelectorAll("#servicesList li").forEach(li => {
-                li.classList.toggle("highlighted", li.getAttribute("data-key") === key);
-            });
-        }
+            // Node Template
+            myDiagram.nodeTemplate =
+                $(go.Node, "Auto",
+                    { click: onNodeClick },
+                    $(go.Shape, "RoundedRectangle", { fill: "lightgray", strokeWidth: 0 },
+                        new go.Binding("fill", "color")),
+                    $(go.TextBlock, { margin: 8 }, new go.Binding("text", "name"))
+                );
 
-        function collapseOtherGroups(selectedGroupKey) {
-            myDiagram.startTransaction("collapse");
-            myDiagram.nodes.each(node => {
-                if (node instanceof go.Group && node.data.key !== selectedGroupKey) {
-                    node.isSubGraphExpanded = false;
-                } else if (node instanceof go.Group && node.data.key === selectedGroupKey) {
-                    node.isSubGraphExpanded = true;
+            // Group Template
+            myDiagram.groupTemplate =
+                $(go.Group, "Vertical",
+                    {
+                        layout: $(go.TreeLayout, { angle: 0, layerSpacing: 50 }),
+                        click: onGroupClick
+                    },
+                    $(go.Panel, "Auto",
+                        $(go.Shape, "RoundedRectangle", { fill: "lightblue" }),
+                        $(go.TextBlock, { margin: 5 }, new go.Binding("text", "name"))
+                    ),
+                    $(go.Placeholder)
+                );
+
+            // Sample GCP Services Data
+            const nodeDataArray = [
+                { key: "Cloud Services", name: "Cloud Services", isGroup: true },
+                { key: "Compute", name: "Compute", group: "Cloud Services", isGroup: true },
+                { key: "Compute Engine", name: "Compute Engine", group: "Compute", color: "#FFA07A" },
+                { key: "Kubernetes Engine", name: "Kubernetes Engine", group: "Compute", color: "#87CEEB" },
+                { key: "Storage", name: "Storage", group: "Cloud Services", isGroup: true },
+                { key: "Cloud Storage", name: "Cloud Storage", group: "Storage", color: "#FFD700" },
+                { key: "BigQuery", name: "BigQuery", group: "Storage", color: "#32CD32" },
+                { key: "Security", name: "Security", group: "Cloud Services", isGroup: true },
+                { key: "Cloud IAM", name: "Cloud IAM", group: "Security", color: "#9370DB" },
+                { key: "Cloud Identity", name: "Cloud Identity", group: "Security", color: "#DC143C" }
+            ];
+
+            myDiagram.model = new go.GraphLinksModel(nodeDataArray);
+
+            // Populate List View
+            const listView = document.getElementById("serviceList");
+            nodeDataArray.forEach(service => {
+                if (!service.isGroup) {
+                    const listItem = document.createElement("li");
+                    listItem.textContent = service.name;
+                    listItem.dataset.key = service.key;
+                    listItem.onclick = () => highlightNode(service.key);
+                    listView.appendChild(listItem);
                 }
             });
-            myDiagram.commitTransaction("collapse");
+
+            // Handle Node Click
+            function onNodeClick(event, obj) {
+                highlightNode(obj.part.data.key);
+            }
+
+            // Handle Group Click - Expand selected, collapse others
+            function onGroupClick(event, group) {
+                const key = group.part.data.key;
+                myDiagram.startTransaction("Collapse Other Groups");
+
+                myDiagram.nodes.each(node => {
+                    if (node instanceof go.Group && node.data.key !== key) {
+                        node.isSubGraphExpanded = false;
+                    }
+                });
+
+                group.isSubGraphExpanded = !group.isSubGraphExpanded;
+                myDiagram.commitTransaction("Collapse Other Groups");
+            }
+
+            // Highlight Node in Both Views
+            function highlightNode(key) {
+                // Highlight in Group View
+                myDiagram.startTransaction("Highlight Node");
+                myDiagram.clearHighlighteds();
+                const node = myDiagram.findNodeForKey(key);
+                if (node) {
+                    node.isHighlighted = true;
+                    expandGroup(node);
+                }
+                myDiagram.commitTransaction("Highlight Node");
+
+                // Highlight in List View
+                document.querySelectorAll("#serviceList li").forEach(li => {
+                    li.classList.toggle("selected", li.dataset.key === key);
+                });
+
+                // Show Details
+                const service = nodeDataArray.find(s => s.key === key);
+                document.getElementById("serviceDetails").innerText = service ? `Service: ${service.name}` : "Select a service";
+            }
+
+            // Expand Group for Selected Node
+            function expandGroup(node) {
+                const groupKey = node.data.group;
+                if (!groupKey) return;
+
+                const group = myDiagram.findNodeForKey(groupKey);
+                if (group instanceof go.Group) {
+                    group.isSubGraphExpanded = true;
+
+                    // Collapse other same-level groups
+                    myDiagram.nodes.each(n => {
+                        if (n instanceof go.Group && n.data.key !== groupKey && n.data.group === group.data.group) {
+                            n.isSubGraphExpanded = false;
+                        }
+                    });
+
+                    expandGroup(group); // Recursively expand parent groups
+                }
+            }
         }
 
-        populateListView();
+        window.addEventListener("DOMContentLoaded", init);
     </script>
-
 </body>
 </html>
