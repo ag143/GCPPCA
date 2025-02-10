@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GCP Services - Interactive TreeView</title>
+    <script src="https://unpkg.com/gojs/release/go.js"></script>
+    <style>
+        #container {
+            display: flex;
+        }
+        #myDiagramDiv {
+            width: 50%;
+            height: 600px;
+            border: 1px solid black;
+        }
+        #sidePanel {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+        }
+        #listView {
+            height: 50%;
+            overflow-y: auto;
+            padding: 10px;
+            border-left: 1px solid black;
+            background-color: #f8f8f8;
+        }
+        #detailsView {
+            height: 50%;
+            padding: 10px;
+            border-left: 1px solid black;
+            background-color: #fff;
+        }
+        .list-item {
+            padding: 8px;
+            cursor: pointer;
+            border-bottom: 1px solid #ccc;
+            font-size: 16px;
+        }
+        .list-item:hover {
+            background-color: #e0e0e0;
+        }
+        .highlighted {
+            background-color: yellow !important;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>GCP Services - Interactive TreeView</h2>
+    <div id="container">
+        <div id="myDiagramDiv"></div>
+        <div id="sidePanel">
+            <div id="listView">
+                <h3>Node List</h3>
+            </div>
+            <div id="detailsView">
+                <h3>Details</h3>
+                <p id="nodeDetails">Select a service to see details.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function init() {
+            var $ = go.GraphObject.make;
+
+            var myDiagram = $(go.Diagram, "myDiagramDiv", {
+                "undoManager.isEnabled": true,
+                layout: $(go.TreeLayout, { angle: 90, layerSpacing: 50 })
+            });
+
+            // Node Template
+            myDiagram.nodeTemplate =
+                $(go.Node, "Auto",
+                    { selectionChanged: nodeSelection },
+                    $(go.Shape, "RoundedRectangle", { fill: "lightgray", strokeWidth: 0 },
+                        new go.Binding("fill", "isHighlighted", function (h) { return h ? "yellow" : "lightgray"; }).ofObject()
+                    ),
+                    $(go.TextBlock, { margin: 8, font: "bold 14px sans-serif" }, new go.Binding("text", "key"))
+                );
+
+            // Link Template
+            myDiagram.linkTemplate =
+                $(go.Link,
+                    { routing: go.Link.Orthogonal, corner: 5, selectable: false },
+                    $(go.Shape, { strokeWidth: 2, stroke: "gray" })
+                );
+
+            // Group Template (Collapsible)
+            myDiagram.groupTemplate =
+                $(go.Group, "Vertical",
+                    { layout: $(go.TreeLayout, { angle: 90 }), isSubGraphExpanded: true },
+                    new go.Binding("isSubGraphExpanded", "expanded").makeTwoWay(),
+                    $(go.Panel, "Auto",
+                        $(go.Shape, "RoundedRectangle", { fill: "lightblue", strokeWidth: 2 }),
+                        $(go.Panel, "Horizontal",
+                            { margin: 5 },
+                            $(go.TextBlock, { font: "bold 14px sans-serif" }, new go.Binding("text", "key")),
+                            $("SubGraphExpanderButton", { alignment: go.Spot.Right })
+                        )
+                    ),
+                    $(go.Placeholder, { padding: 10 })
+                );
+
+            // GCP Services Hierarchy
+            var nodeDataArray = [
+                { key: "Cloud Services", isGroup: true, expanded: true },
+
+                { key: "Compute", parent: "Cloud Services", isGroup: true, expanded: true },
+                { key: "Compute Engine", parent: "Compute", details: "VM instances on Google Cloud." },
+                { key: "Kubernetes Engine", parent: "Compute", details: "Managed Kubernetes clusters." },
+                { key: "Cloud Run", parent: "Compute", details: "Serverless container execution." },
+
+                { key: "Storage", parent: "Cloud Services", isGroup: true, expanded: true },
+                { key: "Cloud Storage", parent: "Storage", details: "Object storage service." },
+                { key: "BigQuery", parent: "Storage", details: "Data warehouse solution." },
+                { key: "Bigtable", parent: "Storage", details: "Scalable NoSQL database." },
+
+                { key: "Networking", parent: "Cloud Services", isGroup: true, expanded: true },
+                { key: "Cloud VPN", parent: "Networking", details: "Secure private network connections." },
+                { key: "Cloud Load Balancing", parent: "Networking", details: "Global load balancing." },
+                { key: "Cloud CDN", parent: "Networking", details: "Content delivery network." },
+
+                { key: "Security", parent: "Cloud Services", isGroup: true, expanded: true },
+                { key: "IAM", parent: "Security", details: "Identity and access management." },
+                { key: "Cloud Armor", parent: "Security", details: "DDoS protection service." },
+
+                { key: "AI & ML", parent: "Cloud Services", isGroup: true, expanded: true },
+                { key: "Vertex AI", parent: "AI & ML", details: "End-to-end ML development platform." },
+                { key: "Cloud AutoML", parent: "AI & ML", details: "Custom ML models with minimal coding." }
+            ];
+
+            myDiagram.model = new go.GraphLinksModel(nodeDataArray);
+
+            // Populate ListView
+            var listView = document.getElementById("listView");
+            nodeDataArray.forEach(node => {
+                if (!node.isGroup) {
+                    var listItem = document.createElement("div");
+                    listItem.className = "list-item";
+                    listItem.textContent = node.key;
+                    listItem.setAttribute("data-node", node.key);
+                    listItem.onclick = function () {
+                        highlightNode(node.key);
+                    };
+                    listView.appendChild(listItem);
+                }
+            });
+
+            // Highlight Node and Show Details
+            function nodeSelection(node) {
+                myDiagram.startTransaction("highlight");
+                myDiagram.clearHighlighteds();
+
+                if (node.isSelected) {
+                    node.isHighlighted = true;
+                    node.findLinksConnected().each(link => {
+                        link.isHighlighted = true;
+                        link.fromNode.isHighlighted = true;
+                        link.toNode.isHighlighted = true;
+                    });
+
+                    // Collapse other groups
+                    myDiagram.nodes.each(n => {
+                        if (n.isGroup && n.data.key !== node.containingGroup?.data.key) {
+                            myDiagram.model.setDataProperty(n.data, "expanded", false);
+                        } else if (n.isGroup && n.data.key === node.containingGroup?.data.key) {
+                            myDiagram.model.setDataProperty(n.data, "expanded", true);
+                        }
+                    });
+
+                    // Show Details
+                    document.getElementById("nodeDetails").innerHTML = `<b>${node.key}</b><br>${node.data.details || "No details available."}`;
+
+                    // Highlight List Item
+                    document.querySelectorAll(".list-item").forEach(item => {
+                        item.classList.remove("highlighted");
+                        if (item.getAttribute("data-node") === node.key) {
+                            item.classList.add("highlighted");
+                        }
+                    });
+                }
+
+                myDiagram.commitTransaction("highlight");
+            }
+
+            function highlightNode(nodeKey) {
+                var node = myDiagram.findNodeForKey(nodeKey);
+                if (node) {
+                    myDiagram.select(node);
+                    myDiagram.centerRect(node.actualBounds);
+                }
+            }
+        }
+
+        window.onload = init;
+    </script>
+
+</body>
+</html>
