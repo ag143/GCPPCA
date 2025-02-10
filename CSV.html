@@ -59,7 +59,7 @@
         }
 
         async function populateTable() {
-            const { labels, teamMonthlyTotals, teams } = await fetchData();
+            const { labels, totalCounts, teamMonthlyTotals, teams } = await fetchData();
             const tableHead = document.getElementById("tableHead");
             const teamMonthlyTableBody = document.getElementById("teamMonthlyTable");
 
@@ -70,18 +70,62 @@
                 tableHead.children[0].appendChild(th);
             });
 
+            const percentageHeader = document.createElement("th");
+            percentageHeader.textContent = "Percentage";
+            tableHead.children[0].appendChild(percentageHeader);
+
             labels.forEach(month => {
                 const row = document.createElement("tr");
                 row.innerHTML = `<td>${month}</td>`;
+                let rowTotal = totalCounts[month];
                 teams.forEach(team => {
                     const teamCount = teamMonthlyTotals[month]?.[team] || 0;
                     row.innerHTML += `<td>${teamCount}</td>`;
                 });
+                row.innerHTML += `<td>${rowTotal}</td>`;
                 teamMonthlyTableBody.appendChild(row);
             });
         }
 
+        async function createCharts() {
+            const { labels, totalCounts, teamMonthlyTotals, teams } = await fetchData();
+
+            // Bar Chart
+            new Chart(document.getElementById("barChart"), {
+                type: "bar",
+                data: {
+                    labels,
+                    datasets: teams.map((team, index) => ({
+                        label: team,
+                        data: labels.map(month => teamMonthlyTotals[month]?.[team] || 0),
+                        backgroundColor: `rgba(${index * 60}, ${100 + index * 30}, ${200 - index * 40}, 0.6)`,
+                        borderColor: `rgba(${index * 60}, ${100 + index * 30}, ${200 - index * 40}, 1)`,
+                        borderWidth: 2,
+                        fill: false
+                    }))
+                },
+                options: { responsive: true }
+            });
+
+            // Line Chart
+            new Chart(document.getElementById("lineChart"), {
+                type: "line",
+                data: {
+                    labels,
+                    datasets: teams.map((team, index) => ({
+                        label: team,
+                        data: labels.map(month => teamMonthlyTotals[month]?.[team] || 0),
+                        borderColor: `rgba(${index * 60}, ${100 + index * 30}, ${200 - index * 40}, 1)`,
+                        borderWidth: 2,
+                        fill: false
+                    }))
+                },
+                options: { responsive: true }
+            });
+        }
+
         populateTable();
+        createCharts();
     </script>
 </body>
 </html>
