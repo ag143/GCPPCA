@@ -22,6 +22,7 @@
             let aggregatedData = {}; // Store aggregated counts
 
             rows.forEach(row => {
+                if(row.length > 0 ){
                 const [date, month, team, count] = row.split(",");
                 const monthTrimmed = month.trim();
                 const teamTrimmed = team.trim();
@@ -34,6 +35,7 @@
                     aggregatedData[monthTrimmed][teamTrimmed] = 0;
                 }
                 aggregatedData[monthTrimmed][teamTrimmed] += countValue;
+                }
             });
 
             const labels = Object.keys(aggregatedData); // Months
