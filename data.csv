@@ -1,49 +1,35 @@
-date,team,count
-2024-10-05,Team A,12
-2024-10-12,Team B,9
-2024-10-19,Team C,15
-2024-10-25,Team A,8
-2024-11-06,Team A,14
-2024-11-14,Team B,10
-2024-11-21,Team C,11
-2024-11-28,Team A,7
-2024-12-08,Team A,18
-2024-12-16,Team B,12
-2024-12-22,Team C,13
-2024-12-30,Team A,9
-2025-01-04,Team A,15
-2025-01-12,Team B,11
-2025-01-18,Team C,14
-2025-01-25,Team A,10
-2025-02-07,Team A,13
-2025-02-14,Team B,16
-2025-02-21,Team C,12
-2025-02-28,Team A,11
-2025-03-05,Team A,17
-2025-03-13,Team B,14
-2025-03-19,Team C,18
-2025-03-27,Team A,12
-2025-04-06,Team A,14
-2025-04-15,Team B,13
-2025-04-22,Team C,17
-2025-04-29,Team A,11
-2025-05-03,Team A,19
-2025-05-11,Team B,12
-2025-05-18,Team C,15
-2025-05-26,Team A,10
-2025-06-07,Team A,16
-2025-06-14,Team B,18
-2025-06-21,Team C,13
-2025-06-28,Team A,12
-2025-07-05,Team A,20
-2025-07-13,Team B,14
-2025-07-19,Team C,16
-2025-07-26,Team A,11
-2025-08-06,Team A,17
-2025-08-12,Team B,13
-2025-08-21,Team C,14
-2025-08-29,Team A,9
-2025-09-03,Team A,15
-2025-09-10,Team B,19
-2025-09-18,Team C,12
-2025-09-25,Team A,10
+PR Repo,PR Branch,PR Number,PR Author,PR Merged Time,count,Team
+"repo1","branch1",101,"user1","2024-10-05T10:15:30Z",1,TeamA
+"repo1","branch1",102,"user1","2024-10-12T14:20:45Z",2,TeamB
+"repo1","branch1",103,"user1","2024-10-18T09:30:15Z",1,TeamC
+"repo1","branch1",104,"user1","2024-10-25T18:45:00Z",3,TeamA
+"repo2","branch2",105,"user2","2024-10-07T11:10:50Z",2,TeamB
+"repo3","branch3",106,"user3","2024-10-20T15:25:35Z",1,TeamC
+
+"repo1","branch1",107,"user1","2024-11-03T11:10:50Z",2,TeamA
+"repo1","branch1",108,"user1","2024-11-15T15:25:35Z",1,TeamB
+"repo1","branch1",109,"user1","2024-11-22T08:40:20Z",2,TeamC
+"repo1","branch1",110,"user1","2024-11-29T17:55:10Z",3,TeamA
+"repo2","branch2",111,"user2","2024-11-10T09:50:30Z",2,TeamA
+"repo3","branch3",112,"user3","2024-11-18T20:15:25Z",1,TeamC
+
+"repo1","branch1",113,"user1","2024-12-07T12:05:40Z",1,TeamA
+"repo1","branch1",114,"user1","2024-12-14T16:30:25Z",2,TeamB
+"repo1","branch1",115,"user1","2024-12-21T07:45:15Z",3,TeamC
+"repo1","branch1",116,"user1","2024-12-28T20:10:05Z",1,TeamA
+"repo2","branch2",117,"user2","2024-12-09T10:20:50Z",3,TeamB
+"repo3","branch3",118,"user3","2024-12-23T18:40:15Z",2,TeamC
+
+"repo1","branch1",119,"user1","2025-01-04T13:20:30Z",2,TeamA
+"repo1","branch1",120,"user1","2025-01-11T17:35:45Z",1,TeamB
+"repo1","branch1",121,"user1","2025-01-18T09:50:10Z",3,TeamC
+"repo1","branch1",122,"user1","2025-01-25T21:05:55Z",2,TeamA
+"repo2","branch2",123,"user2","2025-01-06T14:10:20Z",1,TeamC
+"repo3","branch3",124,"user3","2025-01-19T19:45:30Z",2,TeamB
+
+"repo1","branch1",125,"user1","2025-02-02T10:00:20Z",1,TeamA
+"repo1","branch1",126,"user1","2025-02-09T14:15:35Z",3,TeamB
+"repo1","branch1",127,"user1","2025-02-16T08:30:50Z",2,TeamC
+"repo1","branch1",128,"user1","2025-02-23T18:45:05Z",1,TeamA
+"repo2","branch2",129,"user2","2025-02-07T11:50:10Z",2,TeamC
+"repo3","branch3",130,"user3","2025-02-28T22:15:40Z",1,TeamB
