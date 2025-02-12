@@ -16,7 +16,7 @@
         .options label { display: block; padding: 10px; background: #fff; border-radius: 5px; border: 1px solid #ccc; margin: 5px 0; cursor: pointer; }
         .correct { background-color: lightgreen !important; }
         .incorrect { background-color: lightcoral !important; }
-        .answer { display: none; color: green; font-weight: bold; margin-top: 5px; }
+        .answer { color: green; font-weight: bold; margin-top: 5px; display: block; }
 
         /* Fixed height for answers container */
         #answers-container {
@@ -100,34 +100,37 @@
                     optionsDiv.appendChild(optionLabel);
                 });
 
-                let answerDiv = document.createElement("p");
-                answerDiv.classList.add("answer");
-                answerDiv.id = `answer${start + index}`;
-                answerDiv.innerText = `Correct Answer: ${correctAnswers.join(", ")}`;
-
                 questionBlock.appendChild(optionsDiv);
-                questionBlock.appendChild(answerDiv);
                 quizContainer.appendChild(questionBlock);
             });
         }
 
-        function submitAnswers() {
-            document.querySelectorAll(".question").forEach((questionBlock, index) => {
-                let correctAnswers = allQuestions[currentPage * questionsPerPage + index].answer;
-                if (!Array.isArray(correctAnswers)) {
-                    correctAnswers = correctAnswers.split("");
-                }
+        function displayAnswers() {
+            const answersContainer = document.getElementById("answers-container");
+            answersContainer.innerHTML = "";
 
-                questionBlock.querySelectorAll("input").forEach(input => {
-                    if (correctAnswers.includes(input.value)) {
-                        input.parentElement.classList.add("correct");
-                    } else if (input.checked) {
-                        input.parentElement.classList.add("incorrect");
-                    }
+            allQuestions.forEach((q, index) => {
+                let answerBlock = document.createElement("div");
+                answerBlock.classList.add("question");
+                
+                let questionTitle = `<h3>Question ${index + 1}</h3>`;
+                let questionText = `<p><strong>${String(q.body || "").replace(/\n/g, '<br>')}</strong></p>`;
+                
+                let optionsDiv = document.createElement("div");
+                optionsDiv.classList.add("options");
+
+                let correctAnswers = Array.isArray(q.answer) ? q.answer : q.answer.split("");
+
+                Object.entries(q.options || {}).forEach(([key, option], i) => {
+                    let optionKey = optionLabels[i];
+                    let isCorrect = correctAnswers.includes(optionKey);
+                    let optionLabel = `<label style="background: ${isCorrect ? 'lightgreen' : 'white'};">${optionKey}. ${option}</label>`;
+                    optionsDiv.innerHTML += optionLabel;
                 });
 
-                let answerDiv = document.getElementById(`answer${index}`);
-                answerDiv.style.display = "block";
+                answerBlock.innerHTML = questionTitle + questionText;
+                answerBlock.appendChild(optionsDiv);
+                answersContainer.appendChild(answerBlock);
             });
         }
 
@@ -143,27 +146,6 @@
                         input.parentElement.classList.add("correct");
                     }
                 });
-
-                let answerDiv = document.getElementById(`answer${index}`);
-                answerDiv.style.display = "block";
-            });
-        }
-
-        function displayAnswers() {
-            const answersContainer = document.getElementById("answers-container");
-            answersContainer.innerHTML = "";
-
-            allQuestions.forEach((q, index) => {
-                let answerBlock = document.createElement("div");
-                answerBlock.classList.add("question");
-                
-                let questionTitle = `<h3>Question ${index + 1}</h3>`;
-                let questionText = `<p><strong>${String(q.body || "").replace(/\n/g, '<br>')}</strong></p>`;
-                let correctAnswers = Array.isArray(q.answer) ? q.answer.join(", ") : q.answer;
-                let answerText = `<p class="answer" style="display: block; color: green;">Correct Answer: ${correctAnswers}</p>`;
-                
-                answerBlock.innerHTML = questionTitle + questionText + answerText;
-                answersContainer.appendChild(answerBlock);
             });
         }
 
