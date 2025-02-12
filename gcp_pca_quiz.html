@@ -61,6 +61,11 @@
             displayQuestions();
         }
 
+        function switchTab(tabName) {
+            document.querySelectorAll(".content").forEach(tab => tab.classList.remove("active"));
+            document.getElementById(tabName).classList.add("active");
+        }
+
         function displayQuestions() {
             const quizContainer = document.getElementById("quiz-container");
             quizContainer.innerHTML = "";
@@ -101,11 +106,10 @@
         function submitAnswers() {
             document.querySelectorAll(".question").forEach((questionBlock, index) => {
                 let correctAnswers = allQuestions[currentPage * questionsPerPage + index].answer;
-                let inputs = questionBlock.querySelectorAll("input");
-                inputs.forEach(input => {
+                questionBlock.querySelectorAll("input").forEach(input => {
                     if (correctAnswers.includes(input.value)) {
                         input.parentElement.classList.add("correct");
-                    } else {
+                    } else if (input.checked) {
                         input.parentElement.classList.add("incorrect");
                     }
                 });
