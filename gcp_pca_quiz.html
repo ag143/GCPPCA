@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Quiz</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .question { margin-bottom: 15px; }
+        .options { margin-left: 20px; }
+        button { margin-top: 10px; padding: 10px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h2>GCP PCA MCQ Quiz</h2>
+    <div id="quiz-container"></div>
+    <button onclick="submitQuiz()">Submit</button>
+    <p id="result"></p>
+
+    <script>
+        async function loadQuestions() {
+            const response = await fetch('https://raw.githubusercontent.com/ag143/GCPPCA/main/gcp_pca.json');
+            const questions = await response.json();
+            displayQuestions(questions);
+        }
+
+        function displayQuestions(questions) {
+            const quizContainer = document.getElementById("quiz-container");
+            quizContainer.innerHTML = "";
+            
+            questions.slice(0, 5).forEach((q, index) => {  // Display first 5 questions
+                let questionBlock = document.createElement("div");
+                questionBlock.classList.add("question");
+                questionBlock.innerHTML = `<p><strong>${index + 1}. ${q.question}</strong></p>`;
+                
+                let optionsDiv = document.createElement("div");
+                optionsDiv.classList.add("options");
+                
+                q.options.forEach(option => {
+                    let optionLabel = document.createElement("label");
+                    optionLabel.innerHTML = `<input type="radio" name="q${index}" value="${option}"> ${option}<br>`;
+                    optionsDiv.appendChild(optionLabel);
+                });
+                
+                questionBlock.appendChild(optionsDiv);
+                quizContainer.appendChild(questionBlock);
+            });
+        }
+
+        function submitQuiz() {
+            let score = 0;
+            const questions = document.querySelectorAll(".question");
+            questions.forEach((q, index) => {
+                const selectedOption = document.querySelector(`input[name='q${index}']:checked`);
+                if (selectedOption && selectedOption.value === "Correct Answer") {
+                    score++;
+                }
+            });
+            document.getElementById("result").innerText = `Your Score: ${score} / ${questions.length}`;
+        }
+
+        loadQuestions();
+    </script>
+</body>
+</html>
