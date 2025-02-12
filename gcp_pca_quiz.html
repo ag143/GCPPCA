@@ -36,6 +36,7 @@
             <option value="200">200</option>
             <option value="all">All</option>
         </select>
+        <button onclick="revealAnswers()">Reveal Answers</button>
         <div id="quiz-container"></div>
         <button onclick="submitAnswers()">Submit Answers</button>
         <button onclick="nextPage()">Next</button>
@@ -50,7 +51,7 @@
         let allQuestions = [];
         let currentPage = 0;
         let questionsPerPage = 10;
-        const optionLabels = ["A", "B", "C", "D", "E", "F"]; // Extend if needed
+        const optionLabels = ["A", "B", "C", "D", "E", "F"];
 
         async function loadQuestions() {
             const response = await fetch('https://raw.githubusercontent.com/ag143/GCPPCA/main/gcp_pca.json');
@@ -79,13 +80,12 @@
                 let optionsDiv = document.createElement("div");
                 optionsDiv.classList.add("options");
 
-                let correctAnswers = Array.isArray(q.answer) ? q.answer : q.answer.split(""); // Convert string to array if needed
-                let inputType = correctAnswers.length > 1 ? "checkbox" : "radio"; // Determine input type
+                let correctAnswers = Array.isArray(q.answer) ? q.answer : q.answer.split("");
+                let inputType = correctAnswers.length > 1 ? "checkbox" : "radio";
 
-                // Generate options
                 Object.entries(q.options || {}).forEach(([key, option], i) => {
                     let optionLabel = document.createElement("label");
-                    let optionKey = optionLabels[i]; // Assign A, B, C, D, etc.
+                    let optionKey = optionLabels[i];
                     optionLabel.innerHTML = `<input type="${inputType}" name="q${start + index}" value="${optionKey}"> ${optionKey}. ${option}`;
                     optionsDiv.appendChild(optionLabel);
                 });
@@ -105,7 +105,7 @@
             document.querySelectorAll(".question").forEach((questionBlock, index) => {
                 let correctAnswers = allQuestions[currentPage * questionsPerPage + index].answer;
                 if (!Array.isArray(correctAnswers)) {
-                    correctAnswers = correctAnswers.split(""); // Ensure array format
+                    correctAnswers = correctAnswers.split("");
                 }
 
                 questionBlock.querySelectorAll("input").forEach(input => {
@@ -113,6 +113,24 @@
                         input.parentElement.classList.add("correct");
                     } else if (input.checked) {
                         input.parentElement.classList.add("incorrect");
+                    }
+                });
+
+                let answerDiv = document.getElementById(`answer${index}`);
+                answerDiv.style.display = "block";
+            });
+        }
+
+        function revealAnswers() {
+            document.querySelectorAll(".question").forEach((questionBlock, index) => {
+                let correctAnswers = allQuestions[currentPage * questionsPerPage + index].answer;
+                if (!Array.isArray(correctAnswers)) {
+                    correctAnswers = correctAnswers.split("");
+                }
+
+                questionBlock.querySelectorAll("input").forEach(input => {
+                    if (correctAnswers.includes(input.value)) {
+                        input.parentElement.classList.add("correct");
                     }
                 });
 
