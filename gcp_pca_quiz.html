@@ -42,6 +42,7 @@
             <option value="all">All</option>
         </select>
         <div id="quiz-container"></div>
+        <p id="score"></p>
         <button onclick="nextPage()" class="submit-btn">Next</button>
     </div>
     
@@ -54,6 +55,7 @@
         let allQuestions = [];
         let currentPage = 0;
         let questionsPerPage = 10;
+        let score = 0;
 
         async function loadQuestions() {
             const response = await fetch('https://raw.githubusercontent.com/ag143/GCPPCA/main/gcp_pca.json');
@@ -69,6 +71,7 @@
         function displayQuestions() {
             const quizContainer = document.getElementById("quiz-container");
             quizContainer.innerHTML = "";
+            score = 0;
             const count = document.getElementById("question-count").value;
             questionsPerPage = count === "all" ? allQuestions.length : parseInt(count);
             const start = currentPage * questionsPerPage;
@@ -104,16 +107,19 @@
         }
 
         function submitAnswers() {
+            let correctCount = 0;
             document.querySelectorAll(".question").forEach((questionBlock, index) => {
                 let correctAnswers = allQuestions[currentPage * questionsPerPage + index].answer;
                 questionBlock.querySelectorAll("input").forEach(input => {
                     if (correctAnswers.includes(input.value)) {
                         input.parentElement.classList.add("correct");
+                        if (input.checked) correctCount++;
                     } else if (input.checked) {
                         input.parentElement.classList.add("incorrect");
                     }
                 });
             });
+            document.getElementById("score").innerText = `Score: ${correctCount} / ${questionsPerPage}`;
         }
 
         function revealAllAnswers() {
