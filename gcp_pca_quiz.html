@@ -17,6 +17,16 @@
         .correct { background-color: lightgreen !important; }
         .incorrect { background-color: lightcoral !important; }
         .answer { display: none; color: green; font-weight: bold; margin-top: 5px; }
+
+        /* Fixed height for answers container */
+        #answers-container {
+            height: 200vh; /* Twice the screen height */
+            overflow-y: auto; /* Enable scrolling if content overflows */
+            border: 1px solid #ccc;
+            padding: 10px;
+            background: #fff;
+            border-radius: 10px;
+        }
     </style>
 </head>
 <body>
