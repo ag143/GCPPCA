@@ -28,19 +28,19 @@
             const quizContainer = document.getElementById("quiz-container");
             quizContainer.innerHTML = "";
             
-            questions.slice(0, 5).forEach((q, index) => {  // Display first 5 questions
+            questions.forEach((q, index) => {  // Display all questions
                 let questionBlock = document.createElement("div");
                 questionBlock.classList.add("question");
-                questionBlock.innerHTML = `<p><strong>${index + 1}. ${q.question}</strong></p>`;
+                questionBlock.innerHTML = `<p><strong>Q${index + 1}: ${q.body}</strong></p>`;
                 
                 let optionsDiv = document.createElement("div");
                 optionsDiv.classList.add("options");
                 
                 let inputType = q.answer.length > 1 ? "checkbox" : "radio";
                 
-                q.options.forEach(option => {
+                Object.entries(q.options).forEach(([key, option]) => {
                     let optionLabel = document.createElement("label");
-                    optionLabel.innerHTML = `<input type="${inputType}" name="q${index}" value="${option}"> ${option}<br>`;
+                    optionLabel.innerHTML = `<input type="${inputType}" name="q${index}" value="${key}"> ${key}. ${option}<br>`;
                     optionsDiv.appendChild(optionLabel);
                 });
                 
@@ -54,9 +54,9 @@
             const questions = document.querySelectorAll(".question");
             questions.forEach((q, index) => {
                 const selectedOptions = document.querySelectorAll(`input[name='q${index}']:checked`);
-                let selectedValues = Array.from(selectedOptions).map(opt => opt.value);
+                let selectedValues = Array.from(selectedOptions).map(opt => opt.value).sort().join('');
                 
-                if (selectedValues.length > 0 && JSON.stringify(selectedValues.sort()) === JSON.stringify("Correct Answer".split(',').sort())) {
+                if (selectedValues === questions[index].answer.split('').sort().join('')) {
                     score++;
                 }
             });
