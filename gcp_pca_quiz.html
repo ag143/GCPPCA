@@ -39,7 +39,6 @@
         <div id="quiz-container"></div>
         <button onclick="submitAnswers()">Submit Answers</button>
         <button onclick="nextPage()">Next</button>
-        <button onclick="revealAllAnswers()">Reveal All Answers</button>
     </div>
     
     <div id="answers" class="content quiz-container">
@@ -51,6 +50,7 @@
         let allQuestions = [];
         let currentPage = 0;
         let questionsPerPage = 10;
+        const optionLabels = ["A", "B", "C", "D"]; // Standardized option labels
 
         async function loadQuestions() {
             const response = await fetch('https://raw.githubusercontent.com/ag143/GCPPCA/main/gcp_pca.json');
@@ -80,9 +80,11 @@
                 optionsDiv.classList.add("options");
                 let inputType = Array.isArray(q.answer) ? (q.answer.length > 1 ? "checkbox" : "radio") : "radio";
 
-                Object.entries(q.options || {}).forEach(([key, option]) => {
+                // Convert options to A, B, C, D
+                Object.entries(q.options || {}).forEach(([key, option], i) => {
                     let optionLabel = document.createElement("label");
-                    optionLabel.innerHTML = `<input type="${inputType}" name="q${start + index}" value="${key}"> ${key}. ${option}`;
+                    let optionKey = optionLabels[i]; // Assign A, B, C, D
+                    optionLabel.innerHTML = `<input type="${inputType}" name="q${start + index}" value="${optionKey}"> ${optionKey}. ${option}`;
                     optionsDiv.appendChild(optionLabel);
                 });
 
@@ -111,25 +113,10 @@
                         input.parentElement.classList.add("incorrect");
                     }
                 });
-            });
-        }
 
-        function revealAllAnswers() {
-            document.querySelectorAll(".answer").forEach(answer => {
-                answer.style.display = "block";
-            });
-
-            document.querySelectorAll(".question").forEach((questionBlock, index) => {
-                let correctAnswers = allQuestions[currentPage * questionsPerPage + index].answer;
-                if (!Array.isArray(correctAnswers)) {
-                    correctAnswers = [correctAnswers];
-                }
-
-                questionBlock.querySelectorAll("input").forEach(input => {
-                    if (correctAnswers.includes(input.value)) {
-                        input.parentElement.classList.add("correct");
-                    }
-                });
+                // Show correct answers if not selected
+                let answerDiv = document.getElementById(`answer${index}`);
+                answerDiv.style.display = "block";
             });
         }
 
