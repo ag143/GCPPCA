@@ -27,49 +27,74 @@
     
     <div id="quiz" class="content active quiz-container">
         <h2>GCP PCA MCQ Quiz</h2>
+        <label for="question-count">Select Number of Questions: </label>
+        <select id="question-count" onchange="displayQuestions()">
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="200">200</option>
+            <option value="all">All</option>
+        </select>
         <div id="quiz-container"></div>
         <button onclick="submitAnswers()">Submit Answers</button>
+        <button onclick="nextPage()">Next</button>
+    </div>
+    
+    <div id="answers" class="content quiz-container">
+        <h2>Questions & Answers</h2>
+        <div id="answers-container"></div>
     </div>
     
     <script>
         let allQuestions = [];
-        const optionLabels = ["A", "B", "C", "D"];
+        let currentPage = 0;
+        let questionsPerPage = 10;
+        const optionLabels = ["A", "B", "C", "D", "E", "F"]; // Extend if needed
 
         async function loadQuestions() {
             const response = await fetch('https://raw.githubusercontent.com/ag143/GCPPCA/main/gcp_pca.json');
             allQuestions = await response.json();
             displayQuestions();
+            displayAnswers();
         }
 
         function displayQuestions() {
             const quizContainer = document.getElementById("quiz-container");
             quizContainer.innerHTML = "";
+            const count = document.getElementById("question-count").value;
+            questionsPerPage = count === "all" ? allQuestions.length : parseInt(count);
+            const start = currentPage * questionsPerPage;
+            const end = start + questionsPerPage;
+            const questionsToShow = allQuestions.slice(start, end);
             
-            allQuestions.forEach((q, index) => {
+            questionsToShow.forEach((q, index) => {
                 let questionBlock = document.createElement("div");
                 questionBlock.classList.add("question");
                 
-                let questionTitle = `<h3>Question ${index + 1}</h3>`;
-                let questionText = `<p><strong>${(q.body ? String(q.body) : "No question text available").replace(/\n/g, '<br>')}</strong></p>`;
+                let questionTitle = `<h3>Question ${start + index + 1}</h3>`;
+                let questionText = `<p><strong>${String(q.body || "").replace(/\n/g, '<br>')}</strong></p>`;
                 questionBlock.innerHTML = questionTitle + questionText;
                 
                 let optionsDiv = document.createElement("div");
                 optionsDiv.classList.add("options");
-                let correctAnswers = Array.isArray(q.answer) ? q.answer : [q.answer];
-                let inputType = correctAnswers.length > 1 ? "checkbox" : "radio";
-                
+
+                let correctAnswers = Array.isArray(q.answer) ? q.answer : q.answer.split(""); // Convert string to array if needed
+                let inputType = correctAnswers.length > 1 ? "checkbox" : "radio"; // Determine input type
+
+                // Generate options
                 Object.entries(q.options || {}).forEach(([key, option], i) => {
                     let optionLabel = document.createElement("label");
-                    let optionKey = optionLabels[i];
-                    optionLabel.innerHTML = `<input type="${inputType}" name="q${index}" value="${optionKey}"> ${optionKey}. ${option}`;
+                    let optionKey = optionLabels[i]; // Assign A, B, C, D, etc.
+                    optionLabel.innerHTML = `<input type="${inputType}" name="q${start + index}" value="${optionKey}"> ${optionKey}. ${option}`;
                     optionsDiv.appendChild(optionLabel);
                 });
-                
+
                 let answerDiv = document.createElement("p");
                 answerDiv.classList.add("answer");
-                answerDiv.id = `answer${index}`;
+                answerDiv.id = `answer${start + index}`;
                 answerDiv.innerText = `Correct Answer: ${correctAnswers.join(", ")}`;
-                
+
                 questionBlock.appendChild(optionsDiv);
                 questionBlock.appendChild(answerDiv);
                 quizContainer.appendChild(questionBlock);
@@ -78,11 +103,11 @@
 
         function submitAnswers() {
             document.querySelectorAll(".question").forEach((questionBlock, index) => {
-                let correctAnswers = allQuestions[index].answer;
+                let correctAnswers = allQuestions[currentPage * questionsPerPage + index].answer;
                 if (!Array.isArray(correctAnswers)) {
-                    correctAnswers = [correctAnswers];
+                    correctAnswers = correctAnswers.split(""); // Ensure array format
                 }
-                
+
                 questionBlock.querySelectorAll("input").forEach(input => {
                     if (correctAnswers.includes(input.value)) {
                         input.parentElement.classList.add("correct");
@@ -96,9 +121,34 @@
             });
         }
 
+        function displayAnswers() {
+            const answersContainer = document.getElementById("answers-container");
+            answersContainer.innerHTML = "";
+
+            allQuestions.forEach((q, index) => {
+                let answerBlock = document.createElement("div");
+                answerBlock.classList.add("question");
+                
+                let questionTitle = `<h3>Question ${index + 1}</h3>`;
+                let questionText = `<p><strong>${String(q.body || "").replace(/\n/g, '<br>')}</strong></p>`;
+                let correctAnswers = Array.isArray(q.answer) ? q.answer.join(", ") : q.answer;
+                let answerText = `<p class="answer" style="display: block; color: green;">Correct Answer: ${correctAnswers}</p>`;
+                
+                answerBlock.innerHTML = questionTitle + questionText + answerText;
+                answersContainer.appendChild(answerBlock);
+            });
+        }
+
         function switchTab(tabId) {
             document.querySelectorAll('.content').forEach(div => div.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
+        }
+
+        function nextPage() {
+            if ((currentPage + 1) * questionsPerPage < allQuestions.length) {
+                currentPage++;
+                displayQuestions();
+            }
         }
 
         loadQuestions();
