@@ -17,9 +17,10 @@
         .options label:hover { background: #d0e0ff; }
         .correct { background-color: lightgreen !important; }
         .incorrect { background-color: lightcoral !important; }
-        .submit-btn { margin-top: 10px; padding: 10px; border: none; cursor: pointer; background: #28a745; color: white; border-radius: 5px; transition: 0.3s; animation: pulse 1s infinite; }
-        .submit-btn:hover { background: #218838; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        .submit-btn, .reveal-btn { margin-top: 10px; padding: 10px; border: none; cursor: pointer; background: #28a745; color: white; border-radius: 5px; transition: 0.3s; }
+        .submit-btn:hover, .reveal-btn:hover { background: #218838; }
+        .reveal-btn { animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
     </style>
 </head>
 <body>
@@ -30,6 +31,7 @@
     
     <div id="quiz" class="content active quiz-container">
         <h2>GCP PCA MCQ Quiz</h2>
+        <button class="reveal-btn" onclick="revealAllAnswers()">Reveal All Answers</button>
         <label for="question-count">Select Number of Questions: </label>
         <select id="question-count" onchange="displayQuestions()">
             <option value="10">10</option>
@@ -40,7 +42,7 @@
             <option value="all">All</option>
         </select>
         <div id="quiz-container"></div>
-        <button onclick="nextPage()">Next</button>
+        <button onclick="nextPage()" class="submit-btn">Next</button>
     </div>
     
     <div id="answers" class="content quiz-container">
@@ -101,13 +103,19 @@
                 let correctAnswers = allQuestions[currentPage * questionsPerPage + index].answer;
                 let inputs = questionBlock.querySelectorAll("input");
                 inputs.forEach(input => {
-                    if (input.checked) {
-                        if (correctAnswers.includes(input.value)) {
-                            input.parentElement.classList.add("correct");
-                        } else {
-                            input.parentElement.classList.add("incorrect");
-                        }
+                    if (correctAnswers.includes(input.value)) {
+                        input.parentElement.classList.add("correct");
+                    } else {
+                        input.parentElement.classList.add("incorrect");
                     }
+                });
+            });
+        }
+
+        function revealAllAnswers() {
+            document.querySelectorAll(".question").forEach((questionBlock, index) => {
+                let correctAnswers = allQuestions[currentPage * questionsPerPage + index].answer;
+                questionBlock.querySelectorAll("input").forEach(input => {
                     if (correctAnswers.includes(input.value)) {
                         input.parentElement.classList.add("correct");
                     }
