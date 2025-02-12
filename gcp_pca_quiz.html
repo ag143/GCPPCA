@@ -7,7 +7,7 @@
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; padding: 10px; background-color: #f4f4f9; }
         .tab { display: flex; justify-content: center; margin-bottom: 20px; }
-        .tab button { padding: 10px; border: none; cursor: pointer; background: #007BFF; color: white; margin: 5px; border-radius: 5px; }
+        .tab button { padding: 10px; border: none; cursor: pointer; background: #007BFF; color: white; margin: 5px; border-radius: 5px; transition: 0.3s; }
         .tab button:hover { background: #0056b3; }
         .content { display: none; }
         .active { display: block; }
@@ -17,18 +17,16 @@
         .options label:hover { background: #d0e0ff; }
         .correct { background-color: lightgreen; }
         .incorrect { background-color: lightcoral; }
-        .search-container { text-align: center; margin-bottom: 15px; }
-        .search-container input { padding: 8px; width: 60%; border: 1px solid #ccc; border-radius: 5px; }
+        .reveal-btn { margin-top: 10px; padding: 10px; border: none; cursor: pointer; background: #28a745; color: white; border-radius: 5px; transition: 0.3s; }
+        .reveal-btn:hover { background: #218838; }
+        .reveal-btn.animate { animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
     </style>
 </head>
 <body>
     <div class="tab">
         <button onclick="switchTab('quiz')">Quiz</button>
         <button onclick="switchTab('answers')">Questions & Answers</button>
-    </div>
-    
-    <div class="search-container">
-        <input type="text" id="search-box" placeholder="Search by question number or topic..." oninput="searchQuestions()">
     </div>
     
     <div id="quiz" class="content active quiz-container">
@@ -43,6 +41,7 @@
             <option value="all">All</option>
         </select>
         <div id="quiz-container"></div>
+        <button class="reveal-btn animate" onclick="revealAllAnswers()">Reveal Answers</button>
         <button onclick="nextPage()">Next</button>
     </div>
     
@@ -59,7 +58,6 @@
         async function loadQuestions() {
             const response = await fetch('https://raw.githubusercontent.com/ag143/GCPPCA/main/gcp_pca.json');
             allQuestions = await response.json();
-            currentPage = 0;
             displayQuestions();
             displayAnswers();
         }
@@ -90,13 +88,13 @@
                 });
                 optionsList += '</div>';
                 
-                let revealButton = `<button onclick="revealAnswer(this, '${q.answer}')">Reveal Answer</button>`;
-                questionBlock.innerHTML = questionTitle + questionText + optionsList + revealButton;
+                let submitButton = `<button onclick="submitAnswer(this, '${q.answer}')">Submit</button>`;
+                questionBlock.innerHTML = questionTitle + questionText + optionsList + submitButton;
                 quizContainer.appendChild(questionBlock);
             });
         }
 
-        function revealAnswer(button, correctAnswer) {
+        function submitAnswer(button, correctAnswer) {
             let options = button.parentElement.querySelectorAll("input");
             options.forEach(option => {
                 if (correctAnswer.includes(option.value)) {
@@ -118,22 +116,11 @@
                 let questionTitle = `<h3>Section: Question ${index + 1}</h3>`;
                 let questionText = `<p><strong>${String(q.body || "").replace(/\n/g, '<br>')}</strong></p>`;
                 let answerText = `<p class="answer">Correct Option: ${q.answer || "N/A"}</p>`;
+                let description = q.explanation ? `<p><strong>Explanation:</strong> ${q.explanation}</p>` : "";
                 
-                answerBlock.innerHTML = questionTitle + questionText + answerText;
+                answerBlock.innerHTML = questionTitle + questionText + answerText + description;
                 answersContainer.appendChild(answerBlock);
             });
-        }
-
-        function searchQuestions() {
-            const query = document.getElementById("search-box").value.toLowerCase();
-            document.querySelectorAll(".question").forEach(q => {
-                q.style.display = q.innerText.toLowerCase().includes(query) ? "block" : "none";
-            });
-        }
-
-        function switchTab(tabId) {
-            document.querySelectorAll('.content').forEach(div => div.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
         }
 
         function nextPage() {
