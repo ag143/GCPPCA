@@ -21,7 +21,6 @@
         .submit-btn:hover, .reveal-btn:hover { background: #218838; }
         .reveal-btn { animation: pulse 1s infinite; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
-        .right-answer { margin-top: 10px; font-weight: bold; color: green; }
     </style>
 </head>
 <body>
@@ -80,6 +79,7 @@
             const questionsToShow = allQuestions.slice(start, end);
             
             questionsToShow.forEach((q, index) => {
+                let correctAnswers = Array.isArray(q.answer) ? q.answer : [q.answer];
                 let questionBlock = document.createElement("div");
                 questionBlock.classList.add("question");
                 
@@ -87,7 +87,7 @@
                 let questionText = `<p><strong>${String(q.body || "").replace(/\n/g, '<br>')}</strong></p>`;
                 let optionsList = '<div class="options">';
                 
-                let inputType = q.answer.length === 1 ? 'radio' : 'checkbox';
+                let inputType = correctAnswers.length === 1 ? 'radio' : 'checkbox';
                 let optionKeys = Object.keys(q.options || {});
                 
                 optionKeys.forEach((key, idx) => {
@@ -96,8 +96,7 @@
                 });
                 optionsList += '</div>';
                 
-                let answerBlock = `<p class='right-answer' id='answer-${index}' style='display:none;'>Right Answer: ${q.answer.map(a => q.options[a]).join(', ')}</p>`;
-                questionBlock.innerHTML = questionTitle + questionText + optionsList + answerBlock;
+                questionBlock.innerHTML = questionTitle + questionText + optionsList;
                 quizContainer.appendChild(questionBlock);
             });
             
@@ -109,27 +108,19 @@
         }
 
         function submitAnswers() {
+            let correctCount = 0;
             document.querySelectorAll(".question").forEach((questionBlock, index) => {
-                let correctAnswers = allQuestions[currentPage * questionsPerPage + index].answer;
+                let correctAnswers = Array.isArray(allQuestions[currentPage * questionsPerPage + index].answer) ? allQuestions[currentPage * questionsPerPage + index].answer : [allQuestions[currentPage * questionsPerPage + index].answer];
                 questionBlock.querySelectorAll("input").forEach(input => {
                     if (correctAnswers.includes(input.value)) {
                         input.parentElement.classList.add("correct");
+                        if (input.checked) correctCount++;
                     } else if (input.checked) {
                         input.parentElement.classList.add("incorrect");
                     }
                 });
             });
-        }
-
-        function revealAllAnswers() {
-            document.querySelectorAll(".right-answer").forEach(answer => answer.style.display = 'block');
-        }
-
-        function nextPage() {
-            if ((currentPage + 1) * questionsPerPage < allQuestions.length) {
-                currentPage++;
-                displayQuestions();
-            }
+            document.getElementById("score").innerText = `Score: ${correctCount} / ${questionsPerPage}`;
         }
 
         loadQuestions();
