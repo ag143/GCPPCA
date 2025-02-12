@@ -17,9 +17,8 @@
         .options label:hover { background: #d0e0ff; }
         .correct { background-color: lightgreen; }
         .incorrect { background-color: lightcoral; }
-        .reveal-btn { margin-top: 10px; padding: 10px; border: none; cursor: pointer; background: #28a745; color: white; border-radius: 5px; transition: 0.3s; }
+        .reveal-btn { margin-top: 10px; padding: 10px; border: none; cursor: pointer; background: #28a745; color: white; border-radius: 5px; transition: 0.3s; animation: pulse 1s infinite; }
         .reveal-btn:hover { background: #218838; }
-        .reveal-btn.animate { animation: pulse 1s infinite; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
     </style>
 </head>
@@ -41,7 +40,7 @@
             <option value="all">All</option>
         </select>
         <div id="quiz-container"></div>
-        <button class="reveal-btn animate" onclick="revealAllAnswers()">Reveal Answers</button>
+        <button class="reveal-btn" onclick="revealAllAnswers()">Reveal Answers</button>
         <button onclick="nextPage()">Next</button>
     </div>
     
@@ -105,22 +104,8 @@
             });
         }
 
-        function displayAnswers() {
-            const answersContainer = document.getElementById("answers-container");
-            answersContainer.innerHTML = "";
-            
-            allQuestions.forEach((q, index) => {
-                let answerBlock = document.createElement("div");
-                answerBlock.classList.add("question");
-                
-                let questionTitle = `<h3>Section: Question ${index + 1}</h3>`;
-                let questionText = `<p><strong>${String(q.body || "").replace(/\n/g, '<br>')}</strong></p>`;
-                let answerText = `<p class="answer">Correct Option: ${q.answer || "N/A"}</p>`;
-                let description = q.explanation ? `<p><strong>Explanation:</strong> ${q.explanation}</p>` : "";
-                
-                answerBlock.innerHTML = questionTitle + questionText + answerText + description;
-                answersContainer.appendChild(answerBlock);
-            });
+        function revealAllAnswers() {
+            document.querySelectorAll(".correct").forEach(el => el.style.backgroundColor = "lightgreen");
         }
 
         function nextPage() {
