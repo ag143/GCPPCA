@@ -20,6 +20,11 @@
     </style>
 </head>
 <body>
+    <script>
+        function formatOptions(options) {
+            return Object.entries(options).map(([key, option]) => `<li><strong>${key}.</strong> ${option}</li>`).join('');
+        }
+    </script>
     <div class="tab">
         <button onclick="switchTab('quiz')">Quiz</button>
         <button onclick="switchTab('answers')">Questions & Answers</button>
@@ -77,23 +82,14 @@
                 
                 let questionTitle = `<h3>Section: Question ${start + index + 1}</h3>`;
                 let questionText = `<p><strong>${String(q.body || "").replace(/\n/g, '<br>')}</strong></p>`;
-                questionBlock.innerHTML = questionTitle + questionText;
+                let optionsList = `<ul>${formatOptions(q.options || {})}</ul>`;
                 
-                let optionsDiv = document.createElement("div");
-                optionsDiv.classList.add("options");
-                let inputType = q.answer.length > 1 ? "checkbox" : "radio";
-                
-                Object.entries(q.options || {}).forEach(([key, option]) => {
-                    let optionLabel = document.createElement("label");
-                    optionLabel.innerHTML = `<input type="${inputType}" name="q${start + index}" value="${key}"> ${key}. ${option}`;
-                    optionsDiv.appendChild(optionLabel);
-                });
+                questionBlock.innerHTML = questionTitle + questionText + optionsList;
                 
                 let answerDiv = document.createElement("p");
                 answerDiv.classList.add("answer");
                 answerDiv.innerText = `Correct Answer: ${q.answer || "N/A"}`;
                 
-                questionBlock.appendChild(optionsDiv);
                 questionBlock.appendChild(answerDiv);
                 quizContainer.appendChild(questionBlock);
             });
@@ -109,9 +105,10 @@
                 
                 let questionTitle = `<h3>Section: Question ${index + 1}</h3>`;
                 let questionText = `<p><strong>${String(q.body || "").replace(/\n/g, '<br>')}</strong></p>`;
+                let optionsList = `<ul>${formatOptions(q.options || {})}</ul>`;
                 let answerText = `<p class="answer">Correct Answer: ${q.answer || "N/A"}</p>`;
                 
-                answerBlock.innerHTML = questionTitle + questionText + answerText;
+                answerBlock.innerHTML = questionTitle + questionText + optionsList + answerText;
                 answersContainer.appendChild(answerBlock);
             });
         }
