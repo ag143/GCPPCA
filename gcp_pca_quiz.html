@@ -6,15 +6,26 @@
     <title>MCQ Quiz</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; padding: 10px; background-color: #f4f4f9; }
+        .tab { display: flex; justify-content: center; margin-bottom: 20px; }
+        .tab button { padding: 10px; border: none; cursor: pointer; background: #007BFF; color: white; margin: 5px; border-radius: 5px; }
+        .tab button:hover { background: #0056b3; }
+        .content { display: none; }
+        .active { display: block; }
         .quiz-container { max-width: 800px; margin: auto; padding: 20px; background: white; border-radius: 10px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); }
         .question { margin-bottom: 15px; padding: 15px; border: 1px solid #ccc; border-radius: 10px; background: #eef5ff; }
         .options label { display: block; padding: 10px; background: #fff; border-radius: 5px; border: 1px solid #ccc; margin: 5px 0; cursor: pointer; }
         .correct { background-color: lightgreen !important; }
         .incorrect { background-color: lightcoral !important; }
+        .answer { display: none; color: green; font-weight: bold; margin-top: 5px; }
     </style>
 </head>
 <body>
-    <div class="quiz-container">
+    <div class="tab">
+        <button onclick="switchTab('quiz')">Quiz</button>
+        <button onclick="switchTab('answers')">Questions & Answers</button>
+    </div>
+    
+    <div id="quiz" class="content active quiz-container">
         <h2>GCP PCA MCQ Quiz</h2>
         <div id="quiz-container"></div>
         <button onclick="submitAnswers()">Submit Answers</button>
@@ -38,31 +49,39 @@
                 let questionBlock = document.createElement("div");
                 questionBlock.classList.add("question");
                 
-                let correctAnswers = Array.isArray(q.answer) ? q.answer : [q.answer];
-                let inputType = correctAnswers.length > 1 ? "checkbox" : "radio";
-                
                 let questionTitle = `<h3>Question ${index + 1}</h3>`;
-                let questionText = `<p><strong>${q.body.replace(/\n/g, '<br>')}</strong></p>`;
+                let questionText = `<p><strong>${(q.body ? String(q.body) : "No question text available").replace(/\n/g, '<br>')}</strong></p>`;
                 questionBlock.innerHTML = questionTitle + questionText;
                 
                 let optionsDiv = document.createElement("div");
                 optionsDiv.classList.add("options");
+                let correctAnswers = Array.isArray(q.answer) ? q.answer : [q.answer];
+                let inputType = correctAnswers.length > 1 ? "checkbox" : "radio";
                 
                 Object.entries(q.options || {}).forEach(([key, option], i) => {
-                    let optionKey = optionLabels[i];
                     let optionLabel = document.createElement("label");
+                    let optionKey = optionLabels[i];
                     optionLabel.innerHTML = `<input type="${inputType}" name="q${index}" value="${optionKey}"> ${optionKey}. ${option}`;
                     optionsDiv.appendChild(optionLabel);
                 });
                 
+                let answerDiv = document.createElement("p");
+                answerDiv.classList.add("answer");
+                answerDiv.id = `answer${index}`;
+                answerDiv.innerText = `Correct Answer: ${correctAnswers.join(", ")}`;
+                
                 questionBlock.appendChild(optionsDiv);
+                questionBlock.appendChild(answerDiv);
                 quizContainer.appendChild(questionBlock);
             });
         }
 
         function submitAnswers() {
             document.querySelectorAll(".question").forEach((questionBlock, index) => {
-                let correctAnswers = Array.isArray(allQuestions[index].answer) ? allQuestions[index].answer : [allQuestions[index].answer];
+                let correctAnswers = allQuestions[index].answer;
+                if (!Array.isArray(correctAnswers)) {
+                    correctAnswers = [correctAnswers];
+                }
                 
                 questionBlock.querySelectorAll("input").forEach(input => {
                     if (correctAnswers.includes(input.value)) {
@@ -71,7 +90,15 @@
                         input.parentElement.classList.add("incorrect");
                     }
                 });
+
+                let answerDiv = document.getElementById(`answer${index}`);
+                answerDiv.style.display = "block";
             });
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.content').forEach(div => div.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
         }
 
         loadQuestions();
