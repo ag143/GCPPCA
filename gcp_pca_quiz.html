@@ -56,7 +56,6 @@
             const response = await fetch('https://raw.githubusercontent.com/ag143/GCPPCA/main/gcp_pca.json');
             allQuestions = await response.json();
             displayQuestions();
-            displayAnswers();
         }
 
         function displayQuestions() {
@@ -78,9 +77,9 @@
                 
                 let optionsDiv = document.createElement("div");
                 optionsDiv.classList.add("options");
-                let inputType = Array.isArray(q.answer) ? (q.answer.length > 1 ? "checkbox" : "radio") : "radio";
+                let correctAnswers = Array.isArray(q.answer) ? q.answer : [q.answer];
+                let inputType = correctAnswers.length > 1 ? "checkbox" : "radio";
 
-                // Convert options to A, B, C, D
                 Object.entries(q.options || {}).forEach(([key, option], i) => {
                     let optionLabel = document.createElement("label");
                     let optionKey = optionLabels[i]; // Assign A, B, C, D
@@ -91,7 +90,7 @@
                 let answerDiv = document.createElement("p");
                 answerDiv.classList.add("answer");
                 answerDiv.id = `answer${start + index}`;
-                answerDiv.innerText = `Correct Answer: ${Array.isArray(q.answer) ? q.answer.join(", ") : q.answer}`;
+                answerDiv.innerText = `Correct Answer: ${correctAnswers.join(", ")}`;
                 
                 questionBlock.appendChild(optionsDiv);
                 questionBlock.appendChild(answerDiv);
@@ -105,7 +104,7 @@
                 if (!Array.isArray(correctAnswers)) {
                     correctAnswers = [correctAnswers];
                 }
-
+                
                 questionBlock.querySelectorAll("input").forEach(input => {
                     if (correctAnswers.includes(input.value)) {
                         input.parentElement.classList.add("correct");
@@ -114,26 +113,8 @@
                     }
                 });
 
-                // Show correct answers if not selected
                 let answerDiv = document.getElementById(`answer${index}`);
                 answerDiv.style.display = "block";
-            });
-        }
-
-        function displayAnswers() {
-            const answersContainer = document.getElementById("answers-container");
-            answersContainer.innerHTML = "";
-
-            allQuestions.forEach((q, index) => {
-                let answerBlock = document.createElement("div");
-                answerBlock.classList.add("question");
-                
-                let questionTitle = `<h3>Question ${index + 1}</h3>`;
-                let questionText = `<p><strong>${String(q.body || "").replace(/\n/g, '<br>')}</strong></p>`;
-                let answerText = `<p class="answer" style="display: block; color: green;">Correct Answer: ${Array.isArray(q.answer) ? q.answer.join(", ") : q.answer}</p>`;
-                
-                answerBlock.innerHTML = questionTitle + questionText + answerText;
-                answersContainer.appendChild(answerBlock);
             });
         }
 
