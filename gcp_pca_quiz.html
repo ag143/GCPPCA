@@ -40,7 +40,6 @@
             <option value="all">All</option>
         </select>
         <div id="quiz-container"></div>
-        <button class="reveal-btn" onclick="revealAllAnswers()">Reveal Answers</button>
         <button onclick="nextPage()">Next</button>
     </div>
     
@@ -99,17 +98,22 @@
         }
 
         function submitAnswers() {
-            document.querySelectorAll(".options label").forEach(label => {
-                const input = label.querySelector("input");
-                if (input.checked) {
-                    label.classList.add("incorrect");
-                }
+            document.querySelectorAll(".question").forEach((questionBlock, index) => {
+                let correctAnswers = allQuestions[currentPage * questionsPerPage + index].answer;
+                let inputs = questionBlock.querySelectorAll("input");
+                inputs.forEach(input => {
+                    if (input.checked) {
+                        if (correctAnswers.includes(input.value)) {
+                            input.parentElement.classList.add("correct");
+                        } else {
+                            input.parentElement.classList.add("incorrect");
+                        }
+                    }
+                    if (correctAnswers.includes(input.value)) {
+                        input.parentElement.classList.add("correct");
+                    }
+                });
             });
-            document.querySelectorAll(".correct").forEach(el => el.style.backgroundColor = "lightgreen");
-        }
-
-        function revealAllAnswers() {
-            document.querySelectorAll(".correct").forEach(el => el.style.backgroundColor = "lightgreen");
         }
 
         function nextPage() {
