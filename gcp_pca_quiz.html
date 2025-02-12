@@ -5,28 +5,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MCQ Quiz</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
+        body { font-family: Arial, sans-serif; margin: 20px; padding: 10px; }
         .question { margin-bottom: 15px; padding: 15px; border: 1px solid #ccc; border-radius: 5px; background: #f9f9f9; }
         .options { margin-left: 20px; }
-        button { margin-top: 10px; padding: 10px; cursor: pointer; }
+        button { margin-top: 10px; padding: 10px; cursor: pointer; border: none; border-radius: 5px; background-color: #007BFF; color: white; }
+        button:hover { background-color: #0056b3; }
         select { margin-bottom: 10px; padding: 5px; }
         .answer { display: none; color: green; font-weight: bold; margin-top: 5px; }
+        .quiz-container { max-width: 800px; margin: auto; }
+        @media (max-width: 768px) {
+            body { margin: 10px; padding: 5px; }
+            .question { padding: 10px; }
+            button { width: 100%; }
+        }
     </style>
 </head>
 <body>
-    <h2>GCP PCA MCQ Quiz</h2>
-    <label for="question-count">Select Number of Questions: </label>
-    <select id="question-count" onchange="loadQuestions()">
-        <option value="10">10</option>
-        <option value="20">20</option>
-        <option value="50">50</option>
-        <option value="100">100</option>
-        <option value="200">200</option>
-        <option value="all">All</option>
-    </select>
-    <div id="quiz-container"></div>
-    <button onclick="submitQuiz()">Submit</button>
-    <p id="result"></p>
+    <div class="quiz-container">
+        <h2>GCP PCA MCQ Quiz</h2>
+        <label for="question-count">Select Number of Questions: </label>
+        <select id="question-count" onchange="loadQuestions()">
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="200">200</option>
+            <option value="all">All</option>
+        </select>
+        <div id="quiz-container"></div>
+        <button onclick="submitQuiz()">Submit</button>
+        <p id="result"></p>
+    </div>
 
     <script>
         let allQuestions = [];
