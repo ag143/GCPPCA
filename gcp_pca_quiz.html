@@ -15,8 +15,8 @@
         .question { margin-bottom: 15px; padding: 15px; border: 1px solid #ccc; border-radius: 10px; background: #eef5ff; }
         .options label { display: block; padding: 10px; background: #fff; border-radius: 5px; border: 1px solid #ccc; margin: 5px 0; cursor: pointer; transition: 0.3s; }
         .options label:hover { background: #d0e0ff; }
-        .correct { background-color: lightgreen; }
-        .incorrect { background-color: lightcoral; }
+        .correct { background-color: lightgreen !important; }
+        .incorrect { background-color: lightcoral !important; }
         .reveal-btn { margin-top: 10px; padding: 10px; border: none; cursor: pointer; background: #28a745; color: white; border-radius: 5px; transition: 0.3s; animation: pulse 1s infinite; }
         .reveal-btn:hover { background: #218838; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
@@ -106,6 +106,21 @@
 
         function revealAllAnswers() {
             document.querySelectorAll(".correct").forEach(el => el.style.backgroundColor = "lightgreen");
+        }
+
+        function displayAnswers() {
+            const answersContainer = document.getElementById("answers-container");
+            answersContainer.innerHTML = "";
+            allQuestions.forEach((q, index) => {
+                let answerBlock = document.createElement("div");
+                answerBlock.classList.add("question");
+                
+                let questionTitle = `<h3>Section: Question ${index + 1}</h3>`;
+                let questionText = `<p><strong>${String(q.body || "").replace(/\n/g, '<br>')}</strong></p>`;
+                let rightAnswer = `<p><strong>Right Option: ${q.answer}</strong></p>`;
+                answerBlock.innerHTML = questionTitle + questionText + rightAnswer;
+                answersContainer.appendChild(answerBlock);
+            });
         }
 
         function nextPage() {
