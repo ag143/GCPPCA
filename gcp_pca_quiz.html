@@ -15,7 +15,8 @@
         .question { margin-bottom: 15px; padding: 15px; border: 1px solid #ccc; border-radius: 10px; background: #eef5ff; }
         .options label { display: block; padding: 10px; background: #fff; border-radius: 5px; border: 1px solid #ccc; margin: 5px 0; cursor: pointer; transition: 0.3s; }
         .options label:hover { background: #d0e0ff; }
-        .answer { color: green; font-weight: bold; margin-top: 5px; display: block; }
+        .correct { background-color: lightgreen; }
+        .incorrect { background-color: lightcoral; }
         .search-container { text-align: center; margin-bottom: 15px; }
         .search-container input { padding: 8px; width: 60%; border: 1px solid #ccc; border-radius: 5px; }
     </style>
@@ -81,13 +82,28 @@
                 let optionsList = '<div class="options">';
                 
                 let inputType = q.answer.length === 1 ? 'radio' : 'checkbox';
-                for (const [key, value] of Object.entries(q.options || {})) {
-                    optionsList += `<label><input type="${inputType}" name="q${index}"> ${key}. ${value}</label>`;
-                }
+                let optionKeys = Object.keys(q.options || {});
+                
+                optionKeys.forEach((key, idx) => {
+                    const letter = String.fromCharCode(65 + idx);
+                    optionsList += `<label><input type="${inputType}" name="q${index}" value="${key}"> ${letter}. ${q.options[key]}</label>`;
+                });
                 optionsList += '</div>';
                 
-                questionBlock.innerHTML = questionTitle + questionText + optionsList;
+                let revealButton = `<button onclick="revealAnswer(this, '${q.answer}')">Reveal Answer</button>`;
+                questionBlock.innerHTML = questionTitle + questionText + optionsList + revealButton;
                 quizContainer.appendChild(questionBlock);
+            });
+        }
+
+        function revealAnswer(button, correctAnswer) {
+            let options = button.parentElement.querySelectorAll("input");
+            options.forEach(option => {
+                if (correctAnswer.includes(option.value)) {
+                    option.parentElement.classList.add("correct");
+                } else {
+                    option.parentElement.classList.add("incorrect");
+                }
             });
         }
 
@@ -101,7 +117,7 @@
                 
                 let questionTitle = `<h3>Section: Question ${index + 1}</h3>`;
                 let questionText = `<p><strong>${String(q.body || "").replace(/\n/g, '<br>')}</strong></p>`;
-                let answerText = `<p class="answer">Correct Answer: ${q.answer || "N/A"}</p>`;
+                let answerText = `<p class="answer">Correct Option: ${q.answer || "N/A"}</p>`;
                 
                 answerBlock.innerHTML = questionTitle + questionText + answerText;
                 answersContainer.appendChild(answerBlock);
