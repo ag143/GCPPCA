@@ -28,50 +28,45 @@
 
     <h3>Technical Analysis</h3>
     <div class="chart-container"><canvas id="stockChart"></canvas></div>
-    <div class="chart-container"><canvas id="rsiChart"></canvas></div>
-    <div class="chart-container"><canvas id="macdChart"></canvas></div>
-    <div class="chart-container"><canvas id="bollingerChart"></canvas></div>
 
     <div class="tradingview-widget-container">
         <div id="tradingview_chart"></div>
     </div>
 
     <script>
+        const API_KEY = 'YOUR_ALPHA_VANTAGE_API_KEY';
+        
         async function fetchStockData() {
-            let stockSymbol = document.getElementById("stockSymbol").value.toUpperCase();
-            let url = `https://query1.finance.yahoo.com/v8/finance/chart/${stockSymbol}.NS?interval=1d&range=3mo`;
-            let fundamentalUrl = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${stockSymbol}.NS?modules=summaryDetail,financialData`;
+            let stockSymbol = document.getElementById("stockSymbol").value.toUpperCase() + ".NS";
+            let url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${stockSymbol}&apikey=${API_KEY}`;
             
             try {
-                let [response, fundResponse] = await Promise.all([fetch(url), fetch(fundamentalUrl)]);
+                let response = await fetch(url);
                 let data = await response.json();
-                let fundData = await fundResponse.json();
                 
-                let chartData = data.chart.result[0];
-                let fundamental = fundData.quoteSummary.result[0];
+                if (!data["Time Series (Daily)"]) {
+                    alert("Error fetching stock data. Try again!");
+                    return;
+                }
                 
-                document.getElementById("price").innerText = `Stock Price: ₹${chartData.meta.regularMarketPrice}`;
+                let timeSeries = data["Time Series (Daily)"];
+                let latestDate = Object.keys(timeSeries)[0];
+                let latestData = timeSeries[latestDate];
+                
+                document.getElementById("price").innerText = `Stock Price: ₹${latestData["4. close"]}`;
                 document.getElementById("fundamentalData").innerHTML = `
-                    <div><b>Market Cap:</b> ₹${formatNumber(fundamental.summaryDetail.marketCap.raw)}</div>
-                    <div><b>PE Ratio:</b> ${fundamental.summaryDetail.trailingPE?.raw || "--"}</div>
-                    <div><b>Debt/Equity:</b> ${fundamental.financialData.debtToEquity?.raw.toFixed(2) || "--"}</div>
-                    <div><b>EPS:</b> ${fundamental.summaryDetail.epsTrailingTwelveMonths?.raw || "--"}</div>
-                    <div><b>PB Ratio:</b> ${fundamental.summaryDetail.priceToBook?.raw.toFixed(2) || "--"}</div>
-                    <div><b>Free Cash Flow:</b> ₹${formatNumber(fundamental.financialData.freeCashflow?.raw)}</div>
+                    <div><b>Latest Close Price:</b> ₹${latestData["4. close"]}</div>
+                    <div><b>Open:</b> ₹${latestData["1. open"]}</div>
+                    <div><b>High:</b> ₹${latestData["2. high"]}</div>
+                    <div><b>Low:</b> ₹${latestData["3. low"]}</div>
+                    <div><b>Volume:</b> ${latestData["5. volume"]}</div>
                 `;
                 
-                loadTradingView(stockSymbol);
+                loadTradingView(stockSymbol.replace(".NS", ""));
             } catch (error) {
                 console.error("Error fetching stock data:", error);
                 alert("Error fetching stock data. Try again!");
             }
-        }
-
-        function formatNumber(num) {
-            if (!num) return "--";
-            let units = ["", "K", "M", "B", "T"];
-            let unitIndex = Math.floor(Math.log10(num) / 3);
-            return (num / Math.pow(10, unitIndex * 3)).toFixed(2) + units[unitIndex];
         }
 
         function loadTradingView(stockSymbol) {
@@ -88,8 +83,6 @@
                 "hide_legend": false
             });
         }
-
-        fetchStockData();
     </script>
 </body>
 </html>
