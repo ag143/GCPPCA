@@ -1,189 +1,241 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BlackLine Services</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f4f4f9;
-      color: #333;
-      margin: 0;
-      padding: 0;
-    }
-    header {
-      background-color: #2e3b4e;
-      color: white;
-      padding: 10px 20px;
-      text-align: center;
-    }
-    .container {
-      padding: 20px;
-    }
-    .treeview ul {
-      list-style-type: none;
-      padding-left: 20px;
-    }
-    .treeview li {
-      padding: 5px;
-      cursor: pointer;
-    }
-    .treeview li:hover {
-      background-color: #ddd;
-    }
-    .treeview .subtree {
-      display: none;
-    }
-    .treeview .open > .subtree {
-      display: block;
-    }
-    .toggle-btn {
-      margin-left: 10px;
-      color: #007bff;
-      cursor: pointer;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlackLine Services Tree</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .service {
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 10px 0;
+            padding: 10px;
+            background: #f4f4f4;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        .service:hover {
+            background: #ddd;
+        }
+        .subservices {
+            margin-left: 20px;
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.5s ease-out;
+        }
+        .subservice {
+            cursor: pointer;
+            padding: 5px;
+            background: #e0e0e0;
+            margin: 5px 0;
+            border-radius: 3px;
+            transition: background 0.3s;
+        }
+        .subservice:hover {
+            background: #ccc;
+        }
+        .details {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            display: none;
+            background: #fff8dc;
+        }
+    </style>
 </head>
 <body>
 
-<header>
-  <h1>BlackLine Services Overview</h1>
-</header>
+    <h2>BlackLine Services</h2>
+    <div id="services-container"></div>
+    <div id="details" class="details"></div>
 
-<div class="container">
-  <div class="treeview" id="treeview"></div>
-</div>
-
-<script>
-  const data ={
+    <script>
+        const jsonData = {
   "services": [
     {
       "name": "Financial Close Management",
+      "description": "Streamline and automate financial close tasks to ensure accurate and efficient reporting. Improve transparency and reduce manual effort with automated workflows.",
       "subservices": [
-        { "name": "Account Reconciliations", "url": "https://www.blackline.com/products/financial-close/account-reconciliations" },
-        { "name": "Journal Entry Automation", "url": "https://www.blackline.com/products/financial-close/journal-entry" },
-        { "name": "Task Management", "url": "https://www.blackline.com/products/financial-close/task-management" },
-        { "name": "Variance Analysis", "url": "https://www.blackline.com/products/financial-close/variance-analysis" },
-        { "name": "Transaction Matching", "url": "https://www.blackline.com/products/financial-close/transaction-matching" },
-        { "name": "Financial Reporting Automation", "url": "https://www.blackline.com/products/financial-close/financial-reporting" },
-        { "name": "Bank Reconciliations", "url": "https://www.blackline.com/products/financial-close/bank-reconciliations" },
-        { "name": "Payroll Reconciliations", "url": "https://www.blackline.com/products/financial-close/payroll-reconciliations" }
+        { 
+          "name": "Account Reconciliations",
+          "url": "https://www.blackline.com/products/financial-close/account-reconciliations",
+          "description": "Automate and standardize account reconciliations to reduce errors and improve accuracy."
+        },
+        { 
+          "name": "Journal Entry Automation",
+          "url": "https://www.blackline.com/products/financial-close/journal-entry",
+          "description": "Simplify and control journal entries by automating workflow and approvals."
+        },
+        { 
+          "name": "Task Management",
+          "url": "https://www.blackline.com/products/financial-close/task-management",
+          "description": "Organize and manage financial close tasks efficiently with workflow automation."
+        },
+        { 
+          "name": "Variance Analysis",
+          "url": "https://www.blackline.com/products/financial-close/variance-analysis",
+          "description": "Identify and analyze unexpected fluctuations in financial data."
+        },
+        { 
+          "name": "Transaction Matching",
+          "url": "https://www.blackline.com/products/financial-close/transaction-matching",
+          "description": "Automatically match high volumes of transactions and reduce reconciliation time."
+        }
+      ]
+    },
+    {
+      "name": "Intercompany Accounting",
+      "description": "Automate intercompany transactions to improve efficiency and compliance. Enhance visibility and eliminate manual reconciliation errors.",
+      "subservices": [
+        { 
+          "name": "Intercompany Reconciliation",
+          "url": "https://www.blackline.com/products/intercompany-accounting/reconciliation",
+          "description": "Streamline and automate intercompany transaction reconciliation."
+        },
+        { 
+          "name": "Netting & Settlement",
+          "url": "https://www.blackline.com/products/intercompany-accounting/netting-settlement",
+          "description": "Optimize cash flow by automating intercompany netting and settlement processes."
+        },
+        { 
+          "name": "Intercompany Billing",
+          "url": "https://www.blackline.com/products/intercompany-accounting/intercompany-billing",
+          "description": "Facilitate accurate intercompany invoicing and transaction documentation."
+        }
       ]
     },
     {
       "name": "Accounts Receivable Automation",
+      "description": "Improve cash flow and efficiency by automating invoice-to-cash processes and collections management.",
       "subservices": [
-        { "name": "Cash Application", "url": "https://www.blackline.com/products/accounts-receivable/cash-application" },
-        { "name": "Credit and Risk Management", "url": "https://www.blackline.com/products/accounts-receivable/credit-risk-management" },
-        { "name": "Collections Management", "url": "https://www.blackline.com/products/accounts-receivable/collections-management" },
-        { "name": "Invoice Matching", "url": "https://www.blackline.com/products/accounts-receivable/invoice-matching" },
-        { "name": "Dispute Resolution", "url": "https://www.blackline.com/products/accounts-receivable/dispute-resolution" },
-        { "name": "Customer Portal", "url": "https://www.blackline.com/products/accounts-receivable/customer-portal" },
-        { "name": "Aging Analysis", "url": "https://www.blackline.com/products/accounts-receivable/aging-analysis" },
-        { "name": "Deductions Management", "url": "https://www.blackline.com/products/accounts-receivable/deductions-management" }
+        { 
+          "name": "Cash Application",
+          "url": "https://www.blackline.com/products/accounts-receivable/cash-application",
+          "description": "Automate the application of payments to open invoices for faster reconciliation."
+        },
+        { 
+          "name": "Credit & Risk Management",
+          "url": "https://www.blackline.com/products/accounts-receivable/credit-risk",
+          "description": "Assess customer credit risk and manage exposure effectively."
+        },
+        { 
+          "name": "Collections Management",
+          "url": "https://www.blackline.com/products/accounts-receivable/collections",
+          "description": "Automate collections workflows to improve recovery rates and efficiency."
+        },
+        { 
+          "name": "Dispute & Deduction Management",
+          "url": "https://www.blackline.com/products/accounts-receivable/dispute-management",
+          "description": "Streamline dispute resolution to recover outstanding receivables faster."
+        }
       ]
     },
     {
-      "name": "Intercompany Financial Management",
+      "name": "Compliance & Risk Management",
+      "description": "Enhance financial governance, minimize risk, and ensure compliance with regulatory requirements.",
       "subservices": [
-        { "name": "Intercompany Reconciliations", "url": "https://www.blackline.com/products/intercompany-hub/intercompany-reconciliations" },
-        { "name": "Netting and Settlement", "url": "https://www.blackline.com/products/intercompany-hub/netting-settlement" },
-        { "name": "Tax and Compliance", "url": "https://www.blackline.com/products/intercompany-hub/tax-compliance" },
-        { "name": "Intercompany Billing", "url": "https://www.blackline.com/products/intercompany-hub/intercompany-billing" },
-        { "name": "Transfer Pricing", "url": "https://www.blackline.com/products/intercompany-hub/transfer-pricing" },
-        { "name": "Intercompany Workflow Automation", "url": "https://www.blackline.com/products/intercompany-hub/workflow-automation" }
+        { 
+          "name": "Controls Assurance",
+          "url": "https://www.blackline.com/products/compliance-risk/controls-assurance",
+          "description": "Monitor financial controls and ensure compliance with internal policies."
+        },
+        { 
+          "name": "Audit Trail & Documentation",
+          "url": "https://www.blackline.com/products/compliance-risk/audit-trail",
+          "description": "Maintain audit-ready documentation with automated data tracking."
+        },
+        { 
+          "name": "SOX Compliance",
+          "url": "https://www.blackline.com/products/compliance-risk/sox-compliance",
+          "description": "Ensure compliance with Sarbanes-Oxley (SOX) Act and regulatory standards."
+        }
       ]
     },
     {
-      "name": "Compliance and Controls",
+      "name": "Financial Planning & Analysis (FP&A)",
+      "description": "Enable accurate forecasting, budgeting, and strategic financial decision-making with automation.",
       "subservices": [
-        { "name": "Automated Controls", "url": "https://www.blackline.com/products/compliance-controls/automated-controls" },
-        { "name": "Policy Management", "url": "https://www.blackline.com/products/compliance-controls/policy-management" },
-        { "name": "Audit Trail", "url": "https://www.blackline.com/products/compliance-controls/audit-trail" },
-        { "name": "SOX Compliance", "url": "https://www.blackline.com/products/compliance-controls/sox-compliance" },
-        { "name": "User Access Management", "url": "https://www.blackline.com/products/compliance-controls/user-access-management" },
-        { "name": "Risk Management", "url": "https://www.blackline.com/products/compliance-controls/risk-management" }
-      ]
-    },
-    {
-      "name": "Financial Planning and Analysis (FP&A)",
-      "subservices": [
-        { "name": "Budgeting and Forecasting", "url": "https://www.blackline.com/products/fpa/budgeting-forecasting" },
-        { "name": "Scenario Planning", "url": "https://www.blackline.com/products/fpa/scenario-planning" },
-        { "name": "Profitability Analysis", "url": "https://www.blackline.com/products/fpa/profitability-analysis" },
-        { "name": "Financial Consolidation", "url": "https://www.blackline.com/products/fpa/financial-consolidation" },
-        { "name": "Rolling Forecasts", "url": "https://www.blackline.com/products/fpa/rolling-forecasts" },
-        { "name": "Driver-Based Planning", "url": "https://www.blackline.com/products/fpa/driver-based-planning" }
-      ]
-    },
-    {
-      "name": "Expense Management",
-      "subservices": [
-        { "name": "Spend Analysis", "url": "https://www.blackline.com/products/expense-management/spend-analysis" },
-        { "name": "Travel and Expense Automation", "url": "https://www.blackline.com/products/expense-management/travel-expense-automation" },
-        { "name": "Vendor Invoice Management", "url": "https://www.blackline.com/products/expense-management/vendor-invoice-management" },
-        { "name": "Corporate Card Management", "url": "https://www.blackline.com/products/expense-management/corporate-card-management" },
-        { "name": "Expense Policy Compliance", "url": "https://www.blackline.com/products/expense-management/policy-compliance" }
+        { 
+          "name": "Budgeting & Forecasting",
+          "url": "https://www.blackline.com/products/fpa/budgeting-forecasting",
+          "description": "Automate budgeting and forecasting to improve financial planning accuracy."
+        },
+        { 
+          "name": "Variance Reporting",
+          "url": "https://www.blackline.com/products/fpa/variance-reporting",
+          "description": "Analyze variances between actual and forecasted financial data for better decision-making."
+        },
+        { 
+          "name": "Scenario Planning",
+          "url": "https://www.blackline.com/products/fpa/scenario-planning",
+          "description": "Model different financial scenarios to assess business impact and risk."
+        }
       ]
     },
     {
       "name": "Tax Management",
+      "description": "Automate tax calculations, reporting, and compliance to reduce risk and improve efficiency.",
       "subservices": [
-        { "name": "Indirect Tax Compliance", "url": "https://www.blackline.com/products/tax-management/indirect-tax-compliance" },
-        { "name": "Direct Tax Reporting", "url": "https://www.blackline.com/products/tax-management/direct-tax-reporting" },
-        { "name": "Transfer Pricing Management", "url": "https://www.blackline.com/products/tax-management/transfer-pricing" },
-        { "name": "Tax Data Analytics", "url": "https://www.blackline.com/products/tax-management/tax-data-analytics" },
-        { "name": "Real-Time Tax Monitoring", "url": "https://www.blackline.com/products/tax-management/real-time-monitoring" }
+        { 
+          "name": "Tax Compliance",
+          "url": "https://www.blackline.com/products/tax-management/compliance",
+          "description": "Ensure regulatory compliance with automated tax calculations and reporting."
+        },
+        { 
+          "name": "Transfer Pricing",
+          "url": "https://www.blackline.com/products/tax-management/transfer-pricing",
+          "description": "Manage transfer pricing policies and ensure compliance with global tax regulations."
+        }
       ]
     }
   ]
 }
 
 
-  function createTreeView(data) {
-    const treeContainer = document.getElementById('treeview');
-    const ul = document.createElement('ul');
-    
-    data.services.forEach(service => {
-      const li = document.createElement('li');
-      const toggleBtn = document.createElement('span');
-      toggleBtn.classList.add('toggle-btn');
-      toggleBtn.textContent = '+';
-      toggleBtn.addEventListener('click', () => {
-        li.classList.toggle('open');
-        toggleBtn.textContent = li.classList.contains('open') ? '-' : '+';
-      });
+        function renderServices() {
+            const container = document.getElementById("services-container");
 
-      li.appendChild(toggleBtn);
-      li.appendChild(document.createTextNode(service.name));
-      
-      if (service.subservices && service.subservices.length > 0) {
-        const subTree = document.createElement('ul');
-        service.subservices.forEach(subservice => {
-          const subLi = document.createElement('li');
-          if (subservice.url) {
-            const link = document.createElement('a');
-            link.href = subservice.url;
-            link.target = '_blank';
-            link.textContent = subservice.name;
-            subLi.appendChild(link);
-          } else {
-            subLi.textContent = subservice.name;
-          }
-          subTree.appendChild(subLi);
-        });
-        li.appendChild(subTree);
-      }
+            jsonData.services.forEach(service => {
+                const serviceDiv = document.createElement("div");
+                serviceDiv.classList.add("service");
+                serviceDiv.textContent = service.name;
 
-      ul.appendChild(li);
-    });
-    
-    treeContainer.appendChild(ul);
-  }
+                const subservicesDiv = document.createElement("div");
+                subservicesDiv.classList.add("subservices");
 
-  createTreeView(data);
-</script>
+                service.subservices.forEach(sub => {
+                    const subDiv = document.createElement("div");
+                    subDiv.classList.add("subservice");
+                    subDiv.textContent = sub.name;
+                    subDiv.onclick = () => showDetails(sub);
+                    subservicesDiv.appendChild(subDiv);
+                });
+
+                serviceDiv.onclick = () => {
+                    const isOpen = subservicesDiv.style.maxHeight;
+                    document.querySelectorAll(".subservices").forEach(s => s.style.maxHeight = null);
+                    subservicesDiv.style.maxHeight = isOpen ? null : subservicesDiv.scrollHeight + "px";
+                };
+
+                container.appendChild(serviceDiv);
+                container.appendChild(subservicesDiv);
+            });
+        }
+
+        function showDetails(subservice) {
+            const detailsDiv = document.getElementById("details");
+            detailsDiv.innerHTML = `<h3>${subservice.name}</h3><p>${subservice.description}</p><a href="${subservice.url}" target="_blank">Learn More</a>`;
+            detailsDiv.style.display = "block";
+        }
+
+        renderServices();
+    </script>
 
 </body>
 </html>
