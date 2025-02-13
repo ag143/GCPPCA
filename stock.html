@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Stock Analysis Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://s3.tradingview.com/tv.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        .container { max-width: 1200px; margin: auto; padding: 20px; }
+        .info-box { display: flex; flex-wrap: wrap; justify-content: space-around; margin-top: 20px; }
+        .info-box div { border: 1px solid #ddd; padding: 10px; margin: 5px; width: 30%; border-radius: 5px; }
+        .tradingview-widget-container { height: 450px; margin-top: 20px; }
+        .chart-container { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Advanced Stock Analysis Dashboard</h1>
+    <label for="stockSymbol">Enter Stock Symbol (NSE): </label>
+    <input type="text" id="stockSymbol" value="RELIANCE">
+    <button onclick="fetchStockData()">Get Data</button>
+
+    <h2 id="price">Stock Price: --</h2>
+
+    <h3>Fundamental Analysis</h3>
+    <div class="info-box" id="fundamentalData"></div>
+
+    <h3>Technical Analysis</h3>
+    <div class="chart-container"><canvas id="stockChart"></canvas></div>
+    <div class="chart-container"><canvas id="rsiChart"></canvas></div>
+    <div class="chart-container"><canvas id="macdChart"></canvas></div>
+    <div class="chart-container"><canvas id="bollingerChart"></canvas></div>
+
+    <div class="tradingview-widget-container">
+        <div id="tradingview_chart"></div>
+    </div>
+
+    <script>
+        async function fetchStockData() {
+            let stockSymbol = document.getElementById("stockSymbol").value.toUpperCase();
+            let url = `https://query1.finance.yahoo.com/v8/finance/chart/${stockSymbol}.NS?interval=1d&range=3mo`;
+            let fundamentalUrl = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${stockSymbol}.NS?modules=summaryDetail,financialData`;
+            
+            try {
+                let [response, fundResponse] = await Promise.all([fetch(url), fetch(fundamentalUrl)]);
+                let data = await response.json();
+                let fundData = await fundResponse.json();
+                
+                let chartData = data.chart.result[0];
+                let fundamental = fundData.quoteSummary.result[0];
+                
+                document.getElementById("price").innerText = `Stock Price: ₹${chartData.meta.regularMarketPrice}`;
+                document.getElementById("fundamentalData").innerHTML = `
+                    <div><b>Market Cap:</b> ₹${formatNumber(fundamental.summaryDetail.marketCap.raw)}</div>
+                    <div><b>PE Ratio:</b> ${fundamental.summaryDetail.trailingPE?.raw || "--"}</div>
+                    <div><b>Debt/Equity:</b> ${fundamental.financialData.debtToEquity?.raw.toFixed(2) || "--"}</div>
+                    <div><b>EPS:</b> ${fundamental.summaryDetail.epsTrailingTwelveMonths?.raw || "--"}</div>
+                    <div><b>PB Ratio:</b> ${fundamental.summaryDetail.priceToBook?.raw.toFixed(2) || "--"}</div>
+                    <div><b>Free Cash Flow:</b> ₹${formatNumber(fundamental.financialData.freeCashflow?.raw)}</div>
+                `;
+                
+                loadTradingView(stockSymbol);
+            } catch (error) {
+                console.error("Error fetching stock data:", error);
+                alert("Error fetching stock data. Try again!");
+            }
+        }
+
+        function formatNumber(num) {
+            if (!num) return "--";
+            let units = ["", "K", "M", "B", "T"];
+            let unitIndex = Math.floor(Math.log10(num) / 3);
+            return (num / Math.pow(10, unitIndex * 3)).toFixed(2) + units[unitIndex];
+        }
+
+        function loadTradingView(stockSymbol) {
+            new TradingView.widget({
+                "container_id": "tradingview_chart",
+                "symbol": `NSE:${stockSymbol}`,
+                "interval": "D",
+                "theme": "light",
+                "style": "1",
+                "locale": "en",
+                "toolbar_bg": "#f1f3f6",
+                "hide_top_toolbar": false,
+                "enable_publishing": false,
+                "hide_legend": false
+            });
+        }
+
+        fetchStockData();
+    </script>
+</body>
+</html>
