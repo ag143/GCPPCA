@@ -30,10 +30,11 @@
         <h2>GCP PCA MCQ Quiz</h2>
         <label for="question-range">Select Question Range: </label>
         <select id="question-range" onchange="displayQuestions()"></select>
+        <button onclick="prevPage()">Back</button>
+        <button onclick="nextPage()">Next</button>
         <button onclick="revealAnswers()">Reveal Answers</button>
         <div id="quiz-container"></div>
         <button onclick="submitAnswers()">Submit Answers</button>
-        <button onclick="nextPage()">Next</button>
     </div>
     
     <div id="answers" class="content quiz-container">
@@ -52,7 +53,6 @@
             allQuestions = await response.json();
             populateQuestionRange();
             displayQuestions();
-            displayAnswers();
         }
 
         function populateQuestionRange() {
@@ -100,23 +100,25 @@
             });
         }
 
+        function prevPage() {
+            let select = document.getElementById("question-range");
+            if (select.selectedIndex > 0) {
+                select.selectedIndex--;
+                displayQuestions();
+            }
+        }
+
+        function nextPage() {
+            let select = document.getElementById("question-range");
+            if (select.selectedIndex < select.options.length - 1) {
+                select.selectedIndex++;
+                displayQuestions();
+            }
+        }
+
         function switchTab(tabId) {
             document.querySelectorAll('.content').forEach(div => div.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
-        }
-
-        function revealAnswers() {
-            document.querySelectorAll(".question").forEach((questionBlock, index) => {
-                let correctAnswers = allQuestions[index].answer;
-                if (!Array.isArray(correctAnswers)) {
-                    correctAnswers = correctAnswers.split("");
-                }
-                questionBlock.querySelectorAll("input").forEach(input => {
-                    if (correctAnswers.includes(input.value)) {
-                        input.parentElement.classList.add("correct");
-                    }
-                });
-            });
         }
 
         loadQuestions();
