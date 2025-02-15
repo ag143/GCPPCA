@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Quiz</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; padding: 10px; background-color: #f4f4f9; }
+        .tab { display: flex; justify-content: center; margin-bottom: 20px; }
+        .tab button { padding: 10px; border: none; cursor: pointer; background: #007BFF; color: white; margin: 5px; border-radius: 5px; }
+        .tab button:hover { background: #0056b3; }
+        .content { display: none; }
+        .active { display: block; }
+        .quiz-container { max-width: 800px; margin: auto; padding: 20px; background: white; border-radius: 10px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); }
+        .question { margin-bottom: 15px; padding: 15px; border: 1px solid #ccc; border-radius: 10px; background: #eef5ff; }
+        .options label { display: block; padding: 10px; background: #fff; border-radius: 5px; border: 1px solid #ccc; margin: 5px 0; cursor: pointer; }
+        .correct { background-color: lightgreen !important; }
+        .incorrect { background-color: lightcoral !important; }
+        .answer { color: green; font-weight: bold; margin-top: 5px; display: block; }
+        #answers-container { height: 200vh; overflow-y: auto; border: 1px solid #ccc; padding: 10px; background: #fff; border-radius: 10px; }
+    </style>
+</head>
+<body>
+    <div class="tab">
+        <button onclick="switchTab('quiz')">Quiz</button>
+        <button onclick="switchTab('answers')">Questions & Answers</button>
+    </div>
+    
+    <div id="quiz" class="content active quiz-container">
+        <h2>GCP PCA MCQ Quiz</h2>
+        <label for="question-range">Select Question Range: </label>
+        <select id="question-range" onchange="displayQuestions()"></select>
+        <button onclick="prevPage()">Back</button>
+        <button onclick="nextPage()">Next</button>
+        <button onclick="revealAnswers()">Reveal Answers</button>
+        <div id="quiz-container"></div>
+        <button onclick="submitAnswers()">Submit Answers</button>
+        <p id="score"></p>
+        <button onclick="scrollToTop()">Scroll to Top</button>
+    </div>
+    
+    <div id="answers" class="content quiz-container">
+        <h2>Questions & Answers</h2>
+        <div id="answers-container"></div>
+    </div>
+    
+    <script>
+        let allQuestions = [];
+        let selectedAnswers = {};
+        let currentPage = 0;
+        const questionsPerPage = 10;
+        const optionLabels = ["A", "B", "C", "D", "E", "F"];
+
+        async function loadQuestions() {
+            const response = await fetch('https://raw.githubusercontent.com/ag143/GCPPCA/main/gcp_pca.json');
+            allQuestions = await response.json();
+            populateQuestionRange();
+            displayQuestions();
+            displayAnswers();
+        }
+
+        function populateQuestionRange() {
+            const select = document.getElementById("question-range");
+            select.innerHTML = "";
+            for (let i = 0; i < allQuestions.length; i += questionsPerPage) {
+                let end = Math.min(i + questionsPerPage, allQuestions.length);
+                let option = document.createElement("option");
+                option.value = i;
+                option.textContent = `${i + 1}-${end}`;
+                select.appendChild(option);
+            }
+            let allOption = document.createElement("option");
+            allOption.value = "all";
+            allOption.textContent = "All";
+            select.appendChild(allOption);
+        }
+
+        function displayQuestions() {
+            const quizContainer = document.getElementById("quiz-container");
+            quizContainer.innerHTML = "";
+            const selectedRange = document.getElementById("question-range").value;
+            let questionsToShow = selectedRange === "all" ? allQuestions : allQuestions.slice(selectedRange, Number(selectedRange) + questionsPerPage);
+            
+            questionsToShow.forEach((q, index) => {
+                let questionBlock = document.createElement("div");
+                questionBlock.classList.add("question");
+                let correctAnswers = Array.isArray(q.answer) ? q.answer : q.answer.split("");
+                let inputType = correctAnswers.length > 1 ? "checkbox" : "radio";
+                
+                let questionHTML = `<h3>Question ${index + 1}</h3><p><strong>${q.body}</strong></p>`;
+                questionBlock.innerHTML = questionHTML;
+                
+                let optionsDiv = document.createElement("div");
+                optionsDiv.classList.add("options");
+
+                Object.entries(q.options || {}).forEach(([key, option], i) => {
+                    let optionKey = optionLabels[i];
+                    let optionLabel = `<label><input type="${inputType}" name="q${index}" value="${optionKey}"> ${optionKey}. ${option}</label>`;
+                    optionsDiv.innerHTML += optionLabel;
+                });
+                
+                questionBlock.appendChild(optionsDiv);
+                quizContainer.appendChild(questionBlock);
+            });
+        }
+
+        function nextPage() {
+            if (currentPage * questionsPerPage < allQuestions.length - questionsPerPage) {
+                currentPage++;
+                displayQuestions();
+            }
+        }
+
+        function prevPage() {
+            if (currentPage > 0) {
+                currentPage--;
+                displayQuestions();
+            }
+        }
+
+        function revealAnswers() {
+            document.querySelectorAll(".question").forEach((questionBlock, index) => {
+                let correctAnswers = allQuestions[index].answer;
+                if (!Array.isArray(correctAnswers)) {
+                    correctAnswers = correctAnswers.split("");
+                }
+                questionBlock.querySelectorAll("input").forEach(input => {
+                    if (correctAnswers.includes(input.value)) {
+                        input.parentElement.classList.add("correct");
+                    }
+                });
+            });
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.content').forEach(div => div.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        function submitAnswers() {
+            let score = 0;
+            document.querySelectorAll(".question").forEach((questionBlock, index) => {
+                let correctAnswers = allQuestions[index].answer;
+                if (!Array.isArray(correctAnswers)) {
+                    correctAnswers = correctAnswers.split("");
+                }
+                let selectedOptions = [...questionBlock.querySelectorAll("input:checked")].map(input => input.value);
+                if (JSON.stringify(correctAnswers.sort()) === JSON.stringify(selectedOptions.sort())) {
+                    score++;
+                }
+            });
+            document.getElementById("score").innerText = `Score: ${score}/${allQuestions.length}`;
+        }
+         function displayAnswers() {
+            const answersContainer = document.getElementById("answers-container");
+            answersContainer.innerHTML = "";
+            allQuestions.forEach((q, index) => {
+                let questionBlock = document.createElement("div");
+                questionBlock.classList.add("question");
+                let questionHTML = `<h3>Question ${index + 1}</h3><p><strong>${q.body}</strong></p>`;
+                questionBlock.innerHTML = questionHTML;
+                answersContainer.appendChild(questionBlock);
+            });
+        }
+        loadQuestions();
+    </script>
+</body>
+</html>
