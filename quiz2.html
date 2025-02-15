@@ -30,6 +30,7 @@
         <h2>GCP PCA MCQ Quiz</h2>
         <label for="question-range">Select Question Range: </label>
         <select id="question-range" onchange="displayQuestions()">
+            <option value="0" selected>1-10</option>
             <option value="all">All</option>
         </select>
         <button onclick="revealAnswers()">Reveal Answers</button>
@@ -60,8 +61,8 @@
 
         function populateQuestionRange() {
             const select = document.getElementById("question-range");
-            select.innerHTML = '<option value="all">All</option>';
-            for (let i = 0; i < allQuestions.length; i += 10) {
+            select.innerHTML = '<option value="0" selected>1-10</option><option value="all">All</option>';
+            for (let i = 10; i < allQuestions.length; i += 10) {
                 let end = Math.min(i + 9, allQuestions.length - 1);
                 let option = document.createElement("option");
                 option.value = i;
@@ -101,30 +102,6 @@
 
                 questionBlock.appendChild(optionsDiv);
                 quizContainer.appendChild(questionBlock);
-            });
-        }
-
-        function saveAnswer(input) {
-            const name = input.name;
-            if (!selectedAnswers[name]) selectedAnswers[name] = [];
-            if (input.checked) {
-                selectedAnswers[name].push(input.value);
-            } else {
-                selectedAnswers[name] = selectedAnswers[name].filter(v => v !== input.value);
-            }
-        }
-
-        function revealAnswers() {
-            document.querySelectorAll(".question").forEach((questionBlock, index) => {
-                let correctAnswers = allQuestions[index].answer;
-                if (!Array.isArray(correctAnswers)) {
-                    correctAnswers = correctAnswers.split("");
-                }
-                questionBlock.querySelectorAll("input").forEach(input => {
-                    if (correctAnswers.includes(input.value)) {
-                        input.parentElement.classList.add("correct");
-                    }
-                });
             });
         }
 
