@@ -15,28 +15,26 @@
         }
         #menu-container {
             position: relative;
-            width: 300px;
+            width: 5%;
+            min-width: 50px;
+            max-width: 300px;
             transition: width 0.3s ease-in-out;
+            overflow: hidden;
         }
         #menu {
             width: 100%;
+            height: 100vh;
             padding: 10px;
             background: #f9f9f9;
             overflow-y: auto;
             border-right: 2px solid #ccc;
-            height: 100vh;
+            display: none;
         }
-        #menu-toggle {
-            position: absolute;
-            right: -10px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: #007bff;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            cursor: pointer;
-            font-size: 14px;
+        #menu-container:hover {
+            width: 300px;
+        }
+        #menu-container:hover #menu {
+            display: block;
         }
         #diagramDiv {
             flex-grow: 1;
@@ -74,6 +72,9 @@
             padding: 5px;
             margin-bottom: 10px;
         }
+        .highlight {
+            background-color: yellow !important;
+        }
         @keyframes flow-animation {
             from { stroke-dashoffset: 10; }
             to { stroke-dashoffset: 0; }
@@ -87,7 +88,6 @@
             <input type="text" id="searchBar" placeholder="Search..." onkeyup="filterMenu()">
             <div id="menu-content"></div>
         </div>
-        <button id="menu-toggle" onclick="toggleMenu()">&#10095;</button>
     </div>
     <div id="diagramDiv"></div>
 
@@ -130,8 +130,30 @@
             diagram.layoutDiagram(true);
         }
 
+        function highlightNode(nodeKey) {
+            diagram.startTransaction("highlight");
+            diagram.clearHighlighteds();
+
+            var node = diagram.findNodeForKey(nodeKey);
+            if (node) {
+                node.isHighlighted = true;
+                node.findObject("SHAPE").stroke = "red";
+                node.findObject("SHAPE").strokeWidth = 4;
+            }
+
+            var menuItems = document.querySelectorAll(".menu-item");
+            menuItems.forEach(item => {
+                item.classList.remove("highlight");
+                if (item.innerHTML === nodeKey) {
+                    item.classList.add("highlight");
+                }
+            });
+
+            diagram.commitTransaction("highlight");
+        }
+
         diagram.nodeTemplate = $(go.Node, "Auto",
-            $(go.Shape, "Rectangle", { fill: "#FFD700", strokeWidth: 2 }),
+            $(go.Shape, "Rectangle", { fill: "#FFD700", strokeWidth: 2, name: "SHAPE" }),
             $(go.TextBlock, { margin: 8, font: "bold 12px sans-serif" },
                 new go.Binding("text", "key")
             )
@@ -185,19 +207,6 @@
         function toggleTreeView(groupKey) {
             var groupContent = document.getElementById(groupKey);
             groupContent.style.display = (groupContent.style.display === "block") ? "none" : "block";
-        }
-
-        function toggleMenu() {
-            var menu = document.getElementById("menu-container");
-            if (menu.style.width === "50px") {
-                menu.style.width = "300px";
-                document.getElementById("menu").style.display = "block";
-                document.getElementById("menu-toggle").innerHTML = "&#10094;";
-            } else {
-                menu.style.width = "50px";
-                document.getElementById("menu").style.display = "none";
-                document.getElementById("menu-toggle").innerHTML = "&#10095;";
-            }
         }
 
         diagram.model = new go.GraphLinksModel(gcpData, gcpLinks);
