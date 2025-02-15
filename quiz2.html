@@ -18,6 +18,7 @@
         .incorrect { background-color: lightcoral !important; }
         .answer { color: green; font-weight: bold; margin-top: 5px; display: block; }
         #answers-container { height: 200vh; overflow-y: auto; border: 1px solid #ccc; padding: 10px; background: #fff; border-radius: 10px; }
+        .navigation { display: flex; justify-content: space-between; margin-top: 20px; }
     </style>
 </head>
 <body>
@@ -30,8 +31,10 @@
         <h2>GCP PCA MCQ Quiz</h2>
         <label for="question-range">Select Question Range: </label>
         <select id="question-range" onchange="displayQuestions()"></select>
-        <button onclick="prevPage()">Back</button>
-        <button onclick="nextPage()">Next</button>
+        <div class="navigation">
+            <button onclick="prevPage()">Back</button>
+            <button onclick="nextPage()">Next</button>
+        </div>
         <button onclick="revealAnswers()">Reveal Answers</button>
         <div id="quiz-container"></div>
         <button onclick="submitAnswers()">Submit Answers</button>
@@ -104,11 +107,16 @@
                 quizContainer.appendChild(questionBlock);
             });
         }
+        function updatePage() {
+            currentPage = document.getElementById("question-range").value === "all" ? -1 : parseInt(document.getElementById("question-range").value);
+            displayQuestions();
+        }
         
         function nextPage() {
             if (currentPage * questionsPerPage < allQuestions.length - questionsPerPage) {
                 currentPage++;
                 displayQuestions();
+                 updatePage();
             }
         }
 
@@ -116,6 +124,7 @@
             if (currentPage > 0) {
                 currentPage--;
                 displayQuestions();
+                 updatePage();
             }
         }
 
