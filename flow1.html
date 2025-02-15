@@ -17,19 +17,7 @@
 <body>
     <div id="menu">
         <h3>GCP Services</h3>
-        <div class="menu-group" onclick="toggleTreeView('Compute')">Compute ▾</div>
-        <div id="Compute" class="submenu">
-            <div class="menu-item" onclick="highlightNode('Compute')">Compute</div>
-            <div class="menu-item" onclick="highlightNode('GCE')">GCE</div>
-            <div class="menu-item" onclick="highlightNode('GKE')">GKE</div>
-            <div class="menu-item" onclick="highlightNode('CloudRun')">CloudRun</div>
-        </div>
-        <div class="menu-group" onclick="toggleTreeView('Networking')">Networking ▾</div>
-        <div id="Networking" class="submenu">
-            <div class="menu-item" onclick="highlightNode('Networking')">Networking</div>
-            <div class="menu-item" onclick="highlightNode('VPC')">VPC</div>
-            <div class="menu-item" onclick="highlightNode('CloudDNS')">CloudDNS</div>
-        </div>
+        <div id="menu-content"></div>
     </div>
     <div id="diagramDiv"></div>
 
@@ -40,6 +28,53 @@
             layout: $(go.TreeLayout, { angle: 90, layerSpacing: 50 })
         });
 
+        var gcpData = [
+            { key: "Compute", color: "#ADD8E6", isGroup: true },
+            { key: "GCE", group: "Compute", color: "#D3D3D3" },
+            { key: "GKE", group: "Compute", color: "#D3D3D3" },
+            { key: "CloudRun", group: "Compute", color: "#D3D3D3" },
+            { key: "Networking", color: "#90EE90", isGroup: true },
+            { key: "VPC", group: "Networking", color: "#D3D3D3" },
+            { key: "CloudDNS", group: "Networking", color: "#D3D3D3" },
+            { key: "Storage", color: "#FFA07A", isGroup: true },
+            { key: "Cloud Storage", group: "Storage", color: "#D3D3D3" },
+            { key: "BigQuery", group: "Storage", color: "#D3D3D3" },
+            { key: "Security", color: "#FFD700", isGroup: true },
+            { key: "IAM", group: "Security", color: "#D3D3D3" },
+            { key: "Cloud Armor", group: "Security", color: "#D3D3D3" }
+        ];
+
+        var links = gcpData.filter(d => d.group).map(d => ({ from: d.group, to: d.key }));
+
+        function createMenu() {
+            var menuContent = document.getElementById("menu-content");
+            var groupedData = {};
+            gcpData.forEach(item => {
+                if (item.isGroup) {
+                    groupedData[item.key] = [];
+                } else if (item.group) {
+                    groupedData[item.group].push(item.key);
+                }
+            });
+
+            Object.keys(groupedData).forEach(group => {
+                var groupDiv = document.createElement("div");
+                groupDiv.innerHTML = `<div class='menu-group' onclick='toggleTreeView("${group}")'>${group} ▾</div>`;
+                var submenuDiv = document.createElement("div");
+                submenuDiv.id = group;
+                submenuDiv.className = "submenu";
+                groupedData[group].forEach(node => {
+                    var nodeDiv = document.createElement("div");
+                    nodeDiv.className = "menu-item";
+                    nodeDiv.innerHTML = node;
+                    nodeDiv.onclick = () => highlightNode(node);
+                    submenuDiv.appendChild(nodeDiv);
+                });
+                menuContent.appendChild(groupDiv);
+                menuContent.appendChild(submenuDiv);
+            });
+        }
+
         function toggleTreeView(groupId) {
             var submenu = document.getElementById(groupId);
             submenu.style.display = submenu.style.display === "none" ? "block" : "none";
@@ -49,24 +84,6 @@
             var node = diagram.findNodeForKey(key);
             if (node) diagram.centerRect(node.actualBounds);
         }
-
-        var nodes = [
-            { key: "Compute", color: "#ADD8E6", isGroup: true },
-            { key: "GCE", group: "Compute", color: "#D3D3D3" },
-            { key: "GKE", group: "Compute", color: "#D3D3D3" },
-            { key: "CloudRun", group: "Compute", color: "#D3D3D3" },
-            { key: "Networking", color: "#90EE90", isGroup: true },
-            { key: "VPC", group: "Networking", color: "#D3D3D3" },
-            { key: "CloudDNS", group: "Networking", color: "#D3D3D3" }
-        ];
-        
-        var links = [
-            { from: "Compute", to: "GCE" },
-            { from: "Compute", to: "GKE" },
-            { from: "Compute", to: "CloudRun" },
-            { from: "Networking", to: "VPC" },
-            { from: "Networking", to: "CloudDNS" }
-        ];
 
         diagram.nodeTemplate = $(go.Node, "Auto",
             $(go.Shape, "RoundedRectangle", { fill: "white", strokeWidth: 2 },
@@ -103,7 +120,8 @@
             $(go.Shape, { toArrow: "Standard" })
         );
 
-        diagram.model = new go.GraphLinksModel(nodes, links);
+        diagram.model = new go.GraphLinksModel(gcpData, links);
+        createMenu();
     </script>
 </body>
 </html>
