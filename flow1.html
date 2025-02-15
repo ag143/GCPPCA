@@ -12,6 +12,7 @@
         .menu-item { cursor: pointer; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; }
         .menu-item:hover { background-color: #e0e0e0; }
         .submenu { padding-left: 20px; display: none; }
+        .toggle-button { cursor: pointer; font-weight: bold; padding: 5px; }
     </style>
 </head>
 <body>
@@ -78,18 +79,27 @@
         );
 
         diagram.groupTemplate = $(go.Group, "Auto",
-            { layout: $(go.TreeLayout, { angle: 90, layerSpacing: 40 }) },
+            { layout: $(go.TreeLayout, { angle: 90, layerSpacing: 50 }) },
             $(go.Shape, "RoundedRectangle", { fill: "lightgray", strokeWidth: 2 }),
             $(go.Panel, "Vertical",
                 $(go.TextBlock, { margin: 8, font: "bold 14px Arial" },
                     new go.Binding("text", "key")
                 ),
-                $(go.Placeholder)
+                $(go.Panel, "Horizontal",
+                    $("Button", { click: function(e, obj) { toggleGroup(obj.part) } },
+                        $(go.TextBlock, "+/-", { margin: 5 })
+                    )
+                ),
+                $(go.Placeholder, { padding: 10 })
             )
         );
 
+        function toggleGroup(group) {
+            group.isSubGraphExpanded = !group.isSubGraphExpanded;
+        }
+
         diagram.linkTemplate = $(go.Link,
-            { routing: go.Link.Orthogonal, corner: 10 },
+            { routing: go.Link.AvoidsNodes, corner: 10, curve: go.Link.JumpGap },
             $(go.Shape, { strokeWidth: 2 }),
             $(go.Shape, { toArrow: "Standard" })
         );
