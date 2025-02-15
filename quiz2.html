@@ -29,13 +29,11 @@
     <div id="quiz" class="content active quiz-container">
         <h2>GCP PCA MCQ Quiz</h2>
         <label for="question-range">Select Question Range: </label>
-        <select id="question-range" onchange="displayQuestions()">
-            <option value="0" selected>1-10</option>
-            <option value="all">All</option>
-        </select>
+        <select id="question-range" onchange="displayQuestions()"></select>
         <button onclick="prevPage()">Back</button>
         <button onclick="nextPage()">Next</button>
         <button onclick="revealAnswers()">Reveal Answers</button>
+        <button onclick="scrollToTop()">Scroll to Top</button>
         <div id="quiz-container"></div>
         <button onclick="prevPage()">Back</button>
         <button onclick="nextPage()">Next</button>
@@ -48,8 +46,6 @@
     
     <script>
         let allQuestions = [];
-        let currentPage = 0;
-        let questionsPerPage = 10;
         let selectedAnswers = {};
         const optionLabels = ["A", "B", "C", "D", "E", "F"];
 
@@ -58,12 +54,11 @@
             allQuestions = await response.json();
             populateQuestionRange();
             displayQuestions();
-            displayAnswers();
         }
 
         function populateQuestionRange() {
             const select = document.getElementById("question-range");
-            select.innerHTML = '<option value="0" selected>1-10</option><option value="all">All</option>';
+            select.innerHTML = '<option value="0" selected>1-10</option>';
             for (let i = 10; i < allQuestions.length; i += 10) {
                 let end = Math.min(i + 9, allQuestions.length - 1);
                 let option = document.createElement("option");
@@ -71,6 +66,7 @@
                 option.textContent = `${i + 1}-${end + 1}`;
                 select.appendChild(option);
             }
+            select.innerHTML += '<option value="all">All</option>';
         }
 
         function displayQuestions() {
@@ -90,15 +86,14 @@
                 
                 let optionsDiv = document.createElement("div");
                 optionsDiv.classList.add("options");
-
+                
                 let correctAnswers = Array.isArray(q.answer) ? q.answer : q.answer.split("");
                 let inputType = correctAnswers.length > 1 ? "checkbox" : "radio";
-
+                
                 Object.entries(q.options || {}).forEach(([key, option], i) => {
                     let optionLabel = document.createElement("label");
                     let optionKey = optionLabels[i];
-                    let checked = selectedAnswers[`q${start + index}`] && selectedAnswers[`q${start + index}`].includes(optionKey) ? "checked" : "";
-                    optionLabel.innerHTML = `<input type="${inputType}" name="q${start + index}" value="${optionKey}" ${checked} onchange="saveAnswer(this)"> ${optionKey}. ${option}`;
+                    optionLabel.innerHTML = `<input type="${inputType}" name="q${start + index}" value="${optionKey}" onchange="saveAnswer(this)"> ${optionKey}. ${option}`;
                     optionsDiv.appendChild(optionLabel);
                 });
 
@@ -107,9 +102,25 @@
             });
         }
 
+        function revealAnswers() {
+            document.querySelectorAll(".question").forEach((questionBlock, index) => {
+                let correctAnswers = allQuestions[index].answer;
+                if (!Array.isArray(correctAnswers)) correctAnswers = correctAnswers.split("");
+                questionBlock.querySelectorAll("input").forEach(input => {
+                    if (correctAnswers.includes(input.value)) {
+                        input.parentElement.classList.add("correct");
+                    }
+                });
+            });
+        }
+
         function switchTab(tabId) {
             document.querySelectorAll('.content').forEach(div => div.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
+        }
+
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         loadQuestions();
