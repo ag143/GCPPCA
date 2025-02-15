@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Architecture Diagram</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gojs/2.3.11/go.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; display: flex; }
+        #list { width: 250px; padding: 10px; border-right: 2px solid #ccc; background: #f9f9f9; }
+        #diagramDiv { flex-grow: 1; height: 600px; border: 1px solid #ccc; }
+        .list-item { cursor: pointer; padding: 8px; border-bottom: 1px solid #ddd; }
+        .list-item:hover { background-color: #e0e0e0; }
+        .highlighted { background-color: yellow; }
+    </style>
+</head>
+<body>
+    <div id="list">
+        <h3>Components</h3>
+        <div class="list-item" onclick="highlightNode('Server')">Server</div>
+        <div class="list-item" onclick="highlightNode('Database')">Database</div>
+        <div class="list-item" onclick="toggleGroup('Services')">Toggle Services Group</div>
+        <div class="list-item" onclick="addNewNode()">Add New Node</div>
+    </div>
+    <div id="diagramDiv"></div>
+    
+    <script>
+        var $ = go.GraphObject.make;
+        var diagram = $(go.Diagram, "diagramDiv", {
+            "undoManager.isEnabled": true,
+            layout: $(go.TreeLayout, { angle: 90, layerSpacing: 50 }),
+            "animationManager.isEnabled": true
+        });
+
+        diagram.nodeTemplate = $(go.Node, "Auto",
+            { click: (e, obj) => highlightNode(obj.data.key) },
+            $(go.Shape, "RoundedRectangle", { fill: "lightblue", strokeWidth: 1, stroke: "black",
+                portId: "", fromLinkable: true, toLinkable: true },
+                new go.Binding("fill", "color")
+            ),
+            $(go.TextBlock, { margin: 5 }, new go.Binding("text", "key"))
+        );
+
+        diagram.groupTemplate = $(go.Group, "Auto",
+            { layout: $(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(10, 10) }) },
+            $(go.Shape, "Rectangle", { fill: "lightgray", stroke: "black" }),
+            $(go.Panel, "Vertical",
+                $(go.TextBlock, { margin: 5, font: "bold 12px sans-serif" }, new go.Binding("text", "key")),
+                $(go.Placeholder)
+            )
+        );
+
+        diagram.model = new go.GraphLinksModel(
+            [
+                { key: "Server", color: "lightblue" },
+                { key: "Database", color: "lightgreen" },
+                { key: "Services", isGroup: true },
+                { key: "API", group: "Services", color: "orange" },
+                { key: "Auth", group: "Services", color: "pink" }
+            ],
+            [
+                { from: "Server", to: "Database" },
+                { from: "Server", to: "API" },
+                { from: "API", to: "Auth" }
+            ]
+        );
+
+        function highlightNode(nodeKey) {
+            diagram.startTransaction("highlight");
+            diagram.nodes.each(node => {
+                var shape = node.findObject("Shape");
+                if (node.data.key === nodeKey) {
+                    shape.strokeWidth = 3;
+                    shape.stroke = "red";
+                    node.scale = 1.2;
+                } else {
+                    shape.strokeWidth = 1;
+                    shape.stroke = "black";
+                    node.scale = 1;
+                }
+            });
+            diagram.commitTransaction("highlight");
+        }
+
+        function toggleGroup(groupKey) {
+            diagram.startTransaction("toggleGroup");
+            var group = diagram.findNodeForKey(groupKey);
+            if (group) {
+                group.isSubGraphExpanded = !group.isSubGraphExpanded;
+                diagram.animationManager.animateExpansion = true;
+            }
+            diagram.commitTransaction("toggleGroup");
+        }
+
+        function addNewNode() {
+            diagram.startTransaction("addNode");
+            var newNodeKey = "NewNode" + Math.floor(Math.random() * 1000);
+            diagram.model.addNodeData({ key: newNodeKey, color: "lightcoral" });
+            diagram.commitTransaction("addNode");
+        }
+    </script>
+</body>
+</html>
