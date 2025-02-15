@@ -28,39 +28,50 @@
         var $ = go.GraphObject.make;
         var diagram = $(go.Diagram, "diagramDiv", {
             "undoManager.isEnabled": true,
-            layout: $(go.GridLayout, { spacing: new go.Size(50, 50) }),
+            layout: $(go.LayeredDigraphLayout, { direction: 90, layerSpacing: 50 }),
             "animationManager.isEnabled": true
         });
 
         diagram.nodeTemplate = $(go.Node, "Auto",
             { click: (e, obj) => highlightNode(obj.data.key) },
-            $(go.Shape, "RoundedRectangle", { fill: "lightblue", strokeWidth: 1, stroke: "black" },
-                new go.Binding("fill", "color")
-            ),
-            $(go.TextBlock, { margin: 5 }, new go.Binding("text", "key"))
+            $(go.Panel, "Vertical",
+                $(go.TextBlock, { font: "bold 12px sans-serif", margin: 5 }, new go.Binding("text", "header")),
+                $(go.Shape, "RoundedRectangle", { fill: "lightblue", strokeWidth: 1, stroke: "black" },
+                    new go.Binding("fill", "color")
+                ),
+                $(go.TextBlock, { margin: 5 }, new go.Binding("text", "key"))
+            )
         );
 
         diagram.groupTemplate = $(go.Group, "Auto",
             { layout: $(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(10, 10) }) },
             $(go.Shape, "Rectangle", { fill: "lightgray", stroke: "black" }),
             $(go.Panel, "Vertical",
-                $(go.TextBlock, { margin: 5, font: "bold 12px sans-serif" }, new go.Binding("text", "key")),
+                $(go.TextBlock, { margin: 5, font: "bold 14px sans-serif" }, new go.Binding("text", "key")),
                 $(go.Placeholder)
             )
         );
 
+        diagram.linkTemplate = $(go.Link,
+            { curve: go.Link.Bezier, corner: 5 },
+            $(go.Shape, { strokeWidth: 2, stroke: "gray" }),
+            $(go.Shape, { toArrow: "Standard", stroke: "gray", fill: "gray" })
+        );
+
         diagram.model = new go.GraphLinksModel(
             [
-                { key: "Server", color: "lightblue" },
-                { key: "Database", color: "lightgreen" },
+                { key: "Server", color: "lightblue", header: "Main Server" },
+                { key: "Database", color: "lightgreen", header: "Database Server" },
                 { key: "Services", isGroup: true },
-                { key: "API", group: "Services", color: "orange" },
-                { key: "Auth", group: "Services", color: "pink" }
+                { key: "API", group: "Services", color: "orange", header: "API Gateway" },
+                { key: "Auth", group: "Services", color: "pink", header: "Authentication Service" },
+                { key: "Cache", group: "Services", color: "yellow", header: "Cache Service" }
             ],
             [
                 { from: "Server", to: "Database" },
                 { from: "Server", to: "API" },
-                { from: "API", to: "Auth" }
+                { from: "API", to: "Auth" },
+                { from: "API", to: "Cache" }
             ]
         );
 
@@ -94,7 +105,7 @@
         function addNewNode() {
             diagram.startTransaction("addNode");
             var newNodeKey = "NewNode" + Math.floor(Math.random() * 1000);
-            diagram.model.addNodeData({ key: newNodeKey, color: "lightcoral" });
+            diagram.model.addNodeData({ key: newNodeKey, color: "lightcoral", header: "New Component" });
             diagram.commitTransaction("addNode");
         }
     </script>
