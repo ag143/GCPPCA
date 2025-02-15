@@ -20,6 +20,18 @@
         <div class="list-item" onclick="highlightNode('Server')">Server</div>
         <div class="list-item" onclick="highlightNode('Database')">Database</div>
         <div class="list-item" onclick="toggleGroup('Services')">Toggle Services Group</div>
+        <div class="list-item" onclick="toggleGroup('Networking')">Toggle Networking Group</div>
+        <div class="list-item" onclick="toggleGroup('Security')">Toggle Security Group</div>
+        <div class="list-item" onclick="highlightNode('LoadBalancer')">Load Balancer</div>
+        <div class="list-item" onclick="highlightNode('Frontend')">Frontend</div>
+        <div class="list-item" onclick="highlightNode('Backend')">Backend</div>
+        <div class="list-item" onclick="highlightNode('Storage')">Storage</div>
+        <div class="list-item" onclick="highlightNode('Logging')">Logging</div>
+        <div class="list-item" onclick="highlightNode('Monitoring')">Monitoring</div>
+        <div class="list-item" onclick="highlightNode('Firewall')">Firewall</div>
+        <div class="list-item" onclick="highlightNode('VPN')">VPN</div>
+        <div class="list-item" onclick="highlightNode('DNS')">DNS</div>
+        <div class="list-item" onclick="highlightNode('CDN')">CDN</div>
         <div class="list-item" onclick="addNewNode()">Add New Node</div>
     </div>
     <div id="diagramDiv"></div>
@@ -45,69 +57,57 @@
 
         diagram.groupTemplate = $(go.Group, "Auto",
             { layout: $(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(10, 10) }) },
+            $(go.Panel, "Horizontal",
+                $(go.TextBlock, { margin: 5, font: "bold 14px sans-serif" }, new go.Binding("text", "key")),
+                $(go.Panel, "Auto",
+                    $(go.Shape, "Circle", { width: 20, height: 20, fill: "lightgray", stroke: "black", cursor: "pointer" },
+                        new go.Binding("figure", "expanded", v => v ? "Minus" : "Plus"),
+                        { click: (e, obj) => toggleGroup(obj.part) }
+                    )
+                )
+            ),
             $(go.Shape, "Rectangle", { fill: "lightgray", stroke: "black" }),
             $(go.Panel, "Vertical",
-                $(go.TextBlock, { margin: 5, font: "bold 14px sans-serif" }, new go.Binding("text", "key")),
                 $(go.Placeholder)
             )
         );
 
-        diagram.linkTemplate = $(go.Link,
-            { curve: go.Link.Bezier, corner: 5 },
-            $(go.Shape, { strokeWidth: 2, stroke: "gray" }),
-            $(go.Shape, { toArrow: "Standard", stroke: "gray", fill: "gray" })
-        );
-
-        diagram.model = new go.GraphLinksModel(
-            [
-                { key: "Server", color: "lightblue", header: "Main Server" },
-                { key: "Database", color: "lightgreen", header: "Database Server" },
-                { key: "Services", isGroup: true },
-                { key: "API", group: "Services", color: "orange", header: "API Gateway" },
-                { key: "Auth", group: "Services", color: "pink", header: "Authentication Service" },
-                { key: "Cache", group: "Services", color: "yellow", header: "Cache Service" }
-            ],
-            [
-                { from: "Server", to: "Database" },
-                { from: "Server", to: "API" },
-                { from: "API", to: "Auth" },
-                { from: "API", to: "Cache" }
-            ]
-        );
-
-        function highlightNode(nodeKey) {
-            diagram.startTransaction("highlight");
-            diagram.nodes.each(node => {
-                var shape = node.findObject("Shape");
-                if (node.data.key === nodeKey) {
-                    shape.strokeWidth = 3;
-                    shape.stroke = "red";
-                    node.scale = 1.2;
-                } else {
-                    shape.strokeWidth = 1;
-                    shape.stroke = "black";
-                    node.scale = 1;
-                }
-            });
-            diagram.commitTransaction("highlight");
-        }
-
-        function toggleGroup(groupKey) {
+        function toggleGroup(group) {
+            var isExpanded = group.isSubGraphExpanded;
             diagram.startTransaction("toggleGroup");
-            var group = diagram.findNodeForKey(groupKey);
-            if (group) {
-                group.isSubGraphExpanded = !group.isSubGraphExpanded;
-                diagram.animationManager.animateExpansion = true;
-            }
+            group.isSubGraphExpanded = !isExpanded;
             diagram.commitTransaction("toggleGroup");
         }
 
-        function addNewNode() {
-            diagram.startTransaction("addNode");
-            var newNodeKey = "NewNode" + Math.floor(Math.random() * 1000);
-            diagram.model.addNodeData({ key: newNodeKey, color: "lightcoral", header: "New Component" });
-            diagram.commitTransaction("addNode");
-        }
+        diagram.model = new go.GraphLinksModel(
+            [
+                { key: "Services", isGroup: true, expanded: true },
+                { key: "Networking", isGroup: true, expanded: true },
+                { key: "Security", isGroup: true, expanded: true },
+                { key: "LoadBalancer", group: "Networking", color: "lightgray", header: "Load Balancer" },
+                { key: "DNS", group: "Networking", color: "lightblue", header: "DNS Service" },
+                { key: "CDN", group: "Networking", color: "lightgreen", header: "CDN Service" },
+                { key: "Firewall", group: "Security", color: "red", header: "Firewall" },
+                { key: "VPN", group: "Security", color: "purple", header: "VPN Service" },
+                { key: "Frontend", group: "Services", color: "lightblue", header: "Frontend UI" },
+                { key: "Backend", group: "Services", color: "lightcoral", header: "Backend Service" },
+                { key: "Storage", group: "Services", color: "lightyellow", header: "Storage Service" },
+                { key: "Logging", group: "Services", color: "lightpink", header: "Logging System" },
+                { key: "Monitoring", group: "Services", color: "lightgreen", header: "Monitoring System" }
+            ],
+            [
+                { from: "LoadBalancer", to: "Frontend" },
+                { from: "Frontend", to: "Backend" },
+                { from: "Backend", to: "Database" },
+                { from: "Backend", to: "Storage" },
+                { from: "Database", to: "Logging" },
+                { from: "Backend", to: "Monitoring" },
+                { from: "Firewall", to: "LoadBalancer" },
+                { from: "VPN", to: "Backend" },
+                { from: "DNS", to: "CDN" },
+                { from: "CDN", to: "Frontend" }
+            ]
+        );
     </script>
 </body>
 </html>
