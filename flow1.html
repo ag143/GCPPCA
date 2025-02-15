@@ -14,11 +14,6 @@
         .menu-item { cursor: pointer; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; background: #d3d3d3; }
         .menu-item:hover, .menu-group-header:hover { background-color: #c5dbff; }
         #searchBar { width: 100%; padding: 5px; margin-bottom: 10px; }
-        @keyframes flow {
-            from { stroke-dashoffset: 20; }
-            to { stroke-dashoffset: 0; }
-        }
-        .flow-link { stroke: #FF5733; stroke-width: 2px; stroke-dasharray: 5, 5; animation: flow 0.5s linear infinite; }
     </style>
 </head>
 <body>
@@ -71,8 +66,13 @@
 
         diagram.linkTemplate = $(go.Link,
             { routing: go.Link.Orthogonal, corner: 10 },
-            $(go.Shape, { strokeWidth: 2, stroke: "gray", strokeDashArray: [5, 5] }),
-            $(go.Shape, { toArrow: "Standard", stroke: "gray", fill: "gray" })
+            $(go.Shape, {
+                name: "FLOWING_LINE",
+                stroke: "#FF5733",
+                strokeWidth: 3,
+                strokeDashArray: [10, 5] // Dotted line effect
+            }),
+            $(go.Shape, { toArrow: "Standard", stroke: "#FF5733", fill: "#FF5733" })
         );
 
         diagram.groupTemplate = makeGroupTemplate();
@@ -139,10 +139,17 @@
                 diagram.links.each(link => {
                     if (link.fromNode === node || link.toNode === node) {
                         link.isHighlighted = true;
-                        link.findObject("SHAPE").stroke = "red";
-                        link.findObject("SHAPE").strokeWidth = 3;
-                        link.findObject("SHAPE").strokeDashArray = [4, 2];
-                        link.findObject("SHAPE").strokeDashOffset = 0;
+                        var shape = link.findObject("FLOWING_LINE");
+                        if (shape) {
+                            shape.strokeDashOffset = 20;
+                            go.AnimationManager.defineAnimation({
+                                name: "flow",
+                                properties: { strokeDashOffset: 0 },
+                                duration: 800,
+                                easing: go.Animation.EaseLinear
+                            });
+                            diagram.animationManager.startAnimation("flow");
+                        }
                     }
                 });
             }
