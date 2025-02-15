@@ -6,24 +6,78 @@
     <title>GCP Architecture Diagram</title>
     <script src="https://unpkg.com/gojs@2.3.11/release/go.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; display: flex; flex-direction: column; overflow: hidden; margin: 0; }
-        #menu { width: 100%; max-width: 300px; padding: 10px; background: #f9f9f9; overflow-y: auto; border-bottom: 2px solid #ccc; flex-shrink: 0; }
-        #diagramDiv { flex-grow: 1; height: calc(100vh - 50px); width: 100vw; border: 1px solid #ccc; touch-action: none; }
-        .menu-group-header { cursor: pointer; font-weight: bold; padding: 10px; background: #4A90E2; color: white; border-radius: 5px; margin-bottom: 5px; border: 2px solid #3066BE; }
-        .menu-group-content { display: none; padding-left: 10px; }
-        .menu-item { cursor: pointer; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; background: #d3d3d3; }
-        .menu-item:hover, .menu-group-header:hover { background-color: #c5dbff; }
-        #searchBar { width: 100%; padding: 5px; margin-bottom: 10px; }
+        body { 
+            font-family: Arial, sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden; 
+            margin: 0; 
+            height: 100vh;
+        }
 
-        /* Responsive styles */
-        @media (min-width: 768px) {
-            body { flex-direction: row; }
-            #menu { width: 300px; height: 100vh; border-right: 2px solid #ccc; border-bottom: none; }
-            #diagramDiv { height: 100vh; }
+        /* Header Bar (5% height) */
+        #header { 
+            height: 5vh; 
+            background: #4A90E2; 
+            color: white; 
+            text-align: center; 
+            line-height: 5vh; 
+            font-size: 18px; 
+            font-weight: bold; 
+        }
+
+        /* Auto-Hide Menu Bar */
+        #menu {
+            width: 250px;
+            position: absolute;
+            left: -250px; /* Hide by default */
+            height: 95vh; /* Remaining height */
+            background: #f9f9f9;
+            overflow-y: auto;
+            border-right: 2px solid #ccc;
+            transition: left 0.3s ease-in-out;
+        }
+        #menu:hover { left: 0; } /* Show on hover */
+
+        /* Diagram Container */
+        #diagramDiv { 
+            flex-grow: 1; 
+            height: 95vh; /* Remaining height */
+            width: 100vw; 
+            border: 1px solid #ccc; 
+            touch-action: none;
+        }
+
+        /* Group & Node Styles */
+        .menu-group-header { 
+            cursor: pointer; 
+            font-weight: bold; 
+            padding: 10px; 
+            background: #4A90E2; 
+            color: white; 
+            border-radius: 5px; 
+            margin-bottom: 5px; 
+            border: 2px solid #3066BE; 
+        }
+        .menu-group-content { display: none; padding-left: 10px; }
+        .menu-item { 
+            cursor: pointer; 
+            padding: 8px; 
+            margin: 5px 0; 
+            border: 1px solid #ddd; 
+            border-radius: 5px; 
+            background: #d3d3d3; 
+        }
+        .menu-item:hover, .menu-group-header:hover { background-color: #c5dbff; }
+
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            #menu { width: 200px; left: -200px; } /* Smaller menu for mobile */
         }
     </style>
 </head>
 <body>
+    <div id="header">GCP Architecture Diagram</div>
     <div id="menu">
         <h3>GCP Services</h3>
         <input type="text" id="searchBar" placeholder="Search..." onkeyup="filterMenu()">
@@ -35,8 +89,7 @@
         var $ = go.GraphObject.make;
         var diagram = $(go.Diagram, "diagramDiv", {
             "undoManager.isEnabled": true,
-            "panningTool.isEnabled": true, // Enable panning
-            "zoomToFit": true, // Fit content within view
+            "panningTool.isEnabled": true,
             layout: $(go.LayeredDigraphLayout, { direction: 90, layerSpacing: 50 })
         });
 
@@ -88,16 +141,9 @@
             $(go.Shape, {
                 strokeWidth: 3,
                 strokeDashArray: new go.Binding("dashArray", "dashPattern"),
-                stroke: new go.Binding("color", "color")
+                stroke: new go.Binding("stroke", "color") // Fixed color binding
             }),
-            $(go.Shape, { toArrow: "Standard", stroke: "black", fill: "black" }),
-            $(go.Shape, {
-                geometryString: "M 0 0 L 10 5 L 0 10",
-                stroke: "black",
-                fill: "black",
-                width: 10, height: 10,
-                strokeWidth: 1
-            })
+            $(go.Shape, { toArrow: "Standard", stroke: "black", fill: "black" })
         );
 
         diagram.groupTemplate = makeGroupTemplate();
