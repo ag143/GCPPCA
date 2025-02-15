@@ -6,12 +6,17 @@
     <title>GCP Architecture Diagram</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gojs/2.3.11/go.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; display: flex; overflow: hidden; }
-        #menu { width: 250px; padding: 10px; border-right: 2px solid #ccc; background: #f9f9f9; overflow-y: auto; height: 100vh; }
-        #diagramDiv { flex-grow: 1; height: 100vh; border: 1px solid #ccc; }
-        .menu-item { cursor: pointer; padding: 8px; border-bottom: 1px solid #ddd; }
+        body { font-family: Arial, sans-serif; display: flex; flex-direction: column; overflow: hidden; }
+        #menu { width: 100%; padding: 10px; background: #f9f9f9; overflow-x: auto; white-space: nowrap; border-bottom: 2px solid #ccc; }
+        #diagramDiv { flex-grow: 1; height: calc(100vh - 50px); border: 1px solid #ccc; }
+        .menu-item { display: inline-block; cursor: pointer; padding: 8px; margin-right: 10px; border: 1px solid #ddd; border-radius: 5px; }
         .menu-item:hover { background-color: #e0e0e0; }
         .toggle-btn { cursor: pointer; padding: 5px; font-weight: bold; }
+        @media (min-width: 768px) {
+            body { flex-direction: row; }
+            #menu { width: 250px; height: 100vh; border-right: 2px solid #ccc; border-bottom: none; white-space: normal; }
+            #diagramDiv { height: 100vh; }
+        }
     </style>
 </head>
 <body>
@@ -40,7 +45,7 @@
         diagram.nodeTemplate = $(go.Node, "Auto",
             { click: (e, obj) => highlightNode(obj.data.key) },
             $(go.Panel, "Vertical",
-                $(go.TextBlock, { font: "bold 12px sans-serif", margin: 5 }, new go.Binding("text", "header")),
+                $(go.TextBlock, { font: "bold 12px sans-serif", margin: 5, background: "#ddd", padding: 5, width: "100%", textAlign: "center" }, new go.Binding("text", "header")),
                 $(go.Shape, "RoundedRectangle", { fill: "lightblue", strokeWidth: 1, stroke: "black" },
                     new go.Binding("fill", "color")
                 ),
@@ -49,7 +54,7 @@
         );
 
         diagram.groupTemplate = $(go.Group, "Auto",
-            { layout: $(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(10, 10) }) },
+            { layout: $(go.GridLayout, { wrappingColumn: 2, spacing: new go.Size(20, 20) }) },
             $(go.Panel, "Horizontal",
                 $(go.TextBlock, { margin: 5, font: "bold 14px sans-serif" }, new go.Binding("text", "key")),
                 $(go.Panel, "Auto",
