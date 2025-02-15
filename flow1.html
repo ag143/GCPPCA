@@ -45,27 +45,26 @@
         diagram.nodeTemplate = $(go.Node, "Auto",
             { click: (e, obj) => highlightNode(obj.data.key) },
             $(go.Panel, "Vertical",
-                $(go.TextBlock, { font: "bold 12px sans-serif", margin: 5, background: "#ddd", padding: 5, width: "100%", textAlign: "center" }, new go.Binding("text", "header")),
+                $(go.TextBlock, { font: "bold 14px sans-serif", margin: 5, background: "#ddd", padding: 5, width: "100%", textAlign: "center" }, new go.Binding("text", "header")),
                 $(go.Shape, "RoundedRectangle", { fill: "lightblue", strokeWidth: 1, stroke: "black" },
                     new go.Binding("fill", "color")
                 ),
-                $(go.TextBlock, { margin: 5 }, new go.Binding("text", "key"))
+                $(go.TextBlock, { margin: 5, font: "12px sans-serif" }, new go.Binding("text", "key"))
             )
         );
 
         diagram.groupTemplate = $(go.Group, "Auto",
             { layout: $(go.GridLayout, { wrappingColumn: 2, spacing: new go.Size(20, 20) }) },
-            $(go.Panel, "Horizontal",
-                $(go.TextBlock, { margin: 5, font: "bold 14px sans-serif" }, new go.Binding("text", "key")),
+            $(go.Panel, "Vertical",
+                $(go.TextBlock, { margin: 5, font: "bold 16px sans-serif", background: "#ccc", padding: 5, width: "100%", textAlign: "center" }, new go.Binding("text", "key")),
                 $(go.Panel, "Auto",
                     $(go.Shape, "Circle", { width: 20, height: 20, fill: "lightgray", stroke: "black", cursor: "pointer" },
                         new go.Binding("figure", "expanded", v => v ? "Minus" : "Plus"),
                         { click: (e, obj) => toggleGroup(obj.part) }
                     )
-                )
-            ),
-            $(go.Shape, "Rectangle", { fill: "lightgray", stroke: "black" }),
-            $(go.Panel, "Vertical", $(go.Placeholder))
+                ),
+                $(go.Panel, "Vertical", $(go.Placeholder))
+            )
         );
 
         function toggleGroup(group) {
