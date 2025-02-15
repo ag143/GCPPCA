@@ -37,7 +37,7 @@
         var $ = go.GraphObject.make;
         var diagram = $(go.Diagram, "diagramDiv", {
             "undoManager.isEnabled": true,
-            layout: $(go.TreeLayout, { angle: 90, layerSpacing: 50 })
+            layout: $(go.GridLayout, { spacing: new go.Size(50, 50) })
         });
 
         function toggleTreeView(groupId) {
@@ -69,12 +69,18 @@
         ];
 
         diagram.nodeTemplate = $(go.Node, "Auto",
-            $(go.Shape, "RoundedRectangle", { fill: "white" },
+            $(go.Shape, "Rectangle", { fill: "white" },
                 new go.Binding("fill", "color")
             ),
             $(go.TextBlock, { margin: 5 },
                 new go.Binding("text", "key")
             )
+        );
+
+        diagram.linkTemplate = $(go.Link,
+            { routing: go.Link.Orthogonal, corner: 10 },
+            $(go.Shape),
+            $(go.Shape, { toArrow: "Standard" })
         );
 
         diagram.model = new go.GraphLinksModel(nodes, links);
