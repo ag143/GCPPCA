@@ -26,7 +26,7 @@
         var $ = go.GraphObject.make;
         var diagram = $(go.Diagram, "diagramDiv", {
             "undoManager.isEnabled": true,
-            layout: $(go.GridLayout, { wrappingColumn: 5, spacing: new go.Size(40, 40) })
+            layout: $(go.LayeredDigraphLayout, { direction: 90, layerSpacing: 50 })
         });
 
         var gcpData = [
@@ -36,7 +36,22 @@
             { key: "CloudRun", group: "Compute", color: "#D3D3D3" },
             { key: "Networking", color: "#90EE90", isGroup: true },
             { key: "VPC", group: "Networking", color: "#D3D3D3" },
-            { key: "CloudDNS", group: "Networking", color: "#D3D3D3" }
+            { key: "CloudDNS", group: "Networking", color: "#D3D3D3" },
+            { key: "Storage", color: "#FFD700", isGroup: true },
+            { key: "Cloud Storage", group: "Storage", color: "#D3D3D3" },
+            { key: "Filestore", group: "Storage", color: "#D3D3D3" },
+            { key: "Databases", color: "#FFB6C1", isGroup: true },
+            { key: "Cloud SQL", group: "Databases", color: "#D3D3D3" },
+            { key: "Bigtable", group: "Databases", color: "#D3D3D3" },
+            { key: "Spanner", group: "Databases", color: "#D3D3D3" }
+        ];
+
+        var gcpLinks = [
+            { from: "GCE", to: "VPC" },
+            { from: "GKE", to: "CloudDNS" },
+            { from: "CloudRun", to: "Cloud Storage" },
+            { from: "Cloud Storage", to: "Cloud SQL" },
+            { from: "Filestore", to: "Bigtable" }
         ];
 
         function createMenu() {
@@ -101,7 +116,7 @@
             $(go.Shape, { toArrow: "Standard" })
         );
 
-        diagram.model = new go.GraphLinksModel(gcpData);
+        diagram.model = new go.GraphLinksModel(gcpData, gcpLinks);
         createMenu();
     </script>
 </body>
