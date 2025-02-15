@@ -33,29 +33,61 @@
             layout: $(go.LayeredDigraphLayout, { direction: 90, layerSpacing: 50 })
         });
 
+        function makeGroupTemplate() {
+            return $(go.Group, "Auto", {
+                    layout: $(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(10, 10) }),
+                    isSubGraphExpanded: true
+                },
+                $(go.Shape, "Rectangle", { fill: "lightblue", strokeWidth: 2 }),
+                $(go.Panel, "Vertical",
+                    $(go.Panel, "Auto",
+                        { height: 40, background: "#4A90E2", click: (e, obj) => toggleGroup(obj.part) },
+                        $(go.TextBlock, { margin: 5, stroke: "white", font: "bold 14px sans-serif" },
+                            new go.Binding("text", "key")
+                        )
+                    ),
+                    $(go.Panel, "Auto",
+                        { margin: 5 },
+                        $(go.Shape, "Rectangle", { fill: "#D3D3D3" }),
+                        $(go.Placeholder, { padding: 10 })
+                    )
+                )
+            );
+        }
+
+        function toggleGroup(group) {
+            group.isSubGraphExpanded = !group.isSubGraphExpanded;
+            diagram.layoutDiagram(true);
+        }
+
+        diagram.nodeTemplate = $(go.Node, "Auto",
+            $(go.Shape, "Rectangle", { fill: "#FFD700", strokeWidth: 2 }),
+            $(go.TextBlock, { margin: 8, font: "bold 12px sans-serif" },
+                new go.Binding("text", "key")
+            )
+        );
+
+        diagram.linkTemplate = $(go.Link,
+            { routing: go.Link.Orthogonal, corner: 10 },
+            $(go.Shape, { strokeWidth: 2 }),
+            $(go.Shape, { toArrow: "Standard" })
+        );
+
+        diagram.groupTemplate = makeGroupTemplate();
+
         var gcpData = [
             { key: "Compute", color: "#ADD8E6", isGroup: true },
-            { key: "GCE", group: "Compute", color: "#D3D3D3" },
-            { key: "GKE", group: "Compute", color: "#D3D3D3" },
-            { key: "CloudRun", group: "Compute", color: "#D3D3D3" },
+            { key: "GCE", group: "Compute" },
+            { key: "GKE", group: "Compute" },
+            { key: "CloudRun", group: "Compute" },
             { key: "Networking", color: "#90EE90", isGroup: true },
-            { key: "VPC", group: "Networking", color: "#D3D3D3" },
-            { key: "CloudDNS", group: "Networking", color: "#D3D3D3" },
-            { key: "Storage", color: "#FFD700", isGroup: true },
-            { key: "Cloud Storage", group: "Storage", color: "#D3D3D3" },
-            { key: "Filestore", group: "Storage", color: "#D3D3D3" },
-            { key: "Databases", color: "#FFB6C1", isGroup: true },
-            { key: "Cloud SQL", group: "Databases", color: "#D3D3D3" },
-            { key: "Bigtable", group: "Databases", color: "#D3D3D3" },
-            { key: "Spanner", group: "Databases", color: "#D3D3D3" }
+            { key: "VPC", group: "Networking" },
+            { key: "CloudDNS", group: "Networking" }
         ];
 
         var gcpLinks = [
             { from: "GCE", to: "VPC" },
-            { from: "GKE", to: "CloudDNS" },
-            { from: "CloudRun", to: "Cloud Storage" },
-            { from: "Cloud Storage", to: "Cloud SQL" },
-            { from: "Filestore", to: "Bigtable" }
+            { from: "GKE", to: "CloudDNS" }
         ];
 
         function createMenu() {
@@ -78,35 +110,6 @@
                 menuContent.appendChild(groupHeader);
                 menuContent.appendChild(groupContent);
             });
-        }
-
-        function toggleTreeView(groupId) {
-            var submenu = document.getElementById(groupId);
-            submenu.style.display = submenu.style.display === "none" ? "block" : "none";
-            var groupNode = diagram.findNodeForKey(groupId);
-            if (groupNode) {
-                groupNode.isSubGraphExpanded = !groupNode.isSubGraphExpanded;
-            }
-        }
-
-        function highlightNode(key) {
-            var node = diagram.findNodeForKey(key);
-            if (node) {
-                diagram.centerRect(node.actualBounds);
-                diagram.select(node);
-                diagram.clearHighlighteds();
-                diagram.links.each(link => {
-                    if (link.fromNode && link.toNode && (link.fromNode.key === key || link.toNode.key === key)) {
-                        link.path.stroke = "red";
-                        link.path.strokeWidth = 3;
-                        link.path.classList.add("highlight-link");
-                    } else {
-                        link.path.stroke = "black";
-                        link.path.strokeWidth = 1;
-                        link.path.classList.remove("highlight-link");
-                    }
-                });
-            }
         }
 
         function filterMenu() {
