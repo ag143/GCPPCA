@@ -18,9 +18,6 @@
         .incorrect { background-color: lightcoral !important; }
         .answer { color: green; font-weight: bold; margin-top: 5px; display: block; }
         #answers-container { height: 200vh; overflow-y: auto; border: 1px solid #ccc; padding: 10px; background: #fff; border-radius: 10px; }
-        .pagination { display: flex; justify-content: center; margin-top: 20px; }
-        .pagination button { margin: 5px; padding: 10px; border: none; background: #007BFF; color: white; cursor: pointer; border-radius: 5px; }
-        .pagination button:disabled { background: #ccc; cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -32,13 +29,13 @@
     <div id="quiz" class="content active quiz-container">
         <h2>GCP PCA MCQ Quiz</h2>
         <label for="question-range">Select Question Range: </label>
-        <select id="question-range" onchange="displayQuestions()"></select>
+        <select id="question-range" onchange="displayQuestions()">
+            <option value="all">All</option>
+        </select>
         <button onclick="revealAnswers()">Reveal Answers</button>
         <div id="quiz-container"></div>
-        <div class="pagination">
-            <button onclick="prevPage()" id="prev-btn">Back</button>
-            <button onclick="nextPage()" id="next-btn">Next</button>
-        </div>
+        <button onclick="prevPage()">Back</button>
+        <button onclick="nextPage()">Next</button>
     </div>
     
     <div id="answers" class="content quiz-container">
@@ -50,6 +47,7 @@
         let allQuestions = [];
         let currentPage = 0;
         let questionsPerPage = 10;
+        let selectedAnswers = {};
         const optionLabels = ["A", "B", "C", "D", "E", "F"];
 
         async function loadQuestions() {
@@ -62,7 +60,7 @@
 
         function populateQuestionRange() {
             const select = document.getElementById("question-range");
-            select.innerHTML = "";
+            select.innerHTML = '<option value="all">All</option>';
             for (let i = 0; i < allQuestions.length; i += 10) {
                 let end = Math.min(i + 9, allQuestions.length - 1);
                 let option = document.createElement("option");
@@ -75,8 +73,8 @@
         function displayQuestions() {
             const quizContainer = document.getElementById("quiz-container");
             quizContainer.innerHTML = "";
-            const start = parseInt(document.getElementById("question-range").value);
-            const end = Math.min(start + 10, allQuestions.length);
+            const start = document.getElementById("question-range").value === "all" ? 0 : parseInt(document.getElementById("question-range").value);
+            const end = document.getElementById("question-range").value === "all" ? allQuestions.length : Math.min(start + 10, allQuestions.length);
             const questionsToShow = allQuestions.slice(start, end);
             
             questionsToShow.forEach((q, index) => {
@@ -96,36 +94,38 @@
                 Object.entries(q.options || {}).forEach(([key, option], i) => {
                     let optionLabel = document.createElement("label");
                     let optionKey = optionLabels[i];
-                    optionLabel.innerHTML = `<input type="${inputType}" name="q${start + index}" value="${optionKey}"> ${optionKey}. ${option}`;
+                    let checked = selectedAnswers[`q${start + index}`] && selectedAnswers[`q${start + index}`].includes(optionKey) ? "checked" : "";
+                    optionLabel.innerHTML = `<input type="${inputType}" name="q${start + index}" value="${optionKey}" ${checked} onchange="saveAnswer(this)"> ${optionKey}. ${option}`;
                     optionsDiv.appendChild(optionLabel);
                 });
 
                 questionBlock.appendChild(optionsDiv);
                 quizContainer.appendChild(questionBlock);
             });
-
-            updatePaginationButtons();
         }
 
-        function updatePaginationButtons() {
-            document.getElementById("prev-btn").disabled = currentPage === 0;
-            document.getElementById("next-btn").disabled = (currentPage + 1) * questionsPerPage >= allQuestions.length;
-        }
-
-        function nextPage() {
-            if ((currentPage + 1) * questionsPerPage < allQuestions.length) {
-                currentPage++;
-                document.getElementById("question-range").value = currentPage * questionsPerPage;
-                displayQuestions();
+        function saveAnswer(input) {
+            const name = input.name;
+            if (!selectedAnswers[name]) selectedAnswers[name] = [];
+            if (input.checked) {
+                selectedAnswers[name].push(input.value);
+            } else {
+                selectedAnswers[name] = selectedAnswers[name].filter(v => v !== input.value);
             }
         }
 
-        function prevPage() {
-            if (currentPage > 0) {
-                currentPage--;
-                document.getElementById("question-range").value = currentPage * questionsPerPage;
-                displayQuestions();
-            }
+        function revealAnswers() {
+            document.querySelectorAll(".question").forEach((questionBlock, index) => {
+                let correctAnswers = allQuestions[index].answer;
+                if (!Array.isArray(correctAnswers)) {
+                    correctAnswers = correctAnswers.split("");
+                }
+                questionBlock.querySelectorAll("input").forEach(input => {
+                    if (correctAnswers.includes(input.value)) {
+                        input.parentElement.classList.add("correct");
+                    }
+                });
+            });
         }
 
         function switchTab(tabId) {
