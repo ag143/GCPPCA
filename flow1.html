@@ -6,30 +6,28 @@
     <title>GCP Architecture Diagram</title>
     <script src="https://unpkg.com/gojs@2.3.11/release/go.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; display: flex; flex-direction: column; overflow: hidden; }
-        #menu { width: 100%; padding: 10px; background: #f9f9f9; overflow-x: auto; white-space: nowrap; border-bottom: 2px solid #ccc; }
-        #diagramDiv { flex-grow: 1; height: calc(100vh - 50px); border: 1px solid #ccc; }
-        .menu-item { display: inline-block; cursor: pointer; padding: 8px; margin-right: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        body { font-family: Arial, sans-serif; display: flex; flex-direction: row; overflow: hidden; }
+        #menu { width: 300px; padding: 10px; background: #f9f9f9; overflow-y: auto; border-right: 2px solid #ccc; }
+        #diagramDiv { flex-grow: 1; height: 100vh; border: 1px solid #ccc; }
+        .menu-item { cursor: pointer; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; }
         .menu-item:hover { background-color: #e0e0e0; }
-        @media (min-width: 768px) {
-            body { flex-direction: row; }
-            #menu { width: 250px; height: 100vh; border-right: 2px solid #ccc; border-bottom: none; white-space: normal; }
-            #diagramDiv { height: 100vh; }
-        }
+        .submenu { padding-left: 20px; display: none; }
     </style>
 </head>
 <body>
     <div id="menu">
         <h3>GCP Services</h3>
-        <div class="menu-item" onclick="toggleGroup('Compute')">Compute</div>
-        <div class="menu-item" onclick="toggleGroup('Networking')">Networking</div>
-        <div class="menu-item" onclick="toggleGroup('Security')">Security</div>
-        <div class="menu-item" onclick="toggleGroup('Storage')">Storage</div>
-        <div class="menu-item" onclick="toggleGroup('Monitoring')">Monitoring</div>
-        <div class="menu-item" onclick="toggleGroup('Database')">Database</div>
-        <div class="menu-item" onclick="toggleGroup('AI')">AI & ML</div>
-        <div class="menu-item" onclick="toggleGroup('Developer')">Developer Tools</div>
-        <div class="menu-item" onclick="toggleGroup('Analytics')">Analytics</div>
+        <div class="menu-group" onclick="toggleTreeView('Compute')">Compute ▾</div>
+        <div id="Compute" class="submenu">
+            <div class="menu-item" onclick="highlightNode('GCE')">GCE</div>
+            <div class="menu-item" onclick="highlightNode('GKE')">GKE</div>
+            <div class="menu-item" onclick="highlightNode('CloudRun')">CloudRun</div>
+        </div>
+        <div class="menu-group" onclick="toggleTreeView('Networking')">Networking ▾</div>
+        <div id="Networking" class="submenu">
+            <div class="menu-item" onclick="highlightNode('VPC')">VPC</div>
+            <div class="menu-item" onclick="highlightNode('CloudDNS')">CloudDNS</div>
+        </div>
     </div>
     <div id="diagramDiv"></div>
 
@@ -37,87 +35,37 @@
         var $ = go.GraphObject.make;
         var diagram = $(go.Diagram, "diagramDiv", {
             "undoManager.isEnabled": true,
-            layout: $(go.LayeredDigraphLayout, { direction: 90, layerSpacing: 50 }),
-            "animationManager.isEnabled": true
+            layout: $(go.TreeLayout, { angle: 90, layerSpacing: 50 })
         });
 
-        // Node Template
-        diagram.nodeTemplate = $(go.Node, "Auto",
-            { click: (e, obj) => highlightNode(obj.data.key) },
-            $(go.Panel, "Vertical",
-                $(go.TextBlock, { font: "bold 14px sans-serif", margin: 5, background: "#ddd", padding: 5, width: "100%", textAlign: "center" }, new go.Binding("text", "header")),
-                $(go.Shape, "RoundedRectangle", { fill: "lightblue", strokeWidth: 1, stroke: "black" },
-                    new go.Binding("fill", "color")
-                ),
-                $(go.TextBlock, { margin: 5, font: "12px sans-serif" }, new go.Binding("text", "key"))
-            )
-        );
-
-        // Group Template
-        diagram.groupTemplate = $(go.Group, "Auto",
-            { layout: $(go.GridLayout, { wrappingColumn: 2, spacing: new go.Size(20, 20) }) },
-            $(go.Panel, "Vertical",
-                $(go.TextBlock, { margin: 5, font: "bold 16px sans-serif", background: "#ccc", padding: 5, width: "100%", textAlign: "center" }, new go.Binding("text", "key")),
-                $(go.Panel, "Auto",
-                    $(go.Shape, "Circle", { width: 20, height: 20, fill: "lightgray", stroke: "black", cursor: "pointer" },
-                        new go.Binding("figure", "expanded", v => v ? "Minus" : "Plus"),
-                        { click: (e, obj) => toggleGroup(obj.part) }
-                    )
-                ),
-                $(go.Panel, "Vertical", $(go.Placeholder))
-            )
-        );
-
-        // Function to toggle groups
-        function toggleGroup(groupKey) {
-            var groupNode = diagram.findNodeForKey(groupKey);
-            if (groupNode) {
-                diagram.startTransaction("toggleGroup");
-                groupNode.isSubGraphExpanded = !groupNode.isSubGraphExpanded;
-                diagram.commitTransaction("toggleGroup");
-            } else {
-                console.error("Group not found:", groupKey);
-            }
+        function toggleTreeView(groupId) {
+            var submenu = document.getElementById(groupId);
+            submenu.style.display = submenu.style.display === "none" ? "block" : "none";
         }
 
-        // Define groups and services
-        var nodes = [];
-        var links = [];
-        var groups = ["Compute", "Networking", "Security", "Storage", "Monitoring", "Database", "AI", "Developer", "Analytics"];
+        function highlightNode(key) {
+            var node = diagram.findNodeForKey(key);
+            if (node) diagram.centerRect(node.actualBounds);
+        }
+
+        var nodes = [
+            { key: "Compute", isGroup: true },
+            { key: "GCE", group: "Compute" },
+            { key: "GKE", group: "Compute" },
+            { key: "CloudRun", group: "Compute" },
+            { key: "Networking", isGroup: true },
+            { key: "VPC", group: "Networking" },
+            { key: "CloudDNS", group: "Networking" }
+        ];
         
-        // Add groups
-        groups.forEach(group => {
-            nodes.push({ key: group, isGroup: true, expanded: true });
-        });
+        var links = [
+            { from: "GCE", to: "Compute" },
+            { from: "GKE", to: "Compute" },
+            { from: "CloudRun", to: "Compute" },
+            { from: "VPC", to: "Networking" },
+            { from: "CloudDNS", to: "Networking" }
+        ];
 
-        var services = {
-            "Compute": ["GCE", "GKE", "CloudRun", "AppEngine", "Batch"],
-            "Networking": ["VPC", "CloudDNS", "CloudCDN", "CloudLoadBalancing", "Interconnect"],
-            "Security": ["IAM", "CloudArmor", "SecurityCommandCenter", "KeyManagement", "DLP"],
-            "Storage": ["CloudStorage", "Filestore", "PersistentDisks", "TransferService", "Backup"],
-            "Monitoring": ["CloudLogging", "CloudMonitoring", "ErrorReporting", "CloudTrace", "Profiler"],
-            "Database": ["BigQuery", "CloudSQL", "Firestore", "Spanner", "Memorystore"],
-            "AI": ["VertexAI", "AutoML", "AIPlatform", "VisionAI", "NaturalLanguage"],
-            "Developer": ["CloudBuild", "CloudFunctions", "ArtifactRegistry", "CloudCode", "SourceRepo"],
-            "Analytics": ["Dataflow", "PubSub", "Dataproc", "Looker", "BigTable"]
-        };
-
-        // Add services to groups and create links
-        Object.keys(services).forEach(group => {
-            services[group].forEach(service => {
-                nodes.push({ key: service, group: group, color: "lightgray", header: service });
-                links.push({ from: service, to: group });
-            });
-        });
-
-        // Avoid crossing links by using curved connections
-        diagram.linkTemplate = $(go.Link,
-            { curve: go.Link.Bezier, toShortLength: 10 },
-            $(go.Shape, { strokeWidth: 2 }),
-            $(go.Shape, { toArrow: "Standard" })
-        );
-
-        // Apply model
         diagram.model = new go.GraphLinksModel(nodes, links);
     </script>
 </body>
