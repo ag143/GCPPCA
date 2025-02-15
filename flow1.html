@@ -9,8 +9,9 @@
         body { font-family: Arial, sans-serif; display: flex; flex-direction: row; overflow: hidden; }
         #menu { width: 300px; padding: 10px; background: #f9f9f9; overflow-y: auto; border-right: 2px solid #ccc; }
         #diagramDiv { flex-grow: 1; height: 100vh; border: 1px solid #ccc; }
+        .menu-group { cursor: pointer; font-weight: bold; padding: 8px; background: #dcdcdc; border-radius: 5px; }
         .menu-item { cursor: pointer; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; }
-        .menu-item:hover { background-color: #e0e0e0; }
+        .menu-item:hover, .menu-group:hover { background-color: #e0e0e0; }
         .submenu { padding-left: 20px; display: none; }
     </style>
 </head>
@@ -25,7 +26,7 @@
         var $ = go.GraphObject.make;
         var diagram = $(go.Diagram, "diagramDiv", {
             "undoManager.isEnabled": true,
-            layout: $(go.TreeLayout, { angle: 90, layerSpacing: 50 })
+            layout: $(go.GridLayout, { wrappingColumn: 5, spacing: new go.Size(40, 40) })
         });
 
         var gcpData = [
@@ -35,39 +36,23 @@
             { key: "CloudRun", group: "Compute", color: "#D3D3D3" },
             { key: "Networking", color: "#90EE90", isGroup: true },
             { key: "VPC", group: "Networking", color: "#D3D3D3" },
-            { key: "CloudDNS", group: "Networking", color: "#D3D3D3" },
-            { key: "Storage", color: "#FFA07A", isGroup: true },
-            { key: "Cloud Storage", group: "Storage", color: "#D3D3D3" },
-            { key: "BigQuery", group: "Storage", color: "#D3D3D3" },
-            { key: "Security", color: "#FFD700", isGroup: true },
-            { key: "IAM", group: "Security", color: "#D3D3D3" },
-            { key: "Cloud Armor", group: "Security", color: "#D3D3D3" }
+            { key: "CloudDNS", group: "Networking", color: "#D3D3D3" }
         ];
-
-        var links = gcpData.filter(d => d.group).map(d => ({ from: d.group, to: d.key }));
 
         function createMenu() {
             var menuContent = document.getElementById("menu-content");
-            var groupedData = {};
-            gcpData.forEach(item => {
-                if (item.isGroup) {
-                    groupedData[item.key] = [];
-                } else if (item.group) {
-                    groupedData[item.group].push(item.key);
-                }
-            });
-
-            Object.keys(groupedData).forEach(group => {
+            gcpData.filter(item => item.isGroup).forEach(group => {
                 var groupDiv = document.createElement("div");
-                groupDiv.innerHTML = `<div class='menu-group' onclick='toggleTreeView("${group}")'>${group} ▾</div>`;
+                groupDiv.className = "menu-group";
+                groupDiv.innerHTML = `<span onclick='toggleTreeView("${group.key}")'>${group.key} ▾</span>`;
                 var submenuDiv = document.createElement("div");
-                submenuDiv.id = group;
+                submenuDiv.id = group.key;
                 submenuDiv.className = "submenu";
-                groupedData[group].forEach(node => {
+                gcpData.filter(item => item.group === group.key).forEach(node => {
                     var nodeDiv = document.createElement("div");
                     nodeDiv.className = "menu-item";
-                    nodeDiv.innerHTML = node;
-                    nodeDiv.onclick = () => highlightNode(node);
+                    nodeDiv.innerHTML = node.key;
+                    nodeDiv.onclick = () => highlightNode(node.key);
                     submenuDiv.appendChild(nodeDiv);
                 });
                 menuContent.appendChild(groupDiv);
@@ -86,7 +71,7 @@
         }
 
         diagram.nodeTemplate = $(go.Node, "Auto",
-            $(go.Shape, "RoundedRectangle", { fill: "white", strokeWidth: 2 },
+            $(go.Shape, "Rectangle", { fill: "white", strokeWidth: 2 },
                 new go.Binding("fill", "color")
             ),
             $(go.TextBlock, { margin: 8, font: "bold 12px Arial" },
@@ -95,7 +80,7 @@
         );
 
         diagram.groupTemplate = $(go.Group, "Auto",
-            { layout: $(go.TreeLayout, { angle: 90, layerSpacing: 70 }) },
+            { layout: $(go.GridLayout, { wrappingColumn: 3, spacing: new go.Size(30, 30) }) },
             $(go.Shape, "RoundedRectangle", { fill: "lightgray", strokeWidth: 2 }),
             $(go.Panel, "Vertical",
                 $(go.Panel, "Horizontal",
@@ -120,7 +105,7 @@
             $(go.Shape, { toArrow: "Standard" })
         );
 
-        diagram.model = new go.GraphLinksModel(gcpData, links);
+        diagram.model = new go.GraphLinksModel(gcpData);
         createMenu();
     </script>
 </body>
