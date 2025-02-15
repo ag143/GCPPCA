@@ -7,16 +7,21 @@
     <script src="https://unpkg.com/gojs@2.3.11/release/go.js"></script>
     <style>
         body { font-family: Arial, sans-serif; display: flex; flex-direction: row; overflow: hidden; }
-        #menu { width: 5%; min-width: 50px; background: #2c3e50; color: white; overflow-y: auto; border-right: 2px solid #ccc; transition: width 0.3s; }
-        #menu:hover { width: 300px; }
+        #menu { width: 300px; padding: 10px; background: #f9f9f9; overflow-y: auto; border-right: 2px solid #ccc; transition: width 0.3s; }
         #diagramDiv { flex-grow: 1; height: 100vh; border: 1px solid #ccc; }
-        .menu-group-header { cursor: pointer; font-weight: bold; padding: 10px; background: #4A90E2; color: white; border-radius: 5px; margin-bottom: 5px; border: 2px solid #3066BE; box-shadow: 0px 0px 10px #4A90E2; }
+        .menu-group-header { cursor: pointer; font-weight: bold; padding: 10px; background: #4A90E2; color: white; border-radius: 5px; margin-bottom: 5px; border: 2px solid #3066BE; }
         .menu-group-content { display: none; padding-left: 10px; }
         .menu-item { cursor: pointer; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; background: #d3d3d3; }
         .menu-item:hover, .menu-group-header:hover { background-color: #c5dbff; }
         #searchBar { width: 100%; padding: 5px; margin-bottom: 10px; }
         .highlight-link { stroke: red; stroke-width: 3px; animation: blink 1s infinite alternate; }
         @keyframes blink { from { stroke-opacity: 1; } to { stroke-opacity: 0.5; } }
+        
+        /* Auto-hide menu for mobile */
+        @media (max-width: 768px) {
+            #menu { width: 5%; overflow: hidden; }
+            #menu:hover { width: 300px; }
+        }
     </style>
 </head>
 <body>
@@ -42,13 +47,13 @@
                 $(go.Panel, "Vertical",
                     $(go.Panel, "Auto",
                         { height: 40, background: "#4A90E2", click: (e, obj) => toggleGroup(obj.part) },
-                        $(go.Shape, "Rectangle", { fill: "#4A90E2", stroke: "#3066BE", strokeWidth: 2, width: 100, height: 30 }),
                         $(go.TextBlock, { margin: 5, stroke: "white", font: "bold 14px sans-serif" },
                             new go.Binding("text", "key")
                         )
                     ),
                     $(go.Panel, "Auto",
-                        $(go.Shape, "Rectangle", { fill: "#D3D3D3", stroke: "black", strokeWidth: 2 }),
+                        { margin: 5 },
+                        $(go.Shape, "Rectangle", { fill: "#D3D3D3" }),
                         $(go.Placeholder, { padding: 10 })
                     )
                 )
@@ -58,6 +63,13 @@
         function toggleGroup(group) {
             group.isSubGraphExpanded = !group.isSubGraphExpanded;
             diagram.layoutDiagram(true);
+        }
+
+        function toggleTreeView(groupKey) {
+            var groupContent = document.getElementById(groupKey);
+            if (groupContent) {
+                groupContent.style.display = (groupContent.style.display === "none" || groupContent.style.display === "") ? "block" : "none";
+            }
         }
 
         diagram.nodeTemplate = $(go.Node, "Auto",
@@ -76,11 +88,11 @@
         diagram.groupTemplate = makeGroupTemplate();
 
         var gcpData = [
-            { key: "Compute", isGroup: true },
+            { key: "Compute", color: "#ADD8E6", isGroup: true },
             { key: "GCE", group: "Compute" },
             { key: "GKE", group: "Compute" },
             { key: "CloudRun", group: "Compute" },
-            { key: "Networking", isGroup: true },
+            { key: "Networking", color: "#90EE90", isGroup: true },
             { key: "VPC", group: "Networking" },
             { key: "CloudDNS", group: "Networking" }
         ];
