@@ -9,10 +9,10 @@
         body { font-family: Arial, sans-serif; display: flex; flex-direction: row; overflow: hidden; }
         #menu { width: 300px; padding: 10px; background: #f9f9f9; overflow-y: auto; border-right: 2px solid #ccc; }
         #diagramDiv { flex-grow: 1; height: 100vh; border: 1px solid #ccc; }
-        .menu-group { cursor: pointer; font-weight: bold; padding: 8px; background: #a6c8ff; border-radius: 5px; }
+        .menu-group-header { cursor: pointer; font-weight: bold; padding: 10px; background: #6b8ef1; color: white; border-radius: 5px; margin-bottom: 5px; }
+        .menu-group-content { display: none; padding-left: 10px; }
         .menu-item { cursor: pointer; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; background: #d3d3d3; }
-        .menu-item:hover, .menu-group:hover { background-color: #c5dbff; }
-        .submenu { padding-left: 20px; display: none; }
+        .menu-item:hover, .menu-group-header:hover { background-color: #c5dbff; }
     </style>
 </head>
 <body>
@@ -42,25 +42,22 @@
         function createMenu() {
             var menuContent = document.getElementById("menu-content");
             gcpData.filter(item => item.isGroup).forEach(group => {
-                var groupDiv = document.createElement("div");
-                groupDiv.className = "menu-group";
-                groupDiv.innerHTML = group.key;
-                groupDiv.onclick = () => {
-                    toggleTreeView(group.key);
-                    highlightNode(group.key);
-                };
-                var submenuDiv = document.createElement("div");
-                submenuDiv.id = group.key;
-                submenuDiv.className = "submenu";
+                var groupHeader = document.createElement("div");
+                groupHeader.className = "menu-group-header";
+                groupHeader.innerHTML = group.key;
+                groupHeader.onclick = () => toggleTreeView(group.key);
+                var groupContent = document.createElement("div");
+                groupContent.id = group.key;
+                groupContent.className = "menu-group-content";
                 gcpData.filter(item => item.group === group.key).forEach(node => {
                     var nodeDiv = document.createElement("div");
                     nodeDiv.className = "menu-item";
                     nodeDiv.innerHTML = node.key;
                     nodeDiv.onclick = () => highlightNode(node.key);
-                    submenuDiv.appendChild(nodeDiv);
+                    groupContent.appendChild(nodeDiv);
                 });
-                menuContent.appendChild(groupDiv);
-                menuContent.appendChild(submenuDiv);
+                menuContent.appendChild(groupHeader);
+                menuContent.appendChild(groupContent);
             });
         }
 
@@ -90,7 +87,7 @@
             { layout: $(go.GridLayout, { wrappingColumn: 3, spacing: new go.Size(30, 30) }) },
             $(go.Shape, "RoundedRectangle", { fill: "#a6c8ff", strokeWidth: 2 }),
             $(go.Panel, "Vertical",
-                $(go.TextBlock, { margin: 8, font: "bold 14px Arial", background: "#85a3ff" },
+                $(go.TextBlock, { margin: 8, font: "bold 14px Arial", background: "#85a3ff", cursor: "pointer" },
                     new go.Binding("text", "key"),
                     { click: function(e, obj) { highlightNode(obj.part.data.key); } }
                 ),
