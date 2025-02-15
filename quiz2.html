@@ -140,7 +140,31 @@
         function scrollToTop() {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-
+        function submitAnswers() {
+            let score = 0;
+            document.querySelectorAll(".question").forEach((questionBlock, index) => {
+                let correctAnswers = allQuestions[index].answer;
+                if (!Array.isArray(correctAnswers)) {
+                    correctAnswers = correctAnswers.split("");
+                }
+                let selectedOptions = [...questionBlock.querySelectorAll("input:checked")].map(input => input.value);
+                if (JSON.stringify(correctAnswers.sort()) === JSON.stringify(selectedOptions.sort())) {
+                    score++;
+                }
+            });
+            document.getElementById("score").innerText = `Score: ${score}/${allQuestions.length}`;
+        }
+         function displayAnswers() {
+            const answersContainer = document.getElementById("answers-container");
+            answersContainer.innerHTML = "";
+            allQuestions.forEach((q, index) => {
+                let questionBlock = document.createElement("div");
+                questionBlock.classList.add("question");
+                let questionHTML = `<h3>Question ${index + 1}</h3><p><strong>${q.body}</strong></p>`;
+                questionBlock.innerHTML = questionHTML;
+                answersContainer.appendChild(questionBlock);
+            });
+        }
         loadQuestions();
     </script>
 </body>
