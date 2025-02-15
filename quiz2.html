@@ -73,13 +73,14 @@
             allOption.value = "all";
             allOption.textContent = "All";
             select.appendChild(allOption);
+            select.value = "0";
         }
 
         function displayQuestions() {
             const quizContainer = document.getElementById("quiz-container");
             quizContainer.innerHTML = "";
-            const selectedRange = document.getElementById("question-range").value;
-            let questionsToShow = selectedRange === "all" ? allQuestions : allQuestions.slice(selectedRange, Number(selectedRange) + questionsPerPage);
+            let start = currentPage * questionsPerPage;
+            let questionsToShow = allQuestions.slice(start, start + questionsPerPage);
             
             questionsToShow.forEach((q, index) => {
                 let questionBlock = document.createElement("div");
@@ -87,7 +88,7 @@
                 let correctAnswers = Array.isArray(q.answer) ? q.answer : q.answer.split("");
                 let inputType = correctAnswers.length > 1 ? "checkbox" : "radio";
                 
-                let questionHTML = `<h3>Question ${index + 1}</h3><p><strong>${q.body}</strong></p>`;
+                let questionHTML = `<h3>Question ${start + index + 1}</h3><p><strong>${q.body}</strong></p>`;
                 questionBlock.innerHTML = questionHTML;
                 
                 let optionsDiv = document.createElement("div");
@@ -95,7 +96,7 @@
 
                 Object.entries(q.options || {}).forEach(([key, option], i) => {
                     let optionKey = optionLabels[i];
-                    let optionLabel = `<label><input type="${inputType}" name="q${index}" value="${optionKey}"> ${optionKey}. ${option}</label>`;
+                    let optionLabel = `<label><input type="${inputType}" name="q${start + index}" value="${optionKey}"> ${optionKey}. ${option}</label>`;
                     optionsDiv.innerHTML += optionLabel;
                 });
                 
@@ -103,7 +104,7 @@
                 quizContainer.appendChild(questionBlock);
             });
         }
-
+        
         function nextPage() {
             if (currentPage * questionsPerPage < allQuestions.length - questionsPerPage) {
                 currentPage++;
