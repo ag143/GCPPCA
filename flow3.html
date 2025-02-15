@@ -13,62 +13,48 @@
         .menu-group-content { display: none; padding-left: 10px; }
         .menu-item { cursor: pointer; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; background: #d3d3d3; }
         .menu-item:hover, .menu-group-header:hover { background-color: #c5dbff; }
-        #searchBar { width: 100%; padding: 5px; margin-bottom: 10px; }
+        #searchBar { width: calc(100% - 30px); padding: 5px; margin-bottom: 10px; display: inline-block; }
+        #clearSearch { cursor: pointer; padding: 5px; background: red; color: white; border: none; }
         .highlight { stroke: red; stroke-width: 3px; }
-        
-        @media (max-width: 768px) {
-            #menu { width: 5%; overflow: hidden; }
-            #menu:hover { width: 300px; }
-        }
+        @keyframes flowAnimation { 0% { stroke-dashoffset: 10; } 100% { stroke-dashoffset: 0; } }
+        @media (max-width: 768px) { #menu { width: 5%; overflow: hidden; } #menu:hover { width: 300px; } }
     </style>
 </head>
 <body>
     <div id="menu">
         <h3>GCP Services</h3>
         <input type="text" id="searchBar" placeholder="Search..." onkeyup="filterMenu()">
+        <button id="clearSearch" onclick="clearSearch()">X</button>
         <div id="menu-content"></div>
     </div>
     <div id="diagramDiv"></div>
-
     <script>
         var $ = go.GraphObject.make;
         var diagram = $(go.Diagram, "diagramDiv", {
             "undoManager.isEnabled": true,
             layout: $(go.LayeredDigraphLayout, { direction: 90, layerSpacing: 50 })
         });
-
         diagram.nodeTemplate = $(go.Node, "Auto",
             $(go.Shape, "Rectangle", { fill: "#FFD700", strokeWidth: 2 }),
-            $(go.TextBlock, { margin: 8, font: "bold 12px sans-serif" },
-                new go.Binding("text", "key")
-            )
+            $(go.Picture, { width: 20, height: 20, margin: 5 }, new go.Binding("source", "icon")),
+            $(go.TextBlock, { margin: 8, font: "bold 12px sans-serif" }, new go.Binding("text", "key"))
         );
-
-        diagram.linkTemplate = $(go.Link,
-            { routing: go.Link.Orthogonal, corner: 10 },
-            $(go.Shape, { strokeWidth: 2, strokeDashArray: [4, 2], stroke: "black" }),
-            $(go.Shape, { toArrow: "Standard" })
+        diagram.linkTemplate = $(go.Link, { routing: go.Link.Orthogonal, corner: 10 },
+            $(go.Shape, { strokeWidth: 2, strokeDashArray: [4, 2], stroke: "black", strokeDashOffset: 0, strokeDashArray: [5, 3] })
         );
-
-        diagram.groupTemplate = $(go.Group, "Vertical",
-            { layout: $(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(10, 10) }) },
-            $(go.Panel, "Auto",
-                { height: 40, background: "#4A90E2", click: (e, obj) => toggleGroup(obj.part) },
-                $(go.TextBlock, { margin: 5, stroke: "white", font: "bold 14px sans-serif" },
-                    new go.Binding("text", "key")
-                )
+        diagram.groupTemplate = $(go.Group, "Vertical", { layout: $(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(10, 10) }) },
+            $(go.Panel, "Auto", { height: 40, background: "#4A90E2", click: (e, obj) => toggleGroup(obj.part) },
+                $(go.TextBlock, { margin: 5, stroke: "white", font: "bold 14px sans-serif" }, new go.Binding("text", "key"))
             ),
             $(go.Panel, "Auto",
                 $(go.Shape, "Rectangle", { fill: "#D3D3D3" }),
                 $(go.Placeholder, { padding: 10 })
             )
         );
-
         function toggleGroup(group) {
             group.isSubGraphExpanded = !group.isSubGraphExpanded;
             diagram.layoutDiagram(true);
         }
-
         function highlightNode(nodeKey) {
             diagram.startTransaction("highlight");
             diagram.clearHighlighteds();
@@ -80,7 +66,6 @@
             }
             diagram.commitTransaction("highlight");
         }
-
         function expandAllParentGroups(nodeKey) {
             diagram.startTransaction("expandGroups");
             var node = diagram.findNodeForKey(nodeKey);
@@ -90,7 +75,6 @@
             }
             diagram.commitTransaction("expandGroups");
         }
-
         function createMenu() {
             var menuContent = document.getElementById("menu-content");
             gcpData.filter(item => item.isGroup).forEach(group => {
@@ -112,12 +96,15 @@
                 menuContent.appendChild(groupContent);
             });
         }
-
         function filterMenu() {
             var searchText = document.getElementById("searchBar").value.toLowerCase();
             document.querySelectorAll(".menu-item").forEach(item => {
                 item.style.display = item.innerHTML.toLowerCase().includes(searchText) ? "block" : "none";
             });
+        }
+        function clearSearch() {
+            document.getElementById("searchBar").value = "";
+            filterMenu();
         }
         function toggleTreeView(groupKey) {
             var groupContent = document.getElementById(groupKey);
@@ -127,22 +114,12 @@
         }
         var gcpData = [
             { key: "Compute", isGroup: true },
-            { key: "GCE", group: "Compute" },
-            { key: "GKE", group: "Compute" },
+            { key: "GCE", group: "Compute", icon: "gce-icon.png" },
+            { key: "GKE", group: "Compute", icon: "gke-icon.png" },
             { key: "Networking", isGroup: true },
-            { key: "VPC", group: "Networking" },
-            { key: "CloudDNS", group: "Networking" },
-            { key: "Storage", isGroup: true },
-            { key: "Cloud Storage", group: "Storage" },
-            { key: "Bigtable", group: "Storage" }
+            { key: "VPC", group: "Networking", icon: "vpc-icon.png" }
         ];
-
-        var gcpLinks = [
-            { from: "GCE", to: "VPC" },
-            { from: "GKE", to: "CloudDNS" }
-        ];
-
-        diagram.model = new go.GraphLinksModel(gcpData, gcpLinks);
+        diagram.model = new go.GraphLinksModel(gcpData, []);
         createMenu();
     </script>
 </body>
