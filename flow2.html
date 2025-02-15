@@ -16,7 +16,6 @@
         #searchBar { width: 100%; padding: 5px; margin-bottom: 10px; }
         .highlight { stroke: red; stroke-width: 3px; }
         
-        /* Auto-hide menu for mobile */
         @media (max-width: 768px) {
             #menu { width: 5%; overflow: hidden; }
             #menu:hover { width: 300px; }
@@ -47,7 +46,7 @@
 
         diagram.linkTemplate = $(go.Link,
             { routing: go.Link.Orthogonal, corner: 10 },
-            $(go.Shape, { strokeWidth: 2, strokeDashArray: [4, 2] }),
+            $(go.Shape, { strokeWidth: 2, strokeDashArray: [4, 2], stroke: "black" }),
             $(go.Shape, { toArrow: "Standard" })
         );
 
@@ -77,8 +76,19 @@
             if (node) {
                 node.isHighlighted = true;
                 diagram.centerRect(node.actualBounds);
+                expandAllParentGroups(nodeKey);
             }
             diagram.commitTransaction("highlight");
+        }
+
+        function expandAllParentGroups(nodeKey) {
+            diagram.startTransaction("expandGroups");
+            var node = diagram.findNodeForKey(nodeKey);
+            if (node && node.containingGroup) {
+                node.containingGroup.isSubGraphExpanded = true;
+                expandAllParentGroups(node.containingGroup.key);
+            }
+            diagram.commitTransaction("expandGroups");
         }
 
         function createMenu() {
@@ -109,19 +119,17 @@
                 item.style.display = item.innerHTML.toLowerCase().includes(searchText) ? "block" : "none";
             });
         }
-        function toggleTreeView(groupKey) {
-            var groupContent = document.getElementById(groupKey);
-            if (groupContent) {
-                groupContent.style.display = (groupContent.style.display === "none" || groupContent.style.display === "") ? "block" : "none";
-            }
-        }
+
         var gcpData = [
             { key: "Compute", isGroup: true },
             { key: "GCE", group: "Compute" },
             { key: "GKE", group: "Compute" },
             { key: "Networking", isGroup: true },
             { key: "VPC", group: "Networking" },
-            { key: "CloudDNS", group: "Networking" }
+            { key: "CloudDNS", group: "Networking" },
+            { key: "Storage", isGroup: true },
+            { key: "Cloud Storage", group: "Storage" },
+            { key: "Bigtable", group: "Storage" }
         ];
 
         var gcpLinks = [
