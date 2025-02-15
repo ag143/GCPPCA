@@ -13,11 +13,13 @@
         .menu-group-content { display: none; padding-left: 10px; }
         .menu-item { cursor: pointer; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; background: #d3d3d3; }
         .menu-item:hover, .menu-group-header:hover { background-color: #c5dbff; }
+        #searchBar { width: 100%; padding: 5px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
     <div id="menu">
         <h3>GCP Services</h3>
+        <input type="text" id="searchBar" placeholder="Search..." onkeyup="filterMenu()">
         <div id="menu-content"></div>
     </div>
     <div id="diagramDiv"></div>
@@ -93,32 +95,12 @@
             }
         }
 
-        diagram.nodeTemplate = $(go.Node, "Auto",
-            $(go.Shape, "Rectangle", { fill: "white", strokeWidth: 2 },
-                new go.Binding("fill", "color")
-            ),
-            $(go.TextBlock, { margin: 8, font: "bold 12px Arial" },
-                new go.Binding("text", "key")
-            )
-        );
-
-        diagram.groupTemplate = $(go.Group, "Auto",
-            { layout: $(go.GridLayout, { wrappingColumn: 3, spacing: new go.Size(30, 30) }) },
-            $(go.Shape, "RoundedRectangle", { fill: "#a6c8ff", strokeWidth: 2 }),
-            $(go.Panel, "Vertical",
-                $(go.TextBlock, { margin: 8, font: "bold 14px Arial", background: "#85a3ff", cursor: "pointer" },
-                    new go.Binding("text", "key"),
-                    { click: function(e, obj) { toggleTreeView(obj.part.data.key); } }
-                ),
-                $(go.Placeholder, { padding: 20 })
-            )
-        );
-
-        diagram.linkTemplate = $(go.Link,
-            { routing: go.Link.AvoidsNodes, corner: 10, curve: go.Link.JumpGap },
-            $(go.Shape, { strokeWidth: 2 }),
-            $(go.Shape, { toArrow: "Standard" })
-        );
+        function filterMenu() {
+            var searchText = document.getElementById("searchBar").value.toLowerCase();
+            document.querySelectorAll(".menu-item").forEach(item => {
+                item.style.display = item.innerHTML.toLowerCase().includes(searchText) ? "block" : "none";
+            });
+        }
 
         diagram.model = new go.GraphLinksModel(gcpData, gcpLinks);
         createMenu();
