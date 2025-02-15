@@ -9,9 +9,9 @@
         body { font-family: Arial, sans-serif; display: flex; flex-direction: row; overflow: hidden; }
         #menu { width: 300px; padding: 10px; background: #f9f9f9; overflow-y: auto; border-right: 2px solid #ccc; }
         #diagramDiv { flex-grow: 1; height: 100vh; border: 1px solid #ccc; }
-        .menu-group { cursor: pointer; font-weight: bold; padding: 8px; background: #dcdcdc; border-radius: 5px; }
-        .menu-item { cursor: pointer; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; }
-        .menu-item:hover, .menu-group:hover { background-color: #e0e0e0; }
+        .menu-group { cursor: pointer; font-weight: bold; padding: 8px; background: #a6c8ff; border-radius: 5px; }
+        .menu-item { cursor: pointer; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; background: #d3d3d3; }
+        .menu-item:hover, .menu-group:hover { background-color: #c5dbff; }
         .submenu { padding-left: 20px; display: none; }
     </style>
 </head>
@@ -44,7 +44,11 @@
             gcpData.filter(item => item.isGroup).forEach(group => {
                 var groupDiv = document.createElement("div");
                 groupDiv.className = "menu-group";
-                groupDiv.innerHTML = `<span onclick='toggleTreeView("${group.key}")'>${group.key} ▾</span>`;
+                groupDiv.innerHTML = group.key;
+                groupDiv.onclick = () => {
+                    toggleTreeView(group.key);
+                    highlightNode(group.key);
+                };
                 var submenuDiv = document.createElement("div");
                 submenuDiv.id = group.key;
                 submenuDiv.className = "submenu";
@@ -67,7 +71,10 @@
 
         function highlightNode(key) {
             var node = diagram.findNodeForKey(key);
-            if (node) diagram.centerRect(node.actualBounds);
+            if (node) {
+                diagram.centerRect(node.actualBounds);
+                diagram.select(node);
+            }
         }
 
         diagram.nodeTemplate = $(go.Node, "Auto",
@@ -81,23 +88,15 @@
 
         diagram.groupTemplate = $(go.Group, "Auto",
             { layout: $(go.GridLayout, { wrappingColumn: 3, spacing: new go.Size(30, 30) }) },
-            $(go.Shape, "RoundedRectangle", { fill: "lightgray", strokeWidth: 2 }),
+            $(go.Shape, "RoundedRectangle", { fill: "#a6c8ff", strokeWidth: 2 }),
             $(go.Panel, "Vertical",
-                $(go.Panel, "Horizontal",
-                    $("Button", { click: function(e, obj) { toggleGroup(obj.part); } },
-                        new go.Binding("text", "isSubGraphExpanded", function(exp) { return exp ? "-" : "+"; })
-                    ),
-                    $(go.TextBlock, { margin: 8, font: "bold 14px Arial" },
-                        new go.Binding("text", "key")
-                    )
+                $(go.TextBlock, { margin: 8, font: "bold 14px Arial", background: "#85a3ff" },
+                    new go.Binding("text", "key"),
+                    { click: function(e, obj) { highlightNode(obj.part.data.key); } }
                 ),
                 $(go.Placeholder, { padding: 20 })
             )
         );
-
-        function toggleGroup(group) {
-            group.isSubGraphExpanded = !group.isSubGraphExpanded;
-        }
 
         diagram.linkTemplate = $(go.Link,
             { routing: go.Link.AvoidsNodes, corner: 10, curve: go.Link.JumpGap },
