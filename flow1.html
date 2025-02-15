@@ -19,12 +19,14 @@
         <h3>GCP Services</h3>
         <div class="menu-group" onclick="toggleTreeView('Compute')">Compute ▾</div>
         <div id="Compute" class="submenu">
+            <div class="menu-item" onclick="highlightNode('Compute')">Compute</div>
             <div class="menu-item" onclick="highlightNode('GCE')">GCE</div>
             <div class="menu-item" onclick="highlightNode('GKE')">GKE</div>
             <div class="menu-item" onclick="highlightNode('CloudRun')">CloudRun</div>
         </div>
         <div class="menu-group" onclick="toggleTreeView('Networking')">Networking ▾</div>
         <div id="Networking" class="submenu">
+            <div class="menu-item" onclick="highlightNode('Networking')">Networking</div>
             <div class="menu-item" onclick="highlightNode('VPC')">VPC</div>
             <div class="menu-item" onclick="highlightNode('CloudDNS')">CloudDNS</div>
         </div>
@@ -49,22 +51,31 @@
         }
 
         var nodes = [
-            { key: "Compute", isGroup: true },
-            { key: "GCE", group: "Compute" },
-            { key: "GKE", group: "Compute" },
-            { key: "CloudRun", group: "Compute" },
-            { key: "Networking", isGroup: true },
-            { key: "VPC", group: "Networking" },
-            { key: "CloudDNS", group: "Networking" }
+            { key: "Compute", color: "lightblue" },
+            { key: "GCE", group: "Compute", color: "lightgray" },
+            { key: "GKE", group: "Compute", color: "lightgray" },
+            { key: "CloudRun", group: "Compute", color: "lightgray" },
+            { key: "Networking", color: "lightgreen" },
+            { key: "VPC", group: "Networking", color: "lightgray" },
+            { key: "CloudDNS", group: "Networking", color: "lightgray" }
         ];
         
         var links = [
-            { from: "GCE", to: "Compute" },
-            { from: "GKE", to: "Compute" },
-            { from: "CloudRun", to: "Compute" },
-            { from: "VPC", to: "Networking" },
-            { from: "CloudDNS", to: "Networking" }
+            { from: "Compute", to: "GCE" },
+            { from: "Compute", to: "GKE" },
+            { from: "Compute", to: "CloudRun" },
+            { from: "Networking", to: "VPC" },
+            { from: "Networking", to: "CloudDNS" }
         ];
+
+        diagram.nodeTemplate = $(go.Node, "Auto",
+            $(go.Shape, "RoundedRectangle", { fill: "white" },
+                new go.Binding("fill", "color")
+            ),
+            $(go.TextBlock, { margin: 5 },
+                new go.Binding("text", "key")
+            )
+        );
 
         diagram.model = new go.GraphLinksModel(nodes, links);
     </script>
