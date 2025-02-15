@@ -6,78 +6,63 @@
     <title>GCP Architecture Diagram</title>
     <script src="https://unpkg.com/gojs@2.3.11/release/go.js"></script>
     <style>
-        body { 
-            font-family: Arial, sans-serif; 
-            display: flex; 
-            flex-direction: column; 
-            overflow: hidden; 
-            margin: 0; 
-            height: 100vh;
-        }
-
-        /* Header Bar (5% height) */
-        #header { 
-            height: 5vh; 
-            background: #4A90E2; 
-            color: white; 
-            text-align: center; 
-            line-height: 5vh; 
-            font-size: 18px; 
-            font-weight: bold; 
-        }
-
-        /* Auto-Hide Menu Bar */
+        body { font-family: Arial, sans-serif; display: flex; flex-direction: row; overflow: hidden; margin: 0; }
+        
+        /* Auto-Hiding Menu (Keep 5% visible) */
         #menu {
             width: 250px;
             position: absolute;
-            left: -250px; /* Hide by default */
-            height: 95vh; /* Remaining height */
+            left: -210px; /* Keep 40px visible */
+            height: 95vh;
             background: #f9f9f9;
             overflow-y: auto;
             border-right: 2px solid #ccc;
             transition: left 0.3s ease-in-out;
-        }
-        #menu:hover { left: 0; } /* Show on hover */
-
-        /* Diagram Container */
-        #diagramDiv { 
-            flex-grow: 1; 
-            height: 95vh; /* Remaining height */
-            width: 100vw; 
-            border: 1px solid #ccc; 
-            touch-action: none;
+            padding: 10px;
         }
 
-        /* Group & Node Styles */
-        .menu-group-header { 
-            cursor: pointer; 
-            font-weight: bold; 
-            padding: 10px; 
-            background: #4A90E2; 
-            color: white; 
-            border-radius: 5px; 
-            margin-bottom: 5px; 
-            border: 2px solid #3066BE; 
+        #menu:hover {
+            left: 0; /* Show full menu on hover */
         }
+
+        /* Keep 5% of menu visible */
+        #menu::after {
+            content: "☰"; /* Menu icon */
+            position: absolute;
+            top: 50%;
+            right: -30px;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 40px;
+            background: #4A90E2;
+            color: white;
+            text-align: center;
+            line-height: 40px;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        #diagramDiv { flex-grow: 1; height: 100vh; border: 1px solid #ccc; touch-action: pan-x pan-y; }
+
+        .menu-group-header { cursor: pointer; font-weight: bold; padding: 10px; background: #4A90E2; color: white; border-radius: 5px; margin-bottom: 5px; border: 2px solid #3066BE; }
         .menu-group-content { display: none; padding-left: 10px; }
-        .menu-item { 
-            cursor: pointer; 
-            padding: 8px; 
-            margin: 5px 0; 
-            border: 1px solid #ddd; 
-            border-radius: 5px; 
-            background: #d3d3d3; 
-        }
+        .menu-item { cursor: pointer; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; background: #d3d3d3; }
         .menu-item:hover, .menu-group-header:hover { background-color: #c5dbff; }
+        #searchBar { width: 100%; padding: 5px; margin-bottom: 10px; }
 
-        /* Responsive Styles */
-        @media (max-width: 768px) {
-            #menu { width: 200px; left: -200px; } /* Smaller menu for mobile */
+        /* Flow animation for links */
+        .flow-animation {
+            animation: moveDots 2s linear infinite;
+        }
+
+        @keyframes moveDots {
+            0% { stroke-dasharray: 5,5; stroke-dashoffset: 0; }
+            100% { stroke-dasharray: 5,5; stroke-dashoffset: -10; }
         }
     </style>
 </head>
 <body>
-    <div id="header">GCP Architecture Diagram</div>
     <div id="menu">
         <h3>GCP Services</h3>
         <input type="text" id="searchBar" placeholder="Search..." onkeyup="filterMenu()">
@@ -89,27 +74,27 @@
         var $ = go.GraphObject.make;
         var diagram = $(go.Diagram, "diagramDiv", {
             "undoManager.isEnabled": true,
-            "panningTool.isEnabled": true,
+            allowHorizontalScroll: true,
+            allowVerticalScroll: true,
+            "toolManager.mouseWheelBehavior": go.ToolManager.WheelScroll,
             layout: $(go.LayeredDigraphLayout, { direction: 90, layerSpacing: 50 })
         });
 
         function makeGroupTemplate() {
-            return $(go.Group, "Auto", {
+            return $(go.Group, "Vertical",
+                {
                     layout: $(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(10, 10) }),
                     isSubGraphExpanded: true
                 },
-                $(go.Panel, "Vertical",
-                    $(go.Panel, "Auto",
-                        { height: 40, background: "#4A90E2", click: (e, obj) => toggleGroup(obj.part) },
-                        $(go.TextBlock, { margin: 5, stroke: "white", font: "bold 14px sans-serif" },
-                            new go.Binding("text", "key")
-                        )
-                    ),
-                    $(go.Panel, "Auto",
-                        { margin: 5 },
-                        $(go.Shape, "Rectangle", { fill: "#D3D3D3" }),
-                        $(go.Placeholder, { padding: 10 })
+                $(go.Panel, "Auto",
+                    $(go.Shape, "Rectangle", { fill: "#4A90E2", strokeWidth: 2, height: 40 }),
+                    $(go.TextBlock, { margin: 5, stroke: "white", font: "bold 14px sans-serif" },
+                        new go.Binding("text", "key")
                     )
+                ),
+                $(go.Panel, "Auto",
+                    $(go.Shape, "Rectangle", { fill: "#D3D3D3", strokeWidth: 2 }),
+                    $(go.Placeholder, { padding: 10 })
                 )
             );
         }
@@ -126,24 +111,10 @@
             )
         );
 
-        function getRandomColor() {
-            const colors = ["#FF5733", "#3498db", "#2ecc71", "#e74c3c", "#9b59b6", "#f1c40f"];
-            return colors[Math.floor(Math.random() * colors.length)];
-        }
-
-        function getRandomDashPattern() {
-            const patterns = [[10, 5], [5, 5], [20, 10], [15, 5, 5, 5]];
-            return patterns[Math.floor(Math.random() * patterns.length)];
-        }
-
         diagram.linkTemplate = $(go.Link,
             { routing: go.Link.Orthogonal, corner: 10 },
-            $(go.Shape, {
-                strokeWidth: 3,
-                strokeDashArray: new go.Binding("dashArray", "dashPattern"),
-                stroke: new go.Binding("stroke", "color") // Fixed color binding
-            }),
-            $(go.Shape, { toArrow: "Standard", stroke: "black", fill: "black" })
+            $(go.Shape, { strokeWidth: 2, class: "flow-animation", strokeDashArray: [5, 5] }),
+            $(go.Shape, { toArrow: "Standard" })
         );
 
         diagram.groupTemplate = makeGroupTemplate();
@@ -159,9 +130,8 @@
         ];
 
         var gcpLinks = [
-            { from: "GCE", to: "VPC", color: getRandomColor(), dashPattern: getRandomDashPattern() },
-            { from: "GKE", to: "CloudDNS", color: getRandomColor(), dashPattern: getRandomDashPattern() },
-            { from: "CloudRun", to: "VPC", color: getRandomColor(), dashPattern: getRandomDashPattern() }
+            { from: "GCE", to: "VPC" },
+            { from: "GKE", to: "CloudDNS" }
         ];
 
         function createMenu() {
@@ -186,20 +156,20 @@
             });
         }
 
-        function toggleTreeView(groupKey) {
-            var groupContent = document.getElementById(groupKey);
-            groupContent.style.display = (groupContent.style.display === "none" || groupContent.style.display === "") ? "block" : "none";
+        function toggleTreeView(groupName) {
+            var content = document.getElementById(groupName);
+            content.style.display = content.style.display === "none" ? "block" : "none";
         }
 
-        function fitToScreen() {
-            diagram.zoomToFit();
+        function filterMenu() {
+            var searchText = document.getElementById("searchBar").value.toLowerCase();
+            document.querySelectorAll(".menu-item").forEach(item => {
+                item.style.display = item.innerHTML.toLowerCase().includes(searchText) ? "block" : "none";
+            });
         }
-
-        window.addEventListener("resize", fitToScreen);
 
         diagram.model = new go.GraphLinksModel(gcpData, gcpLinks);
         createMenu();
-        fitToScreen();
     </script>
 </body>
 </html>
