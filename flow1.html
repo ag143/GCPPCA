@@ -130,6 +130,18 @@
                 item.style.display = item.innerHTML.toLowerCase().includes(searchText) ? "block" : "none";
             });
         }
+        function highlightNode(nodeKey) {
+            diagram.startTransaction("highlight");
+            diagram.clearHighlighteds();
+            var node = diagram.findNodeForKey(nodeKey);
+            if (node) {
+                node.isHighlighted = true;
+                diagram.centerRect(node.actualBounds);
+            }
+            diagram.commitTransaction("highlight");
+        }
+
+        
 
         diagram.model = new go.GraphLinksModel(gcpData, gcpLinks);
         createMenu();
