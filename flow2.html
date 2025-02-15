@@ -109,7 +109,12 @@
                 item.style.display = item.innerHTML.toLowerCase().includes(searchText) ? "block" : "none";
             });
         }
-
+        function toggleTreeView(groupKey) {
+            var groupContent = document.getElementById(groupKey);
+            if (groupContent) {
+                groupContent.style.display = (groupContent.style.display === "none" || groupContent.style.display === "") ? "block" : "none";
+            }
+        }
         var gcpData = [
             { key: "Compute", isGroup: true },
             { key: "GCE", group: "Compute" },
