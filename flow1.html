@@ -14,8 +14,11 @@
         .menu-item { cursor: pointer; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; background: #d3d3d3; }
         .menu-item:hover, .menu-group-header:hover { background-color: #c5dbff; }
         #searchBar { width: 100%; padding: 5px; margin-bottom: 10px; }
-        .highlight-link { stroke: red; stroke-width: 3px; animation: blink 1s infinite alternate; }
-        @keyframes blink { from { stroke-opacity: 1; } to { stroke-opacity: 0.5; } }
+        @keyframes flow {
+            from { stroke-dashoffset: 20; }
+            to { stroke-dashoffset: 0; }
+        }
+        .flow-link { stroke: #FF5733; stroke-width: 2px; stroke-dasharray: 5, 5; animation: flow 0.5s linear infinite; }
     </style>
 </head>
 <body>
@@ -38,7 +41,6 @@
                     layout: $(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(10, 10) }),
                     isSubGraphExpanded: true
                 },
-                $(go.Shape, "Rectangle", { fill: "lightblue", strokeWidth: 2 }),
                 $(go.Panel, "Vertical",
                     $(go.Panel, "Auto",
                         { height: 40, background: "#4A90E2", click: (e, obj) => toggleGroup(obj.part) },
@@ -68,9 +70,9 @@
         );
 
         diagram.linkTemplate = $(go.Link,
-            { routing: go.Link.AvoidsNodes, curve: go.Link.JumpGap, corner: 10 },
-            $(go.Shape, { strokeWidth: 2 }),
-            $(go.Shape, { toArrow: "Standard" })
+            { routing: go.Link.Orthogonal, corner: 10 },
+            $(go.Shape, { strokeWidth: 2, stroke: "gray", strokeDashArray: [5, 5] }),
+            $(go.Shape, { toArrow: "Standard", stroke: "gray", fill: "gray" })
         );
 
         diagram.groupTemplate = makeGroupTemplate();
@@ -112,11 +114,39 @@
             });
         }
 
+        function toggleTreeView(groupKey) {
+            var groupContent = document.getElementById(groupKey);
+            if (groupContent.style.display === "none" || groupContent.style.display === "") {
+                groupContent.style.display = "block";
+            } else {
+                groupContent.style.display = "none";
+            }
+        }
+
         function filterMenu() {
             var searchText = document.getElementById("searchBar").value.toLowerCase();
             document.querySelectorAll(".menu-item").forEach(item => {
                 item.style.display = item.innerHTML.toLowerCase().includes(searchText) ? "block" : "none";
             });
+        }
+
+        function highlightNode(nodeKey) {
+            diagram.startTransaction("highlight");
+            diagram.clearHighlighteds();
+            var node = diagram.findNodeForKey(nodeKey);
+            if (node) {
+                node.isHighlighted = true;
+                diagram.links.each(link => {
+                    if (link.fromNode === node || link.toNode === node) {
+                        link.isHighlighted = true;
+                        link.findObject("SHAPE").stroke = "red";
+                        link.findObject("SHAPE").strokeWidth = 3;
+                        link.findObject("SHAPE").strokeDashArray = [4, 2];
+                        link.findObject("SHAPE").strokeDashOffset = 0;
+                    }
+                });
+            }
+            diagram.commitTransaction("highlight");
         }
 
         diagram.model = new go.GraphLinksModel(gcpData, gcpLinks);
