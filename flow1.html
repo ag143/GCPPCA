@@ -68,7 +68,7 @@
         );
 
         diagram.linkTemplate = $(go.Link,
-            { routing: go.Link.Orthogonal, corner: 10 },
+            { routing: go.Link.AvoidsNodes, curve: go.Link.JumpGap, corner: 10 },
             $(go.Shape, { strokeWidth: 2 }),
             $(go.Shape, { toArrow: "Standard" })
         );
