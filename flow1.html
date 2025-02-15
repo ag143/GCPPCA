@@ -52,10 +52,6 @@
             strokeWidth: 2;
             fill: none;
         }
-        @keyframes flow-animation {
-            0% { stroke-dashoffset: 20; }
-            100% { stroke-dashoffset: 0; }
-        }
         @media (max-width: 768px) {
             #menu-container {
                 width: 5%;
@@ -154,8 +150,7 @@
         diagram.linkTemplate = $(go.Link,
             { routing: go.Link.Orthogonal, corner: 10 },
             $(go.Shape, {
-                strokeWidth: 2, strokeDashArray: [10, 5], stroke: "blue",
-                strokeDashOffset: 20, animation: "flow-animation 2s infinite linear"
+                strokeWidth: 2, strokeDashArray: [10, 5], stroke: "blue"
             }),
             $(go.Shape, { toArrow: "Standard", stroke: "blue", fill: "blue" })
         );
@@ -176,6 +171,20 @@
             { from: "GCE", to: "VPC" },
             { from: "GKE", to: "CloudDNS" }
         ];
+
+        function animateLinks() {
+            diagram.links.each(link => {
+                var shape = link.findObject("SHAPE");
+                if (shape) {
+                    var animation = new go.Animation();
+                    animation.add(shape, "strokeDashOffset", 20, 0);
+                    animation.runCount = Infinity;
+                    animation.duration = 1500;
+                    animation.easing = go.Animation.EaseLinear;
+                    animation.start();
+                }
+            });
+        }
 
         function createMenu() {
             var menuContent = document.getElementById("menu-content");
@@ -206,6 +215,7 @@
 
         diagram.model = new go.GraphLinksModel(gcpData, gcpLinks);
         createMenu();
+        animateLinks();
     </script>
 </body>
 </html>
