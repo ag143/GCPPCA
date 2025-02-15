@@ -12,7 +12,6 @@
         .menu-item { cursor: pointer; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; }
         .menu-item:hover { background-color: #e0e0e0; }
         .submenu { padding-left: 20px; display: none; }
-        .toggle-button { cursor: pointer; font-weight: bold; padding: 5px; }
     </style>
 </head>
 <body>
@@ -52,13 +51,13 @@
         }
 
         var nodes = [
-            { key: "Compute", color: "lightblue", isGroup: true },
-            { key: "GCE", group: "Compute", color: "lightgray" },
-            { key: "GKE", group: "Compute", color: "lightgray" },
-            { key: "CloudRun", group: "Compute", color: "lightgray" },
-            { key: "Networking", color: "lightgreen", isGroup: true },
-            { key: "VPC", group: "Networking", color: "lightgray" },
-            { key: "CloudDNS", group: "Networking", color: "lightgray" }
+            { key: "Compute", color: "#ADD8E6", isGroup: true },
+            { key: "GCE", group: "Compute", color: "#D3D3D3" },
+            { key: "GKE", group: "Compute", color: "#D3D3D3" },
+            { key: "CloudRun", group: "Compute", color: "#D3D3D3" },
+            { key: "Networking", color: "#90EE90", isGroup: true },
+            { key: "VPC", group: "Networking", color: "#D3D3D3" },
+            { key: "CloudDNS", group: "Networking", color: "#D3D3D3" }
         ];
         
         var links = [
@@ -79,18 +78,18 @@
         );
 
         diagram.groupTemplate = $(go.Group, "Auto",
-            { layout: $(go.TreeLayout, { angle: 90, layerSpacing: 50 }) },
+            { layout: $(go.TreeLayout, { angle: 90, layerSpacing: 70 }) },
             $(go.Shape, "RoundedRectangle", { fill: "lightgray", strokeWidth: 2 }),
             $(go.Panel, "Vertical",
-                $(go.TextBlock, { margin: 8, font: "bold 14px Arial" },
-                    new go.Binding("text", "key")
-                ),
                 $(go.Panel, "Horizontal",
-                    $("Button", { click: function(e, obj) { toggleGroup(obj.part) } },
-                        $(go.TextBlock, "+/-", { margin: 5 })
+                    $("Button", { click: function(e, obj) { toggleGroup(obj.part); } },
+                        new go.Binding("text", "isSubGraphExpanded", function(exp) { return exp ? "-" : "+"; })
+                    ),
+                    $(go.TextBlock, { margin: 8, font: "bold 14px Arial" },
+                        new go.Binding("text", "key")
                     )
                 ),
-                $(go.Placeholder, { padding: 10 })
+                $(go.Placeholder, { padding: 20 })
             )
         );
 
