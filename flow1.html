@@ -4,14 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GCP Architecture Diagram</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gojs/2.3.11/go.js"></script>
+    <script src="https://unpkg.com/gojs@2.3.11/release/go.js"></script>
     <style>
         body { font-family: Arial, sans-serif; display: flex; flex-direction: column; overflow: hidden; }
         #menu { width: 100%; padding: 10px; background: #f9f9f9; overflow-x: auto; white-space: nowrap; border-bottom: 2px solid #ccc; }
         #diagramDiv { flex-grow: 1; height: calc(100vh - 50px); border: 1px solid #ccc; }
         .menu-item { display: inline-block; cursor: pointer; padding: 8px; margin-right: 10px; border: 1px solid #ddd; border-radius: 5px; }
         .menu-item:hover { background-color: #e0e0e0; }
-        .toggle-btn { cursor: pointer; padding: 5px; font-weight: bold; }
         @media (min-width: 768px) {
             body { flex-direction: row; }
             #menu { width: 250px; height: 100vh; border-right: 2px solid #ccc; border-bottom: none; white-space: normal; }
@@ -22,18 +21,18 @@
 <body>
     <div id="menu">
         <h3>GCP Services</h3>
-        <div class="menu-item toggle-btn" onclick="toggleGroup('Compute')">Compute</div>
-        <div class="menu-item toggle-btn" onclick="toggleGroup('Networking')">Networking</div>
-        <div class="menu-item toggle-btn" onclick="toggleGroup('Security')">Security</div>
-        <div class="menu-item toggle-btn" onclick="toggleGroup('Storage')">Storage</div>
-        <div class="menu-item toggle-btn" onclick="toggleGroup('Monitoring')">Monitoring</div>
-        <div class="menu-item toggle-btn" onclick="toggleGroup('Database')">Database</div>
-        <div class="menu-item toggle-btn" onclick="toggleGroup('AI')">AI & ML</div>
-        <div class="menu-item toggle-btn" onclick="toggleGroup('Developer')">Developer Tools</div>
-        <div class="menu-item toggle-btn" onclick="toggleGroup('Analytics')">Analytics</div>
+        <div class="menu-item" onclick="toggleGroup('Compute')">Compute</div>
+        <div class="menu-item" onclick="toggleGroup('Networking')">Networking</div>
+        <div class="menu-item" onclick="toggleGroup('Security')">Security</div>
+        <div class="menu-item" onclick="toggleGroup('Storage')">Storage</div>
+        <div class="menu-item" onclick="toggleGroup('Monitoring')">Monitoring</div>
+        <div class="menu-item" onclick="toggleGroup('Database')">Database</div>
+        <div class="menu-item" onclick="toggleGroup('AI')">AI & ML</div>
+        <div class="menu-item" onclick="toggleGroup('Developer')">Developer Tools</div>
+        <div class="menu-item" onclick="toggleGroup('Analytics')">Analytics</div>
     </div>
     <div id="diagramDiv"></div>
-    
+
     <script>
         var $ = go.GraphObject.make;
         var diagram = $(go.Diagram, "diagramDiv", {
@@ -42,6 +41,7 @@
             "animationManager.isEnabled": true
         });
 
+        // Node Template
         diagram.nodeTemplate = $(go.Node, "Auto",
             { click: (e, obj) => highlightNode(obj.data.key) },
             $(go.Panel, "Vertical",
@@ -53,6 +53,7 @@
             )
         );
 
+        // Group Template
         diagram.groupTemplate = $(go.Group, "Auto",
             { layout: $(go.GridLayout, { wrappingColumn: 2, spacing: new go.Size(20, 20) }) },
             $(go.Panel, "Vertical",
@@ -67,17 +68,24 @@
             )
         );
 
-        function toggleGroup(group) {
-            var isExpanded = diagram.findNodeForKey(group).isSubGraphExpanded;
-            diagram.startTransaction("toggleGroup");
-            diagram.findNodeForKey(group).isSubGraphExpanded = !isExpanded;
-            diagram.commitTransaction("toggleGroup");
+        // Function to toggle groups
+        function toggleGroup(groupKey) {
+            var groupNode = diagram.findNodeForKey(groupKey);
+            if (groupNode) {
+                diagram.startTransaction("toggleGroup");
+                groupNode.isSubGraphExpanded = !groupNode.isSubGraphExpanded;
+                diagram.commitTransaction("toggleGroup");
+            } else {
+                console.error("Group not found:", groupKey);
+            }
         }
 
+        // Define groups and services
         var nodes = [];
         var links = [];
         var groups = ["Compute", "Networking", "Security", "Storage", "Monitoring", "Database", "AI", "Developer", "Analytics"];
         
+        // Add groups
         groups.forEach(group => {
             nodes.push({ key: group, isGroup: true, expanded: true });
         });
@@ -94,13 +102,22 @@
             "Analytics": ["Dataflow", "PubSub", "Dataproc", "Looker", "BigTable"]
         };
 
+        // Add services to groups and create links
         Object.keys(services).forEach(group => {
             services[group].forEach(service => {
                 nodes.push({ key: service, group: group, color: "lightgray", header: service });
-                links.push({ from: service, to: "BigQuery" });
+                links.push({ from: service, to: group });
             });
         });
 
+        // Avoid crossing links by using curved connections
+        diagram.linkTemplate = $(go.Link,
+            { curve: go.Link.Bezier, toShortLength: 10 },
+            $(go.Shape, { strokeWidth: 2 }),
+            $(go.Shape, { toArrow: "Standard" })
+        );
+
+        // Apply model
         diagram.model = new go.GraphLinksModel(nodes, links);
     </script>
 </body>
