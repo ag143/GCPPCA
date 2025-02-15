@@ -12,13 +12,14 @@
             flex-direction: row;
             overflow: hidden;
             height: 100vh;
+            background: #f4f4f4;
         }
         #menu-container {
             position: relative;
             width: 250px;
             transition: width 0.3s ease-in-out;
             overflow: hidden;
-            background: #f9f9f9;
+            background: white;
             border-right: 2px solid #ccc;
         }
         #menu {
@@ -37,26 +38,18 @@
             cursor: pointer;
             padding: 8px;
             margin: 5px 0;
-            border: 1px solid #ddd;
             border-radius: 5px;
-            background: #d3d3d3;
+            background: #e0e0e0;
+            text-align: center;
+            font-weight: bold;
         }
         .menu-item:hover {
             background-color: #c5dbff;
-        }
-        .highlight {
-            background-color: yellow !important;
-        }
-        .group-border {
-            stroke: #2A4D69;
-            strokeWidth: 2;
-            fill: none;
         }
         @media (max-width: 768px) {
             #menu-container {
                 width: 5%;
                 min-width: 50px;
-                max-width: 250px;
                 transition: width 0.3s ease-in-out;
                 overflow: hidden;
             }
@@ -76,7 +69,7 @@
     <div id="menu-container">
         <div id="menu">
             <h3>GCP Services</h3>
-            <input type="text" id="searchBar" placeholder="Search..." onkeyup="filterMenu()">
+            <input type="text" id="searchBar" placeholder="Search...">
             <div id="menu-content"></div>
         </div>
     </div>
@@ -86,62 +79,31 @@
         var $ = go.GraphObject.make;
         var diagram = $(go.Diagram, "diagramDiv", {
             "undoManager.isEnabled": true,
-            "animationManager.isEnabled": true,
-            allowMove: true,
-            allowZoom: true,
-            allowHorizontalScroll: true,
-            allowVerticalScroll: true,
             layout: $(go.LayeredDigraphLayout, { direction: 90, layerSpacing: 50 })
         });
 
-        function makeGroupTemplate() {
-            return $(go.Group, "Auto",
-                { layout: $(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(10, 10) }) },
-                $(go.Shape, "Rectangle", { name: "GROUP_BORDER", fill: "none", stroke: "#2A4D69", strokeWidth: 2 }),
-                $(go.Panel, "Vertical",
-                    $(go.Panel, "Auto",
-                        { height: 40, background: "#4A90E2", click: (e, obj) => toggleGroup(obj.part) },
-                        $(go.TextBlock, { margin: 5, stroke: "white", font: "bold 14px sans-serif" },
-                            new go.Binding("text", "key")
-                        )
-                    ),
-                    $(go.Panel, "Auto",
-                        { margin: 5 },
-                        $(go.Placeholder, { padding: 10 })
-                    )
-                )
-            );
-        }
-
-        function toggleGroup(group) {
-            group.isSubGraphExpanded = !group.isSubGraphExpanded;
-            diagram.layoutDiagram(true);
+        function clearPreviousHighlight() {
+            diagram.nodes.each(node => {
+                node.isHighlighted = false;
+                node.findObject("SHAPE").stroke = "black";
+                node.findObject("SHAPE").strokeWidth = 1;
+            });
         }
 
         function highlightNode(nodeKey) {
             diagram.startTransaction("highlight");
-            diagram.clearHighlighteds();
-
+            clearPreviousHighlight();
             var node = diagram.findNodeForKey(nodeKey);
             if (node) {
                 node.isHighlighted = true;
                 node.findObject("SHAPE").stroke = "red";
-                node.findObject("SHAPE").strokeWidth = 4;
+                node.findObject("SHAPE").strokeWidth = 3;
             }
-
-            var menuItems = document.querySelectorAll(".menu-item");
-            menuItems.forEach(item => {
-                item.classList.remove("highlight");
-                if (item.innerHTML === nodeKey) {
-                    item.classList.add("highlight");
-                }
-            });
-
             diagram.commitTransaction("highlight");
         }
 
         diagram.nodeTemplate = $(go.Node, "Auto",
-            $(go.Shape, "Rectangle", { name: "SHAPE", fill: "#FFD700", strokeWidth: 2 }),
+            $(go.Shape, "Rectangle", { name: "SHAPE", fill: "#DDEEFF", strokeWidth: 1 }),
             $(go.TextBlock, { margin: 8, font: "bold 12px sans-serif" },
                 new go.Binding("text", "key")
             )
@@ -149,19 +111,14 @@
 
         diagram.linkTemplate = $(go.Link,
             { routing: go.Link.Orthogonal, corner: 10 },
-            $(go.Shape, {
-                strokeWidth: 2, strokeDashArray: [10, 5], stroke: "blue"
-            }),
+            $(go.Shape, { strokeWidth: 2, strokeDashArray: [10, 5], stroke: "blue" }),
             $(go.Shape, { toArrow: "Standard", stroke: "blue", fill: "blue" })
         );
-
-        diagram.groupTemplate = makeGroupTemplate();
 
         var gcpData = [
             { key: "Compute", isGroup: true },
             { key: "GCE", group: "Compute" },
             { key: "GKE", group: "Compute" },
-            { key: "CloudRun", group: "Compute" },
             { key: "Networking", isGroup: true },
             { key: "VPC", group: "Networking" },
             { key: "CloudDNS", group: "Networking" }
@@ -186,35 +143,7 @@
             });
         }
 
-        function createMenu() {
-            var menuContent = document.getElementById("menu-content");
-            gcpData.filter(item => item.isGroup).forEach(group => {
-                var groupHeader = document.createElement("div");
-                groupHeader.className = "menu-group-header";
-                groupHeader.innerHTML = group.key;
-                groupHeader.onclick = () => toggleTreeView(group.key);
-                var groupContent = document.createElement("div");
-                groupContent.id = group.key;
-                groupContent.className = "menu-group-content";
-                gcpData.filter(item => item.group === group.key).forEach(node => {
-                    var nodeDiv = document.createElement("div");
-                    nodeDiv.className = "menu-item";
-                    nodeDiv.innerHTML = node.key;
-                    nodeDiv.onclick = () => highlightNode(node.key);
-                    groupContent.appendChild(nodeDiv);
-                });
-                menuContent.appendChild(groupHeader);
-                menuContent.appendChild(groupContent);
-            });
-        }
-
-        function toggleTreeView(groupKey) {
-            var groupContent = document.getElementById(groupKey);
-            groupContent.style.display = (groupContent.style.display === "block") ? "none" : "block";
-        }
-
         diagram.model = new go.GraphLinksModel(gcpData, gcpLinks);
-        createMenu();
         animateLinks();
     </script>
 </body>
