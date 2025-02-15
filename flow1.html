@@ -79,6 +79,10 @@
         function toggleTreeView(groupId) {
             var submenu = document.getElementById(groupId);
             submenu.style.display = submenu.style.display === "none" ? "block" : "none";
+            var groupNode = diagram.findNodeForKey(groupId);
+            if (groupNode) {
+                groupNode.isSubGraphExpanded = !groupNode.isSubGraphExpanded;
+            }
         }
 
         function highlightNode(key) {
@@ -104,7 +108,7 @@
             $(go.Panel, "Vertical",
                 $(go.TextBlock, { margin: 8, font: "bold 14px Arial", background: "#85a3ff", cursor: "pointer" },
                     new go.Binding("text", "key"),
-                    { click: function(e, obj) { highlightNode(obj.part.data.key); } }
+                    { click: function(e, obj) { toggleTreeView(obj.part.data.key); } }
                 ),
                 $(go.Placeholder, { padding: 20 })
             )
