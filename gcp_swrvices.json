@@ -1,0 +1,26 @@
+{
+    "nodes": [
+        { "key": "Compute", "isGroup": true },
+        { "key": "GCE", "group": "Compute", "icon": "icons/gce.png" },
+        { "key": "GKE", "group": "Compute", "icon": "icons/gke.png" },
+        { "key": "App Engine", "group": "Compute", "icon": "icons/app_engine.png" },
+
+        { "key": "Networking", "isGroup": true },
+        { "key": "VPC", "group": "Networking", "icon": "icons/vpc.png" },
+        { "key": "Cloud Load Balancer", "group": "Networking", "icon": "icons/lb.png" },
+
+        { "key": "Storage", "isGroup": true },
+        { "key": "Cloud Storage", "group": "Storage", "icon": "icons/storage.png" },
+        { "key": "Filestore", "group": "Storage", "icon": "icons/filestore.png" },
+
+        { "key": "Big Data", "isGroup": true },
+        { "key": "BigQuery", "group": "Big Data", "icon": "icons/bigquery.png" },
+        { "key": "Dataflow", "group": "Big Data", "icon": "icons/dataflow.png" }
+    ],
+    "links": [
+        { "from": "GCE", "to": "VPC" },
+        { "from": "GKE", "to": "Cloud Load Balancer" },
+        { "from": "Cloud Storage", "to": "BigQuery" },
+        { "from": "Filestore", "to": "Dataflow" }
+    ]
+}
