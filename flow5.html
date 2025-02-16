@@ -3,21 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GCP Architecture Diagram</title>
+    <title>GCP Services Diagram</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; display: flex; flex-direction: row; overflow: hidden; }
+        body { font-family: Arial, sans-serif; display: flex; overflow: hidden; }
         #menu { width: 300px; padding: 10px; background: #f9f9f9; overflow-y: auto; border-right: 2px solid #ccc; transition: width 0.3s; }
-        #diagramDiv { flex-grow: 1; height: 100vh; border: 1px solid #ccc; padding: 10px; }
-        .menu-group-header { cursor: pointer; font-weight: bold; padding: 10px; background: #4A90E2; color: white; border-radius: 5px; margin-bottom: 5px; border: 2px solid #3066BE; }
-        .menu-group-content { display: none; padding-left: 10px; }
+        #diagram { flex-grow: 1; height: 100vh; border: 1px solid #ccc; padding: 10px; }
+        .menu-group-header { cursor: pointer; font-weight: bold; padding: 10px; background: #4A90E2; color: white; border-radius: 5px; margin-bottom: 5px; }
         .menu-item { cursor: pointer; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; background: #d3d3d3; }
-        .menu-item:hover, .menu-group-header:hover { background-color: #c5dbff; }
-        #searchContainer { position: relative; width: 100%; }
-        #searchBar { width: 100%; padding: 5px; margin-bottom: 10px; display: inline-block; }
-        #clearSearch { position: absolute; right: 5px; top: 5px; cursor: pointer; padding: 5px; background: red; color: white; border: none; }
         .highlight { stroke: red; stroke-width: 3px; }
-        @media (max-width: 768px) { #menu { width: 5%; overflow: hidden; } #menu:hover { width: 300px; } }
+        #searchContainer { width: 100%; }
+        #searchBar { width: 80%; padding: 5px; margin-bottom: 10px; }
+        #clearSearch { padding: 5px; background: red; color: white; border: none; cursor: pointer; }
+        @media (max-width: 768px) { #menu { width: 5%; } #menu:hover { width: 300px; } }
     </style>
 </head>
 <body>
@@ -29,95 +27,146 @@
         </div>
         <div id="menu-content"></div>
     </div>
-    <div id="diagramDiv"></div>
+    <div id="diagram"></div>
     <script>
-        const width = window.innerWidth - 350;
-        const height = window.innerHeight;
-        
-        const svg = d3.select("#diagramDiv").append("svg")
-            .attr("width", width)
-            .attr("height", height);
-        
-        d3.json("https://raw.githubusercontent.com/ag143/GCPPCA/main/gcp_services.json").then(data => {
-            const nodes = [];
-            const links = [];
-            
-            function processNode(node, parent) {
-                nodes.push({ id: node.name, group: parent });
-                if (parent) {
-                    links.push({ source: parent, target: node.name });
+        // Fetch JSON Data
+        fetch('https://raw.githubusercontent.com/ag143/GCPPCA/main/gcp_services.json')
+            .then(response => response.json())
+            .then(data => {
+                if (!data || !data.services) {
+                    console.error("Invalid JSON format");
+                    return;
                 }
-                if (node.subservices) {
-                    node.subservices.forEach(sub => processNode(sub, node.name));
+
+                // Process Data
+                let nodes = [], links = [];
+                function processNode(node, parentKey) {
+                    if (!node.name) return;
+                    nodes.push({ id: node.name, group: parentKey, icon: node.icon || "" });
+                    if (parentKey) links.push({ source: parentKey, target: node.name });
+                    if (node.subservices && Array.isArray(node.subservices)) {
+                        node.subservices.forEach(sub => processNode(sub, node.name));
+                    }
                 }
-            }
-            
-            data.services.forEach(service => processNode(service, null));
-            
-            const simulation = d3.forceSimulation(nodes)
-                .force("link", d3.forceLink(links).id(d => d.id).distance(100))
-                .force("charge", d3.forceManyBody().strength(-300))
-                .force("center", d3.forceCenter(width / 2, height / 2));
-            
-            const link = svg.selectAll(".link")
-                .data(links)
-                .enter().append("line")
-                .attr("class", "link")
-                .style("stroke", "#999")
-                .style("stroke-width", "2px");
-            
-            const node = svg.selectAll(".node")
-                .data(nodes)
-                .enter().append("circle")
-                .attr("class", "node")
-                .attr("r", 10)
-                .style("fill", "#FFD700")
-                .call(d3.drag()
-                    .on("start", dragStarted)
-                    .on("drag", dragged)
-                    .on("end", dragEnded));
-            
-            node.append("title").text(d => d.id);
-            
-            simulation.on("tick", () => {
-                link.attr("x1", d => d.source.x)
-                    .attr("y1", d => d.source.y)
-                    .attr("x2", d => d.target.x)
-                    .attr("y2", d => d.target.y);
-                
-                node.attr("cx", d => d.x)
-                    .attr("cy", d => d.y);
-            });
-            
-            function dragStarted(event, d) {
-                if (!event.active) simulation.alphaTarget(0.3).restart();
-                d.fx = d.x;
-                d.fy = d.y;
-            }
-            
-            function dragged(event, d) {
-                d.fx = event.x;
-                d.fy = event.y;
-            }
-            
-            function dragEnded(event, d) {
-                if (!event.active) simulation.alphaTarget(0);
-                d.fx = null;
-                d.fy = null;
-            }
-        });
-        
-        function filterMenu() {
-            var searchText = document.getElementById("searchBar").value.toLowerCase();
-            document.querySelectorAll(".menu-item").forEach(item => {
-                item.style.display = item.innerHTML.toLowerCase().includes(searchText) ? "block" : "none";
-            });
-        }
-        
-        function clearSearch() {
-            document.getElementById("searchBar").value = "";
-            filterMenu();
-        }
+                data.services.forEach(service => processNode(service, null));
+
+                // Render Diagram with D3
+                const width = document.getElementById("diagram").clientWidth;
+                const height = document.getElementById("diagram").clientHeight;
+                const svg = d3.select("#diagram").append("svg")
+                    .attr("width", width)
+                    .attr("height", height);
+
+                const simulation = d3.forceSimulation(nodes)
+                    .force("link", d3.forceLink(links).id(d => d.id).distance(100))
+                    .force("charge", d3.forceManyBody().strength(-300))
+                    .force("center", d3.forceCenter(width / 2, height / 2));
+
+                const link = svg.append("g")
+                    .selectAll("line")
+                    .data(links)
+                    .enter().append("line")
+                    .attr("stroke", "#999")
+                    .attr("stroke-width", 2)
+                    .attr("marker-end", "url(#arrow)");
+
+                const node = svg.append("g")
+                    .selectAll("circle")
+                    .data(nodes)
+                    .enter().append("circle")
+                    .attr("r", 10)
+                    .attr("fill", d => d.group ? "#ffcc00" : "#4A90E2")
+                    .call(drag(simulation));
+
+                node.append("title").text(d => d.id);
+
+                const label = svg.append("g")
+                    .selectAll("text")
+                    .data(nodes)
+                    .enter().append("text")
+                    .text(d => d.id)
+                    .attr("x", 12)
+                    .attr("y", 3);
+
+                simulation.on("tick", () => {
+                    link.attr("x1", d => d.source.x)
+                        .attr("y1", d => d.source.y)
+                        .attr("x2", d => d.target.x)
+                        .attr("y2", d => d.target.y);
+
+                    node.attr("cx", d => d.x)
+                        .attr("cy", d => d.y);
+
+                    label.attr("x", d => d.x + 12)
+                        .attr("y", d => d.y + 3);
+                });
+
+                function drag(simulation) {
+                    function dragstarted(event, d) {
+                        if (!event.active) simulation.alphaTarget(0.3).restart();
+                        d.fx = d.x;
+                        d.fy = d.y;
+                    }
+                    function dragged(event, d) {
+                        d.fx = event.x;
+                        d.fy = event.y;
+                    }
+                    function dragended(event, d) {
+                        if (!event.active) simulation.alphaTarget(0);
+                        d.fx = null;
+                        d.fy = null;
+                    }
+                    return d3.drag()
+                        .on("start", dragstarted)
+                        .on("drag", dragged)
+                        .on("end", dragended);
+                }
+
+                // Populate Menu
+                function buildMenu(data, container) {
+                    data.forEach(service => {
+                        const header = document.createElement("div");
+                        header.className = "menu-group-header";
+                        header.innerText = service.name;
+                        container.appendChild(header);
+
+                        const content = document.createElement("div");
+                        content.className = "menu-group-content";
+                        service.subservices.forEach(sub => {
+                            const item = document.createElement("div");
+                            item.className = "menu-item";
+                            item.innerText = sub.name;
+                            item.onclick = () => highlightNode(sub.name);
+                            content.appendChild(item);
+                        });
+                        container.appendChild(content);
+
+                        header.onclick = () => {
+                            content.style.display = content.style.display === "block" ? "none" : "block";
+                        };
+                    });
+                }
+                buildMenu(data.services, document.getElementById("menu-content"));
+
+                // Search Filtering
+                function filterMenu() {
+                    const searchText = document.getElementById("searchBar").value.toLowerCase();
+                    document.querySelectorAll(".menu-item").forEach(item => {
+                        item.style.display = item.innerText.toLowerCase().includes(searchText) ? "block" : "none";
+                    });
+                }
+
+                function clearSearch() {
+                    document.getElementById("searchBar").value = "";
+                    filterMenu();
+                }
+
+                // Highlight Function
+                function highlightNode(name) {
+                    node.attr("fill", d => d.id === name ? "red" : (d.group ? "#ffcc00" : "#4A90E2"));
+                }
+            })
+            .catch(error => console.error("Error fetching JSON:", error));
     </script>
 </body>
 </html>
