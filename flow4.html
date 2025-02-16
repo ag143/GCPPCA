@@ -17,7 +17,6 @@
         #searchBar { width: 100%; padding: 5px; margin-bottom: 10px; display: inline-block; }
         #clearSearch { position: absolute; right: 5px; top: 5px; cursor: pointer; padding: 5px; background: red; color: white; border: none; }
         .highlight { stroke: red; stroke-width: 3px; }
-        @keyframes flowAnimation { from { stroke-dashoffset: 10; } to { stroke-dashoffset: 0; } }
         @media (max-width: 768px) { #menu { width: 5%; overflow: hidden; } #menu:hover { width: 300px; } }
     </style>
 </head>
@@ -37,14 +36,18 @@
             "undoManager.isEnabled": true,
             layout: $(go.LayeredDigraphLayout, { direction: 90, layerSpacing: 50 })
         });
+        
         diagram.nodeTemplate = $(go.Node, "Auto",
             $(go.Shape, "Rectangle", { fill: "#FFD700", strokeWidth: 2 }),
             $(go.Picture, { width: 20, height: 20, margin: 5 }, new go.Binding("source", "icon")),
             $(go.TextBlock, { margin: 8, font: "bold 12px sans-serif" }, new go.Binding("text", "key"))
         );
-        diagram.linkTemplate = $(go.Link, { routing: go.Link.AvoidsNodes, curve: go.Link.JumpGap },
-            $(go.Shape, { strokeWidth: 2, stroke: "black", strokeDashArray: [4, 2] })
+        
+        diagram.linkTemplate = $(go.Link, { routing: go.Link.Orthogonal, corner: 10 },
+            $(go.Shape, { strokeWidth: 2, strokeDashArray: [4, 2], stroke: "black" }),
+            $(go.Shape, { toArrow: "Standard", fill: "black" })
         );
+        
         diagram.groupTemplate = $(go.Group, "Vertical", { layout: $(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(10, 10) }) },
             $(go.Panel, "Auto", { height: 40, background: "#4A90E2", click: (e, obj) => toggleGroup(obj.part) },
                 $(go.TextBlock, { margin: 5, stroke: "white", font: "bold 14px sans-serif" }, new go.Binding("text", "key"))
@@ -54,40 +57,24 @@
                 $(go.Placeholder, { padding: 10 })
             )
         );
+        
         function toggleGroup(group) {
             group.isSubGraphExpanded = !group.isSubGraphExpanded;
             diagram.layoutDiagram(true);
         }
-        function highlightNode(nodeKey) {
-            diagram.startTransaction("highlight");
-            diagram.clearHighlighteds();
-            var node = diagram.findNodeForKey(nodeKey);
-            if (node) {
-                node.isHighlighted = true;
-                diagram.centerRect(node.actualBounds);
-                expandAllParentGroups(nodeKey);
-            }
-            diagram.commitTransaction("highlight");
-        }
-        function expandAllParentGroups(nodeKey) {
-            diagram.startTransaction("expandGroups");
-            var node = diagram.findNodeForKey(nodeKey);
-            if (node && node.containingGroup) {
-                node.containingGroup.isSubGraphExpanded = true;
-                expandAllParentGroups(node.containingGroup.key);
-            }
-            diagram.commitTransaction("expandGroups");
-        }
+        
         function filterMenu() {
             var searchText = document.getElementById("searchBar").value.toLowerCase();
             document.querySelectorAll(".menu-item").forEach(item => {
                 item.style.display = item.innerHTML.toLowerCase().includes(searchText) ? "block" : "none";
             });
         }
+        
         function clearSearch() {
             document.getElementById("searchBar").value = "";
             filterMenu();
         }
+        
         fetch('https://raw.githubusercontent.com/ag143/GCPPCA/main/gcp_services.json')
             .then(response => response.json())
             .then(data => {
