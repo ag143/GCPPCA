@@ -64,10 +64,10 @@
         }
 
         function toggleGroup(groupKey) {
-            Object.keys(groups).forEach(key => {
-                if (key !== groupKey) groups[key].style.display = "none";
-            });
-            groups[groupKey].style.display = (groups[groupKey].style.display === "block" ? "none" : "block");
+            const group = document.getElementById(groupKey);
+            if (group) {
+                group.style.display = group.style.display === "block" ? "none" : "block";
+            }
         }
 
         function createDiagram() {
