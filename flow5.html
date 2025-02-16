@@ -3,18 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GCP Architecture Diagram - yFiles</title>
-    <script src="https://unpkg.com/yfiles/yfiles.min.js"></script>
+    <title>GCP Architecture Diagram</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; display: flex; height: 100vh; margin: 0; overflow: hidden; }
-        #menu { width: 300px; background: #f9f9f9; overflow-y: auto; padding: 10px; border-right: 2px solid #ccc; transition: width 0.3s; }
-        #graphContainer { flex-grow: 1; height: 100vh; }
+        body { font-family: Arial, sans-serif; display: flex; flex-direction: row; overflow: hidden; }
+        #menu { width: 300px; padding: 10px; background: #f9f9f9; overflow-y: auto; border-right: 2px solid #ccc; transition: width 0.3s; }
+        #diagramDiv { flex-grow: 1; height: 100vh; border: 1px solid #ccc; padding: 10px; }
         .menu-group-header { cursor: pointer; font-weight: bold; padding: 10px; background: #4A90E2; color: white; border-radius: 5px; margin-bottom: 5px; border: 2px solid #3066BE; }
+        .menu-group-content { display: none; padding-left: 10px; }
         .menu-item { cursor: pointer; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; background: #d3d3d3; }
         .menu-item:hover, .menu-group-header:hover { background-color: #c5dbff; }
         #searchContainer { position: relative; width: 100%; }
-        #searchBar { width: 100%; padding: 5px; margin-bottom: 10px; }
+        #searchBar { width: 100%; padding: 5px; margin-bottom: 10px; display: inline-block; }
         #clearSearch { position: absolute; right: 5px; top: 5px; cursor: pointer; padding: 5px; background: red; color: white; border: none; }
+        .highlight { stroke: red; stroke-width: 3px; }
         @media (max-width: 768px) { #menu { width: 5%; overflow: hidden; } #menu:hover { width: 300px; } }
     </style>
 </head>
@@ -27,70 +29,95 @@
         </div>
         <div id="menu-content"></div>
     </div>
-    <div id="graphContainer"></div>
-
+    <div id="diagramDiv"></div>
     <script>
-        async function loadGraph() {
-            const graphComponent = new yfiles.view.GraphComponent('graphContainer');
-            const graph = graphComponent.graph;
-            graph.nodeDefaults.size = new yfiles.geometry.Size(100, 50);
-
-            // Style for normal nodes
-            const nodeStyle = new yfiles.styles.ShapeNodeStyle({
-                fill: 'lightblue',
-                stroke: 'black',
-                shape: 'rectangle'
-            });
-
-            // Style for group nodes
-            const groupStyle = new yfiles.styles.PanelNodeStyle({
-                color: 'rgba(74, 144, 226, 0.5)',
-                insets: [15, 15, 15, 15]
-            });
-
-            // Fetch JSON data
-            const response = await fetch('https://raw.githubusercontent.com/ag143/GCPPCA/main/gcp_services.json');
-            const data = await response.json();
-            const nodeMap = new Map();
-
+        const width = window.innerWidth - 350;
+        const height = window.innerHeight;
+        
+        const svg = d3.select("#diagramDiv").append("svg")
+            .attr("width", width)
+            .attr("height", height);
+        
+        d3.json("https://raw.githubusercontent.com/ag143/GCPPCA/main/gcp_services.json").then(data => {
+            const nodes = [];
+            const links = [];
+            
             function processNode(node, parent) {
-                let newNode = graph.createNode({
-                    tag: node.name,
-                    layout: new yfiles.geometry.Rect(0, 0, 100, 50),
-                    style: node.subservices ? groupStyle : nodeStyle
-                });
-
-                nodeMap.set(node.name, newNode);
-
+                nodes.push({ id: node.name, group: parent });
                 if (parent) {
-                    graph.createEdge(parent, newNode, new yfiles.styles.PolylineEdgeStyle({ stroke: 'black', targetArrow: 'default' }));
+                    links.push({ source: parent, target: node.name });
                 }
-
                 if (node.subservices) {
-                    node.subservices.forEach(sub => processNode(sub, newNode));
+                    node.subservices.forEach(sub => processNode(sub, node.name));
                 }
             }
-
+            
             data.services.forEach(service => processNode(service, null));
-
-            // Apply hierarchical layout
-            new yfiles.layout.HierarchicLayout().applyLayout(graph);
-            graphComponent.fitGraphBounds();
-        }
-
+            
+            const simulation = d3.forceSimulation(nodes)
+                .force("link", d3.forceLink(links).id(d => d.id).distance(100))
+                .force("charge", d3.forceManyBody().strength(-300))
+                .force("center", d3.forceCenter(width / 2, height / 2));
+            
+            const link = svg.selectAll(".link")
+                .data(links)
+                .enter().append("line")
+                .attr("class", "link")
+                .style("stroke", "#999")
+                .style("stroke-width", "2px");
+            
+            const node = svg.selectAll(".node")
+                .data(nodes)
+                .enter().append("circle")
+                .attr("class", "node")
+                .attr("r", 10)
+                .style("fill", "#FFD700")
+                .call(d3.drag()
+                    .on("start", dragStarted)
+                    .on("drag", dragged)
+                    .on("end", dragEnded));
+            
+            node.append("title").text(d => d.id);
+            
+            simulation.on("tick", () => {
+                link.attr("x1", d => d.source.x)
+                    .attr("y1", d => d.source.y)
+                    .attr("x2", d => d.target.x)
+                    .attr("y2", d => d.target.y);
+                
+                node.attr("cx", d => d.x)
+                    .attr("cy", d => d.y);
+            });
+            
+            function dragStarted(event, d) {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                d.fx = d.x;
+                d.fy = d.y;
+            }
+            
+            function dragged(event, d) {
+                d.fx = event.x;
+                d.fy = event.y;
+            }
+            
+            function dragEnded(event, d) {
+                if (!event.active) simulation.alphaTarget(0);
+                d.fx = null;
+                d.fy = null;
+            }
+        });
+        
         function filterMenu() {
-            const searchText = document.getElementById("searchBar").value.toLowerCase();
+            var searchText = document.getElementById("searchBar").value.toLowerCase();
             document.querySelectorAll(".menu-item").forEach(item => {
                 item.style.display = item.innerHTML.toLowerCase().includes(searchText) ? "block" : "none";
             });
         }
-
+        
         function clearSearch() {
             document.getElementById("searchBar").value = "";
             filterMenu();
         }
-
-        loadGraph();
     </script>
 </body>
 </html>
