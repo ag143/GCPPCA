@@ -32,7 +32,8 @@
             { key: "Cloud DNS", group: "Networking" },
             { key: "Storage", isGroup: true },
             { key: "Databases", group: "Storage", isGroup: true },
-            { key: "Cloud SQL", group: "Databases" },
+            { key: "SQL", group: "Databases", isGroup: true },
+            { key: "Cloud SQL", group: "SQL" },
             { key: "Bigtable", group: "Databases" }
         ];
 
@@ -47,7 +48,7 @@
                     const header = document.createElement("div");
                     header.className = "menu-group-header";
                     header.innerText = item.key;
-                    header.onclick = () => toggleGroup(groups[item.key]);
+                    header.onclick = () => toggleGroup(item.key);
                     menuContent.appendChild(header);
                     menuContent.appendChild(groups[item.key]);
                 } else {
@@ -62,8 +63,11 @@
             });
         }
 
-        function toggleGroup(content) {
-            content.style.display = content.style.display === "block" ? "none" : "block";
+        function toggleGroup(groupKey) {
+            Object.keys(groups).forEach(key => {
+                if (key !== groupKey) groups[key].style.display = "none";
+            });
+            groups[groupKey].style.display = (groups[groupKey].style.display === "block" ? "none" : "block");
         }
 
         function createDiagram() {
@@ -94,9 +98,9 @@
         }
 
         function highlightNode(nodeKey) {
+            myDiagram.clearHighlighteds();
             const node = myDiagram.findNodeForKey(nodeKey);
             if (node) {
-                myDiagram.clearHighlighteds();
                 node.isHighlighted = true;
                 myDiagram.centerRect(node.actualBounds);
             }
