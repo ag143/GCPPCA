@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GCP Architecture Diagram</title>
-    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/gojs/release/go.js"></script>
     <style>
         body { font-family: Arial, sans-serif; display: flex; flex-direction: row; overflow: hidden; }
         #menu { width: 300px; padding: 10px; background: #f9f9f9; overflow-y: auto; border-right: 2px solid #ccc; transition: width 0.3s; }
@@ -33,11 +33,12 @@
     <script>
         async function fetchData() {
             try {
-                const response = await fetch('https://raw.githubusercontent.com/ag143/GCPPCA/main/gcp_services.json');
+                const response = await fetch('gcp_services.json');
                 if (!response.ok) throw new Error("Network response was not ok " + response.statusText);
                 const data = await response.json();
                 if (!data.services) throw new Error("Invalid JSON format: Missing 'services' array");
                 renderData(data.services);
+                createDiagram(data.services);
             } catch (error) {
                 console.error("Error fetching JSON:", error);
             }
@@ -85,6 +86,43 @@
         function clearSearch() {
             document.getElementById("searchBar").value = "";
             filterMenu();
+        }
+
+        function createDiagram(services) {
+            const $ = go.GraphObject.make;
+            const myDiagram = $(go.Diagram, "diagramDiv", {
+                "undoManager.isEnabled": true,
+                layout: $(go.TreeLayout, { angle: 90, layerSpacing: 50 })
+            });
+
+            myDiagram.nodeTemplate = $(go.Node, "Auto",
+                $(go.Shape, "RoundedRectangle", { fill: "lightblue" }),
+                $(go.TextBlock, { margin: 5 }, new go.Binding("text", "name"))
+            );
+
+            const nodeDataArray = [];
+            const linkDataArray = [];
+
+            services.forEach(service => {
+                nodeDataArray.push({ key: service.name, name: service.name });
+                if (service.subservices) {
+                    service.subservices.forEach(sub => {
+                        nodeDataArray.push({ key: sub.name, name: sub.name });
+                        linkDataArray.push({ from: service.name, to: sub.name });
+                    });
+                }
+            });
+
+            myDiagram.model = new go.GraphLinksModel(nodeDataArray, linkDataArray);
+        }
+
+        function highlightNode(nodeName) {
+            const node = myDiagram.findNodeForKey(nodeName);
+            if (node) {
+                myDiagram.clearHighlighteds();
+                node.isHighlighted = true;
+                myDiagram.centerRect(node.actualBounds);
+            }
         }
 
         fetchData();
