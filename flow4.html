@@ -13,6 +13,10 @@
         .menu-group-content { display: none; padding-left: 10px; }
         .menu-item { cursor: pointer; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; background: #d3d3d3; }
         .menu-item:hover, .menu-group-header:hover { background-color: #c5dbff; }
+        #searchContainer { position: relative; width: 100%; }
+        #searchBar { width: 100%; padding: 5px; margin-bottom: 10px; display: inline-block; }
+        #clearSearch { position: absolute; right: 5px; top: 5px; cursor: pointer; padding: 5px; background: red; color: white; border: none; }
+        .highlight { stroke: red; stroke-width: 3px; }
         @keyframes flowAnimation { from { stroke-dashoffset: 10; } to { stroke-dashoffset: 0; } }
         @media (max-width: 768px) { #menu { width: 5%; overflow: hidden; } #menu:hover { width: 300px; } }
     </style>
@@ -20,6 +24,10 @@
 <body>
     <div id="menu">
         <h3>GCP Services</h3>
+        <div id="searchContainer">
+            <input type="text" id="searchBar" placeholder="Search..." onkeyup="filterMenu()">
+            <button id="clearSearch" onclick="clearSearch()">X</button>
+        </div>
         <div id="menu-content"></div>
     </div>
     <div id="diagramDiv"></div>
@@ -29,20 +37,14 @@
             "undoManager.isEnabled": true,
             layout: $(go.LayeredDigraphLayout, { direction: 90, layerSpacing: 50 })
         });
-
-        // Node Template with Icons
         diagram.nodeTemplate = $(go.Node, "Auto",
             $(go.Shape, "Rectangle", { fill: "#FFD700", strokeWidth: 2 }),
             $(go.Picture, { width: 20, height: 20, margin: 5 }, new go.Binding("source", "icon")),
             $(go.TextBlock, { margin: 8, font: "bold 12px sans-serif" }, new go.Binding("text", "key"))
         );
-
-        // Animated Link Template
         diagram.linkTemplate = $(go.Link, { routing: go.Link.Orthogonal, corner: 10 },
             $(go.Shape, { strokeWidth: 2, strokeDashArray: [4, 2], stroke: "black" })
         );
-
-        // Group Template
         diagram.groupTemplate = $(go.Group, "Vertical", { layout: $(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(10, 10) }) },
             $(go.Panel, "Auto", { height: 40, background: "#4A90E2", click: (e, obj) => toggleGroup(obj.part) },
                 $(go.TextBlock, { margin: 5, stroke: "white", font: "bold 14px sans-serif" }, new go.Binding("text", "key"))
@@ -52,45 +54,56 @@
                 $(go.Placeholder, { padding: 10 })
             )
         );
-
-        // Function to Toggle Groups
         function toggleGroup(group) {
             group.isSubGraphExpanded = !group.isSubGraphExpanded;
             diagram.layoutDiagram(true);
         }
-
-        // Function to Expand Only Groups/Nodes with Links
-        function expandLinkedNodesAndGroups() {
-            diagram.startTransaction("expand-linked");
-            diagram.nodes.each(node => {
-                if (node.isGroup) {
-                    node.isSubGraphExpanded = false;
-                }
-            });
-            diagram.links.each(link => {
-                let fromNode = link.fromNode;
-                let toNode = link.toNode;
-                if (fromNode) expandParentGroups(fromNode);
-                if (toNode) expandParentGroups(toNode);
-            });
-            diagram.commitTransaction("expand-linked");
-        }
-
-        function expandParentGroups(node) {
-            if (node.containingGroup) {
-                node.containingGroup.isSubGraphExpanded = true;
-                expandParentGroups(node.containingGroup);
+        function highlightNode(nodeKey) {
+            diagram.startTransaction("highlight");
+            diagram.clearHighlighteds();
+            var node = diagram.findNodeForKey(nodeKey);
+            if (node) {
+                node.isHighlighted = true;
+                diagram.centerRect(node.actualBounds);
+                expandAllParentGroups(nodeKey);
             }
+            diagram.commitTransaction("highlight");
         }
-
-        // Load GCP Services JSON Externally
-        fetch('gcp_services.json')
+        function expandAllParentGroups(nodeKey) {
+            diagram.startTransaction("expandGroups");
+            var node = diagram.findNodeForKey(nodeKey);
+            if (node && node.containingGroup) {
+                node.containingGroup.isSubGraphExpanded = true;
+                expandAllParentGroups(node.containingGroup.key);
+            }
+            diagram.commitTransaction("expandGroups");
+        }
+        function filterMenu() {
+            var searchText = document.getElementById("searchBar").value.toLowerCase();
+            document.querySelectorAll(".menu-item").forEach(item => {
+                item.style.display = item.innerHTML.toLowerCase().includes(searchText) ? "block" : "none";
+            });
+        }
+        function clearSearch() {
+            document.getElementById("searchBar").value = "";
+            filterMenu();
+        }
+        fetch('https://raw.githubusercontent.com/ag143/GCPPCA/main/gcp_services.json')
             .then(response => response.json())
             .then(data => {
-                diagram.model = new go.GraphLinksModel(data.nodes, data.links);
-                expandLinkedNodesAndGroups();
+                var nodeDataArray = [];
+                var linkDataArray = [];
+                function processNode(node, parentKey) {
+                    nodeDataArray.push({ key: node.name, group: parentKey, icon: node.icon });
+                    if (parentKey) linkDataArray.push({ from: parentKey, to: node.name });
+                    if (node.subservices) {
+                        node.subservices.forEach(sub => processNode(sub, node.name));
+                    }
+                }
+                data.services.forEach(service => processNode(service, null));
+                diagram.model = new go.GraphLinksModel(nodeDataArray, linkDataArray);
             })
-            .catch(error => console.error("Error loading JSON:", error));
+            .catch(error => console.error("Error fetching JSON:", error));
     </script>
 </body>
 </html>
