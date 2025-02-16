@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GCP Services Visualization (D3.js)</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        .node {
+            cursor: pointer;
+        }
+        .node circle {
+            fill: #4A90E2;
+            stroke: #fff;
+            stroke-width: 2px;
+        }
+        .node text {
+            font-size: 12px;
+            fill: #fff;
+        }
+        .link {
+            fill: none;
+            stroke: #999;
+            stroke-width: 2px;
+        }
+    </style>
+</head>
+<body>
+    <h2>GCP Services Visualization</h2>
+    <svg width="900" height="700"></svg>
+
+    <script>
+        // Load JSON externally
+        d3.json("gcp_services.json").then(function(data) {
+            renderTree(data);
+        }).catch(function(error) {
+            console.error("Error loading JSON:", error);
+        });
+
+        function renderTree(gcpData) {
+            const width = 900, height = 600;
+            const svg = d3.select("svg")
+                .attr("width", width)
+                .attr("height", height)
+                .append("g")
+                .attr("transform", "translate(50,50)");
+
+            const treeLayout = d3.tree().size([width - 200, height - 200]);
+            const root = d3.hierarchy(gcpData);
+            treeLayout(root);
+
+            // Create links
+            svg.selectAll(".link")
+                .data(root.links())
+                .join("line")
+                .attr("class", "link")
+                .attr("x1", d => d.source.x)
+                .attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x)
+                .attr("y2", d => d.target.y);
+
+            // Create nodes
+            const nodes = svg.selectAll(".node")
+                .data(root.descendants())
+                .join("g")
+                .attr("class", "node")
+                .attr("transform", d => `translate(${d.x},${d.y})`);
+
+            nodes.append("circle")
+                .attr("r", 15);
+
+            nodes.append("text")
+                .attr("dy", -20)
+                .attr("text-anchor", "middle")
+                .text(d => d.data.name);
+
+            // Collapsible groups
+            nodes.on("click", (event, d) => {
+                if (d.children) {
+                    d._children = d.children;
+                    d.children = null;
+                } else {
+                    d.children = d._children;
+                    d._children = null;
+                }
+                update();
+            });
+
+            function update() {
+                treeLayout(root);
+                svg.selectAll(".link")
+                    .data(root.links())
+                    .transition()
+                    .duration(500)
+                    .attr("x1", d => d.source.x)
+                    .attr("y1", d => d.source.y)
+                    .attr("x2", d => d.target.x)
+                    .attr("y2", d => d.target.y);
+
+                nodes.transition()
+                    .duration(500)
+                    .attr("transform", d => `translate(${d.x},${d.y})`);
+            }
+        }
+    </script>
+</body>
+</html>
