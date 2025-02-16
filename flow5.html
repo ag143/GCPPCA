@@ -9,10 +9,11 @@
         body { font-family: Arial, sans-serif; display: flex; flex-direction: row; overflow: hidden; }
         #menu { width: 300px; padding: 10px; background: #f9f9f9; overflow-y: auto; border-right: 2px solid #ccc; transition: width 0.3s; }
         #diagramDiv { flex-grow: 1; height: 100vh; border: 1px solid #ccc; padding: 10px; }
-        .menu-group-header { cursor: pointer; font-weight: bold; padding: 10px; background: #4A90E2; color: white; border-radius: 5px; margin-bottom: 5px; border: 2px solid #3066BE; }
-        .menu-group-content { display: none; padding-left: 10px; }
+        .menu-group-header, .menu-subgroup-header { cursor: pointer; font-weight: bold; padding: 10px; background: #4A90E2; color: white; border-radius: 5px; margin-bottom: 5px; border: 2px solid #3066BE; }
+        .menu-subgroup-header { background: #6A9EF2; padding-left: 20px; }
+        .menu-group-content, .menu-subgroup-content { display: none; padding-left: 10px; }
         .menu-item { cursor: pointer; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; background: #d3d3d3; }
-        .menu-item:hover, .menu-group-header:hover { background-color: #c5dbff; }
+        .menu-item:hover, .menu-group-header:hover, .menu-subgroup-header:hover { background-color: #c5dbff; }
         #searchContainer { position: relative; width: 100%; }
         #searchBar { width: 100%; padding: 5px; margin-bottom: 10px; display: inline-block; }
         #clearSearch { position: absolute; right: 5px; top: 5px; cursor: pointer; padding: 5px; background: red; color: white; border: none; }
@@ -54,15 +55,28 @@
                 groupHeader.onclick = () => toggleGroup(groupHeader);
                 menuContent.appendChild(groupHeader);
                 
-                if (service.subservices) {
+                if (service.subgroups) {
                     const groupContent = document.createElement("div");
                     groupContent.className = "menu-group-content";
-                    service.subservices.forEach(sub => {
-                        const menuItem = document.createElement("div");
-                        menuItem.className = "menu-item";
-                        menuItem.innerText = sub.name;
-                        menuItem.onclick = () => highlightNode(sub.name);
-                        groupContent.appendChild(menuItem);
+                    service.subgroups.forEach(subgroup => {
+                        const subgroupHeader = document.createElement("div");
+                        subgroupHeader.className = "menu-subgroup-header";
+                        subgroupHeader.innerText = subgroup.name;
+                        subgroupHeader.onclick = () => toggleGroup(subgroupHeader);
+                        groupContent.appendChild(subgroupHeader);
+                        
+                        if (subgroup.subservices) {
+                            const subgroupContent = document.createElement("div");
+                            subgroupContent.className = "menu-subgroup-content";
+                            subgroup.subservices.forEach(sub => {
+                                const menuItem = document.createElement("div");
+                                menuItem.className = "menu-item";
+                                menuItem.innerText = sub.name;
+                                menuItem.onclick = () => highlightNode(sub.name);
+                                subgroupContent.appendChild(menuItem);
+                            });
+                            groupContent.appendChild(subgroupContent);
+                        }
                     });
                     menuContent.appendChild(groupContent);
                 }
@@ -105,10 +119,15 @@
 
             services.forEach(service => {
                 nodeDataArray.push({ key: service.name, name: service.name });
-                if (service.subservices) {
-                    service.subservices.forEach(sub => {
-                        nodeDataArray.push({ key: sub.name, name: sub.name });
-                        linkDataArray.push({ from: service.name, to: sub.name });
+                if (service.subgroups) {
+                    service.subgroups.forEach(subgroup => {
+                        nodeDataArray.push({ key: subgroup.name, name: subgroup.name });
+                        linkDataArray.push({ from: service.name, to: subgroup.name });
+                        
+                        subgroup.subservices.forEach(sub => {
+                            nodeDataArray.push({ key: sub.name, name: sub.name });
+                            linkDataArray.push({ from: subgroup.name, to: sub.name });
+                        });
                     });
                 }
             });
