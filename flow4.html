@@ -42,8 +42,8 @@
             $(go.Picture, { width: 20, height: 20, margin: 5 }, new go.Binding("source", "icon")),
             $(go.TextBlock, { margin: 8, font: "bold 12px sans-serif" }, new go.Binding("text", "key"))
         );
-        diagram.linkTemplate = $(go.Link, { routing: go.Link.Orthogonal, corner: 10 },
-            $(go.Shape, { strokeWidth: 2, strokeDashArray: [4, 2], stroke: "black" })
+        diagram.linkTemplate = $(go.Link, { routing: go.Link.AvoidsNodes, curve: go.Link.JumpGap },
+            $(go.Shape, { strokeWidth: 2, stroke: "black", strokeDashArray: [4, 2] })
         );
         diagram.groupTemplate = $(go.Group, "Vertical", { layout: $(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(10, 10) }) },
             $(go.Panel, "Auto", { height: 40, background: "#4A90E2", click: (e, obj) => toggleGroup(obj.part) },
