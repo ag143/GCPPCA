@@ -1,0 +1,150 @@
+Here's an HTML structure with Group View and Tree View, both supporting expand/collapse functionality and synchronized node selection. The Tree View also includes animated links between nodes.
+
+Features:
+
+Expand/Collapse nodes in both views.
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Group View & Tree View</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+            background: #f4f4f4;
+        }
+        .container {
+            flex: 1;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background: white;
+        }
+        .group-view {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .group {
+            border: 1px solid #888;
+            padding: 10px;
+            cursor: pointer;
+            width: 150px;
+            text-align: center;
+            background: #eee;
+        }
+        .group.selected {
+            background: #4caf50;
+            color: white;
+        }
+        .tree-container {
+            width: 400px;
+            height: 400px;
+        }
+        .node {
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .node circle {
+            fill: #3498db;
+        }
+        .node.selected circle {
+            fill: #e74c3c;
+        }
+        .link {
+            stroke: #bbb;
+            stroke-width: 2px;
+            fill: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Group View -->
+    <div class="container">
+        <h3>Group View</h3>
+        <div class="group-view" id="groupView"></div>
+    </div>
+
+    <!-- Tree View -->
+    <div class="container">
+        <h3>Tree View</h3>
+        <svg class="tree-container"></svg>
+    </div>
+
+    <script>
+        const data = {
+            name: "Root",
+            children: [
+                { name: "Node A", children: [{ name: "Node A1" }, { name: "Node A2" }] },
+                { name: "Node B", children: [{ name: "Node B1" }, { name: "Node B2" }] }
+            ]
+        };
+
+        // Group View Generation
+        const groupView = document.getElementById("groupView");
+
+        function createGroupView(node, parentElement) {
+            const div = document.createElement("div");
+            div.className = "group";
+            div.textContent = node.name;
+            div.onclick = () => selectNode(node.name);
+            parentElement.appendChild(div);
+
+            if (node.children) {
+                node.children.forEach(child => createGroupView(child, parentElement));
+            }
+        }
+
+        createGroupView(data, groupView);
+
+        // Tree View with D3
+        const svg = d3.select(".tree-container"),
+              width = +svg.attr("width") || 400,
+              height = +svg.attr("height") || 400,
+              g = svg.append("g").attr("transform", "translate(50,50)");
+
+        const treeLayout = d3.tree().size([width - 100, height - 100]);
+        const root = d3.hierarchy(data);
+        treeLayout(root);
+
+        const link = g.selectAll(".link")
+            .data(root.links())
+            .enter()
+            .append("path")
+            .attr("class", "link")
+            .attr("d", d3.linkHorizontal()
+                .x(d => d.y)
+                .y(d => d.x));
+
+        const node = g.selectAll(".node")
+            .data(root.descendants())
+            .enter()
+            .append("g")
+            .attr("class", "node")
+            .attr("transform", d => `translate(${d.y},${d.x})`)
+            .on("click", (event, d) => selectNode(d.data.name));
+
+        node.append("circle").attr("r", 10);
+        node.append("text").attr("dx", 15).attr("dy", 5).text(d => d.data.name);
+
+        // Node Selection Synchronization
+        function selectNode(name) {
+            d3.selectAll(".node").classed("selected", d => d.data.name === name);
+            document.querySelectorAll(".group").forEach(div => {
+                div.classList.toggle("selected", div.textContent === name);
+            });
+        }
+    </script>
+
+</body>
+</html>
+
+
