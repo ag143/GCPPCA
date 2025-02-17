@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Group & Tree View</title>
+    <title>Tree Menu & Nested Boxes</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
         body {
@@ -13,65 +13,67 @@
             margin: 0;
             background: #f4f4f4;
         }
+        
+        /* Tree View Menu */
         .tree-container {
-            width: 300px;
+            width: 250px;
             background: #2c3e50;
             color: white;
             padding: 10px;
             overflow-y: auto;
         }
+        .tree-item {
+            cursor: pointer;
+            padding: 5px;
+            border-bottom: 1px solid #555;
+        }
+        .tree-item:hover {
+            background: #1abc9c;
+        }
+        .tree-children {
+            margin-left: 15px;
+            display: none;
+        }
+        .tree-toggle {
+            cursor: pointer;
+            color: #f1c40f;
+            margin-right: 5px;
+        }
+
+        /* Group View (Nested Boxes) */
         .group-container {
             flex-grow: 1;
             padding: 20px;
             background: white;
         }
         .group {
-            border: 1px solid #888;
+            border: 2px solid #888;
             padding: 10px;
-            cursor: pointer;
-            background: #eee;
-            margin: 5px;
+            margin: 10px;
+            background: #ecf0f1;
+            position: relative;
         }
         .group.selected {
             background: #4caf50;
             color: white;
         }
         .sub-group {
-            margin-left: 20px;
-            display: none;
-        }
-        .toggle {
-            font-size: 12px;
-            color: #007bff;
-            cursor: pointer;
-            margin-left: 5px;
-        }
-        .node {
-            cursor: pointer;
-            font-size: 14px;
-        }
-        .node circle {
-            fill: #3498db;
-        }
-        .node.selected circle {
-            fill: #e74c3c;
-        }
-        .link {
-            stroke: #bbb;
-            stroke-width: 2px;
-            fill: none;
+            margin: 10px;
+            padding: 10px;
+            border: 2px dashed #888;
+            background: #dfe6e9;
         }
     </style>
 </head>
 <body>
 
-    <!-- Tree View (Left Sidebar) -->
+    <!-- Tree View Menu (Left Sidebar) -->
     <div class="tree-container">
-        <h3>Tree View</h3>
-        <svg width="280" height="500"></svg>
+        <h3>Tree Menu</h3>
+        <div id="treeView"></div>
     </div>
 
-    <!-- Group View (Main Content) -->
+    <!-- Group View (Nested Boxes) -->
     <div class="group-container">
         <h3>Group View</h3>
         <div id="groupView"></div>
@@ -104,36 +106,61 @@
             ]
         };
 
-        // Group View Generation
+        // Tree Menu Generation
+        const treeView = document.getElementById("treeView");
+
+        function createTreeView(node, parentElement) {
+            const div = document.createElement("div");
+            div.className = "tree-item";
+            div.textContent = node.name;
+            div.onclick = (e) => {
+                e.stopPropagation();
+                selectNode(node.name);
+            };
+
+            if (node.children) {
+                const toggleBtn = document.createElement("span");
+                toggleBtn.textContent = "▶";
+                toggleBtn.className = "tree-toggle";
+                toggleBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    subTree.style.display = subTree.style.display === "none" ? "block" : "none";
+                    toggleBtn.textContent = subTree.style.display === "none" ? "▶" : "▼";
+                };
+                div.prepend(toggleBtn);
+            }
+
+            parentElement.appendChild(div);
+
+            if (node.children) {
+                const subTree = document.createElement("div");
+                subTree.className = "tree-children";
+                subTree.style.display = "none";
+                parentElement.appendChild(subTree);
+
+                node.children.forEach(child => createTreeView(child, subTree));
+            }
+        }
+
+        createTreeView(data, treeView);
+
+        // Group View with Nested Boxes
         const groupView = document.getElementById("groupView");
 
         function createGroupView(node, parentElement) {
             const div = document.createElement("div");
             div.className = "group";
             div.textContent = node.name;
-
-            // Expand/Collapse Button
-            if (node.children) {
-                const toggleBtn = document.createElement("span");
-                toggleBtn.textContent = "[+]";
-                toggleBtn.className = "toggle";
-                toggleBtn.onclick = () => {
-                    subGroup.style.display = subGroup.style.display === "none" ? "block" : "none";
-                    toggleBtn.textContent = subGroup.style.display === "none" ? "[+]" : "[-]";
-                };
-                div.appendChild(toggleBtn);
-            }
-
             div.onclick = (e) => {
-                e.stopPropagation(); // Prevent event bubbling
+                e.stopPropagation();
                 selectNode(node.name);
             };
+
             parentElement.appendChild(div);
 
             if (node.children) {
                 const subGroup = document.createElement("div");
                 subGroup.className = "sub-group";
-                subGroup.style.display = "none";
                 parentElement.appendChild(subGroup);
 
                 node.children.forEach(child => createGroupView(child, subGroup));
@@ -142,42 +169,12 @@
 
         createGroupView(data, groupView);
 
-        // Tree View (D3.js)
-        const svg = d3.select("svg"),
-              width = +svg.attr("width"),
-              height = +svg.attr("height"),
-              g = svg.append("g").attr("transform", "translate(40,20)");
-
-        const treeLayout = d3.tree().size([height - 40, width - 80]);
-        const root = d3.hierarchy(data);
-        treeLayout(root);
-
-        const link = g.selectAll(".link")
-            .data(root.links())
-            .enter()
-            .append("path")
-            .attr("class", "link")
-            .attr("d", d3.linkVertical()
-                .x(d => d.x)
-                .y(d => d.y));
-
-        const node = g.selectAll(".node")
-            .data(root.descendants())
-            .enter()
-            .append("g")
-            .attr("class", "node")
-            .attr("transform", d => `translate(${d.x},${d.y})`)
-            .on("click", (event, d) => selectNode(d.data.name));
-
-        node.append("circle").attr("r", 10);
-        node.append("text").attr("dx", 15).attr("dy", 5).text(d => d.data.name);
-
         // Node Selection Synchronization
         function selectNode(name) {
-            // Highlight node in Tree View
-            d3.selectAll(".node").classed("selected", d => d.data.name === name);
+            document.querySelectorAll(".tree-item").forEach(div => {
+                div.style.background = div.textContent.includes(name) ? "#1abc9c" : "";
+            });
 
-            // Highlight node in Group View
             document.querySelectorAll(".group").forEach(div => {
                 div.classList.toggle("selected", div.textContent.includes(name));
             });
@@ -186,8 +183,15 @@
             document.querySelectorAll(".sub-group").forEach(group => {
                 if (group.innerHTML.includes(name)) {
                     group.style.display = "block";
-                    const toggleBtn = group.previousElementSibling.querySelector(".toggle");
-                    if (toggleBtn) toggleBtn.textContent = "[-]";
+                }
+            });
+
+            // Auto-expand tree menu
+            document.querySelectorAll(".tree-children").forEach(tree => {
+                if (tree.innerHTML.includes(name)) {
+                    tree.style.display = "block";
+                    const toggleBtn = tree.previousElementSibling.querySelector(".tree-toggle");
+                    if (toggleBtn) toggleBtn.textContent = "▼";
                 }
             });
         }
