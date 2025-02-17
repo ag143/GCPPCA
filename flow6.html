@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale: 1.0">
     <title>Tree Menu & Group View with Links</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
@@ -226,6 +226,13 @@
 
                 node.children.forEach(child => createGroupView(child, subGroup));
             }
+
+            // Add links for nodes with relationships
+            if (node.links) {
+                node.links.forEach(linkName => {
+                    addLink(node.name, linkName);
+                });
+            }
         }
 
         data.children.forEach(child => createGroupView(child, groupView));
@@ -275,6 +282,24 @@
             }
         }
 
+        // Function to add links between nodes
+        function addLink(fromNode, toNode) {
+            const fromElem = Array.from(document.querySelectorAll(".group")).find(div => div.textContent.includes(fromNode));
+            const toElem = Array.from(document.querySelectorAll(".group")).find(div => div.textContent.includes(toNode));
+
+            if (fromElem && toElem) {
+                const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                const rect1 = fromElem.getBoundingClientRect();
+                const rect2 = toElem.getBoundingClientRect();
+
+                line.setAttribute("x1", rect1.left + rect1.width / 2);
+                line.setAttribute("y1", rect1.top + rect1.height / 2);
+                line.setAttribute("x2", rect2.left + rect2.width / 2);
+                line.setAttribute("y2", rect2.top + rect2.height / 2);
+                line.classList.add("link");
+                document.getElementById("links").appendChild(line);
+            }
+        }
     </script>
 
 </body>
