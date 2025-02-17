@@ -87,6 +87,12 @@
             display: inline-block;
         }
 
+        .group-header {
+            font-weight: bold;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #2c3e50;
+        }
+
         /* Links */
         svg {
             position: absolute;
@@ -131,26 +137,27 @@
 
     <script>
         const data = {
+            name: "Root",
             children: [
                 {
                     name: "Group A",
                     icon: "📂",
                     children: [
-                        { name: "Node A1", icon: "📄" },
-                        { name: "Node A2", icon: "📄" }
+                        { name: "Node A1", icon: "📄", links: ["Node A2"] },
+                        { name: "Node A2", icon: "📄", links: ["Node A1"] }
                     ]
                 },
                 {
                     name: "Group B",
                     icon: "📂",
                     children: [
-                        { name: "Node B1", icon: "📄" },
+                        { name: "Node B1", icon: "📄", links: ["Node B2"] },
                         {
                             name: "Subgroup B2",
                             icon: "📂",
                             children: [
-                                { name: "Node B2.1", icon: "📄" },
-                                { name: "Node B2.2", icon: "📄" }
+                                { name: "Node B2.1", icon: "📄", links: ["Node B2.2"] },
+                                { name: "Node B2.2", icon: "📄", links: ["Node B2.1"] }
                             ]
                         }
                     ]
@@ -198,7 +205,13 @@
         function createGroupView(node, parentElement) {
             const div = document.createElement("div");
             div.className = "group";
-            div.textContent = node.name;
+            
+            // Header with border and top alignment
+            const header = document.createElement("div");
+            header.className = "group-header";
+            header.textContent = node.name;
+            div.appendChild(header);
+
             div.onclick = (e) => {
                 e.stopPropagation();
                 selectNode(node.name);
@@ -209,7 +222,7 @@
             if (node.children) {
                 const subGroup = document.createElement("div");
                 subGroup.className = "sub-group";
-                parentElement.appendChild(subGroup);
+                div.appendChild(subGroup);
 
                 node.children.forEach(child => createGroupView(child, subGroup));
             }
@@ -261,6 +274,7 @@
                 });
             }
         }
+
     </script>
 
 </body>
