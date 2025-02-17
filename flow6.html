@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enhanced Tree & Group View</title>
+    <title>Tree Menu & Group View</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
         body {
@@ -13,11 +13,11 @@
             margin: 0;
             background: #f4f4f4;
         }
-        
+
         /* Tree View Menu */
         .tree-container {
             width: 280px;
-            background: #34495e;
+            background: #2c3e50;
             color: white;
             padding: 15px;
             overflow-y: auto;
@@ -27,6 +27,8 @@
             padding: 8px;
             border-radius: 5px;
             margin: 2px 0;
+            display: flex;
+            align-items: center;
         }
         .tree-item:hover {
             background: #1abc9c;
@@ -34,6 +36,8 @@
         .tree-children {
             margin-left: 15px;
             display: none;
+            border-left: 2px dashed #bbb;
+            padding-left: 10px;
         }
         .tree-toggle {
             cursor: pointer;
@@ -70,13 +74,6 @@
             background: #dfe6e9;
         }
 
-        /* Tree Links */
-        .link {
-            fill: none;
-            stroke: #bbb;
-            stroke-width: 2px;
-            stroke-dasharray: 5, 5;
-        }
     </style>
 </head>
 <body>
@@ -84,7 +81,7 @@
     <!-- Tree View Menu (Left Sidebar) -->
     <div class="tree-container">
         <h3>Tree Menu</h3>
-        <svg width="250" height="500"></svg>
+        <div id="treeView"></div>
     </div>
 
     <!-- Group View (Nested Boxes) -->
@@ -119,40 +116,7 @@
             ]
         };
 
-        // Tree Menu Generation
-        const treeView = d3.select(".tree-container svg"),
-              width = +treeView.attr("width"),
-              height = +treeView.attr("height"),
-              g = treeView.append("g").attr("transform", "translate(20,20)");
-
-        const treeLayout = d3.tree().size([height - 40, width - 80]);
-        const root = d3.hierarchy(data);
-        treeLayout(root);
-
-        const link = g.selectAll(".link")
-            .data(root.links())
-            .enter()
-            .append("path")
-            .attr("class", "link")
-            .attr("d", d3.linkVertical()
-                .x(d => d.x)
-                .y(d => d.y))
-            .style("opacity", 0)
-            .transition()
-            .duration(800)
-            .style("opacity", 1);
-
-        const node = g.selectAll(".node")
-            .data(root.descendants().slice(1))  // Removing root
-            .enter()
-            .append("g")
-            .attr("class", "node")
-            .attr("transform", d => `translate(${d.x},${d.y})`)
-            .on("click", (event, d) => selectNode(d.data.name));
-
-        node.append("circle").attr("r", 10).attr("fill", "#3498db");
-        node.append("text").attr("dx", 15).attr("dy", 5).text(d => d.data.name);
-
+        // Tree View (Menu Style)
         function createTreeView(node, parentElement) {
             const div = document.createElement("div");
             div.className = "tree-item";
@@ -186,7 +150,7 @@
             }
         }
 
-        createTreeView({ children: data.children }, document.querySelector(".tree-container"));
+        createTreeView({ children: data.children }, document.getElementById("treeView"));
 
         // Group View with Nested Boxes
         const groupView = document.getElementById("groupView");
