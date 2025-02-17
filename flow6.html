@@ -16,11 +16,18 @@
 
         /* Tree View Menu */
         .tree-container {
-            width: 280px;
+            width: 300px;
             background: #2c3e50;
             color: white;
             padding: 15px;
             overflow-y: auto;
+        }
+        .search-box {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: none;
         }
         .tree-item {
             cursor: pointer;
@@ -47,12 +54,18 @@
         .selected-tree {
             background: #1abc9c;
         }
+        .icon {
+            width: 16px;
+            height: 16px;
+            margin-right: 5px;
+        }
 
-        /* Group View (Nested Boxes) */
+        /* Group View */
         .group-container {
             flex-grow: 1;
             padding: 20px;
             background: white;
+            position: relative;
         }
         .group {
             border: 2px solid #2c3e50;
@@ -74,19 +87,45 @@
             background: #dfe6e9;
         }
 
+        /* Links */
+        svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        .link {
+            fill: none;
+            stroke: #3498db;
+            stroke-width: 2px;
+            stroke-dasharray: 5, 5;
+            animation: dash 2s linear infinite;
+        }
+        @keyframes dash {
+            from {
+                stroke-dashoffset: 20;
+            }
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
     </style>
 </head>
 <body>
 
-    <!-- Tree View Menu (Left Sidebar) -->
+    <!-- Tree View Menu -->
     <div class="tree-container">
         <h3>Tree Menu</h3>
+        <input type="text" id="searchBox" class="search-box" placeholder="Search node...">
         <div id="treeView"></div>
     </div>
 
-    <!-- Group View (Nested Boxes) -->
+    <!-- Group View -->
     <div class="group-container">
         <h3>Group View</h3>
+        <svg id="links"></svg>
         <div id="groupView"></div>
     </div>
 
@@ -95,20 +134,23 @@
             children: [
                 {
                     name: "Group A",
+                    icon: "📂",
                     children: [
-                        { name: "Node A1" },
-                        { name: "Node A2" }
+                        { name: "Node A1", icon: "📄" },
+                        { name: "Node A2", icon: "📄" }
                     ]
                 },
                 {
                     name: "Group B",
+                    icon: "📂",
                     children: [
-                        { name: "Node B1" },
+                        { name: "Node B1", icon: "📄" },
                         {
                             name: "Subgroup B2",
+                            icon: "📂",
                             children: [
-                                { name: "Node B2.1" },
-                                { name: "Node B2.2" }
+                                { name: "Node B2.1", icon: "📄" },
+                                { name: "Node B2.2", icon: "📄" }
                             ]
                         }
                     ]
@@ -116,29 +158,15 @@
             ]
         };
 
-        // Tree View (Menu Style)
+        // Tree View
         function createTreeView(node, parentElement) {
             const div = document.createElement("div");
             div.className = "tree-item";
-            div.textContent = node.name;
+            div.innerHTML = `<span class="tree-toggle">▶</span> ${node.icon} ${node.name}`;
             div.onclick = (e) => {
                 e.stopPropagation();
                 selectNode(node.name);
             };
-
-            if (node.children) {
-                const toggleBtn = document.createElement("span");
-                toggleBtn.textContent = "▶";
-                toggleBtn.className = "tree-toggle";
-                toggleBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    subTree.style.display = subTree.style.display === "none" ? "block" : "none";
-                    toggleBtn.textContent = subTree.style.display === "none" ? "▶" : "▼";
-                };
-                div.prepend(toggleBtn);
-            }
-
-            parentElement.appendChild(div);
 
             if (node.children) {
                 const subTree = document.createElement("div");
@@ -146,13 +174,33 @@
                 subTree.style.display = "none";
                 parentElement.appendChild(subTree);
 
-                node.children.forEach(child => createTreeView(child, subTree));
+                node.children.forEach(child => {
+                    const childDiv = document.createElement("div");
+                    childDiv.className = "tree-item";
+                    childDiv.innerHTML = `<span class="tree-toggle"></span> ${child.icon} ${child.name}`;
+                    childDiv.onclick = (e) => {
+                        e.stopPropagation();
+                        selectNode(child.name);
+                    };
+                    subTree.appendChild(childDiv);
+                    createTreeView(child, subTree);
+                });
+
+                div.onclick = (e) => {
+                    e.stopPropagation();
+                    subTree.style.display = subTree.style.display === "none" ? "block" : "none";
+                    div.querySelector(".tree-toggle").textContent = subTree.style.display === "none" ? "▶" : "▼";
+                };
+            } else {
+                div.querySelector(".tree-toggle").remove();
             }
+
+            parentElement.appendChild(div);
         }
 
         createTreeView({ children: data.children }, document.getElementById("treeView"));
 
-        // Group View with Nested Boxes
+        // Group View
         const groupView = document.getElementById("groupView");
 
         function createGroupView(node, parentElement) {
@@ -177,7 +225,15 @@
 
         data.children.forEach(child => createGroupView(child, groupView));
 
-        // Node Selection Synchronization
+        // Search Functionality
+        document.getElementById("searchBox").addEventListener("input", (e) => {
+            const query = e.target.value.toLowerCase();
+            document.querySelectorAll(".tree-item").forEach(div => {
+                div.style.display = div.textContent.toLowerCase().includes(query) ? "block" : "none";
+            });
+        });
+
+        // Selection and Link Animation
         function selectNode(name) {
             document.querySelectorAll(".tree-item").forEach(div => {
                 div.classList.toggle("selected-tree", div.textContent.includes(name));
@@ -187,17 +243,23 @@
                 div.classList.toggle("selected", div.textContent.includes(name));
             });
 
-            document.querySelectorAll(".sub-group").forEach(group => {
-                if (group.innerHTML.includes(name)) {
-                    group.style.display = "block";
-                }
-            });
-
             document.querySelectorAll(".tree-children").forEach(tree => {
                 if (tree.innerHTML.includes(name)) {
                     tree.style.display = "block";
-                    const toggleBtn = tree.previousElementSibling.querySelector(".tree-toggle");
-                    if (toggleBtn) toggleBtn.textContent = "▼";
+                }
+            });
+
+            animateLinks();
+        }
+
+        function animateLinks() {
+            const svg = document.getElementById("links");
+            svg.innerHTML = "";
+            document.querySelectorAll(".selected").forEach((node, index, arr) => {
+                if (index < arr.length - 1) {
+                    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    line.classList.add("link");
+                    svg.appendChild(line);
                 }
             });
         }
