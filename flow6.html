@@ -242,20 +242,24 @@
             const svg = document.getElementById("links");
             svg.innerHTML = "";
 
-            document.querySelectorAll(".group").forEach((node, index, arr) => {
-                if (index < arr.length - 1) {
-                    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                    const rect1 = node.getBoundingClientRect();
-                    const rect2 = arr[index + 1].getBoundingClientRect();
+            const selectedGroups = Array.from(document.querySelectorAll(".selected"));
 
-                    line.setAttribute("x1", rect1.left + rect1.width / 2);
-                    line.setAttribute("y1", rect1.top + rect1.height / 2);
-                    line.setAttribute("x2", rect2.left + rect2.width / 2);
-                    line.setAttribute("y2", rect2.top + rect2.height / 2);
-                    line.classList.add("link");
-                    svg.appendChild(line);
-                }
-            });
+            if (selectedGroups.length > 1) {
+                selectedGroups.forEach((node, index, arr) => {
+                    if (index < arr.length - 1) {
+                        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                        const rect1 = node.getBoundingClientRect();
+                        const rect2 = arr[index + 1].getBoundingClientRect();
+
+                        line.setAttribute("x1", rect1.left + rect1.width / 2);
+                        line.setAttribute("y1", rect1.top + rect1.height / 2);
+                        line.setAttribute("x2", rect2.left + rect2.width / 2);
+                        line.setAttribute("y2", rect2.top + rect2.height / 2);
+                        line.classList.add("link");
+                        svg.appendChild(line);
+                    }
+                });
+            }
         }
     </script>
 
