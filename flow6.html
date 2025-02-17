@@ -1,52 +1,50 @@
-Here's an HTML structure with Group View and Tree View, both supporting expand/collapse functionality and synchronized node selection. The Tree View also includes animated links between nodes.
-
-Features:
-
-Expand/Collapse nodes in both views.
-
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Group View & Tree View</title>
+    <title>Group & Tree View</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
             display: flex;
-            gap: 20px;
-            padding: 20px;
+            height: 100vh;
+            margin: 0;
             background: #f4f4f4;
         }
-        .container {
-            flex: 1;
-            border: 1px solid #ccc;
+        .tree-container {
+            width: 300px;
+            background: #2c3e50;
+            color: white;
             padding: 10px;
-            background: white;
+            overflow-y: auto;
         }
-        .group-view {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
+        .group-container {
+            flex-grow: 1;
+            padding: 20px;
+            background: white;
         }
         .group {
             border: 1px solid #888;
             padding: 10px;
             cursor: pointer;
-            width: 150px;
-            text-align: center;
             background: #eee;
+            margin: 5px;
         }
         .group.selected {
             background: #4caf50;
             color: white;
         }
-        .tree-container {
-            width: 400px;
-            height: 400px;
+        .sub-group {
+            margin-left: 20px;
+            display: none;
+        }
+        .toggle {
+            font-size: 12px;
+            color: #007bff;
+            cursor: pointer;
+            margin-left: 5px;
         }
         .node {
             cursor: pointer;
@@ -67,24 +65,42 @@ Expand/Collapse nodes in both views.
 </head>
 <body>
 
-    <!-- Group View -->
-    <div class="container">
-        <h3>Group View</h3>
-        <div class="group-view" id="groupView"></div>
+    <!-- Tree View (Left Sidebar) -->
+    <div class="tree-container">
+        <h3>Tree View</h3>
+        <svg width="280" height="500"></svg>
     </div>
 
-    <!-- Tree View -->
-    <div class="container">
-        <h3>Tree View</h3>
-        <svg class="tree-container"></svg>
+    <!-- Group View (Main Content) -->
+    <div class="group-container">
+        <h3>Group View</h3>
+        <div id="groupView"></div>
     </div>
 
     <script>
         const data = {
             name: "Root",
             children: [
-                { name: "Node A", children: [{ name: "Node A1" }, { name: "Node A2" }] },
-                { name: "Node B", children: [{ name: "Node B1" }, { name: "Node B2" }] }
+                {
+                    name: "Group A",
+                    children: [
+                        { name: "Node A1" },
+                        { name: "Node A2" }
+                    ]
+                },
+                {
+                    name: "Group B",
+                    children: [
+                        { name: "Node B1" },
+                        {
+                            name: "Subgroup B2",
+                            children: [
+                                { name: "Node B2.1" },
+                                { name: "Node B2.2" }
+                            ]
+                        }
+                    ]
+                }
             ]
         };
 
@@ -95,23 +111,44 @@ Expand/Collapse nodes in both views.
             const div = document.createElement("div");
             div.className = "group";
             div.textContent = node.name;
-            div.onclick = () => selectNode(node.name);
+
+            // Expand/Collapse Button
+            if (node.children) {
+                const toggleBtn = document.createElement("span");
+                toggleBtn.textContent = "[+]";
+                toggleBtn.className = "toggle";
+                toggleBtn.onclick = () => {
+                    subGroup.style.display = subGroup.style.display === "none" ? "block" : "none";
+                    toggleBtn.textContent = subGroup.style.display === "none" ? "[+]" : "[-]";
+                };
+                div.appendChild(toggleBtn);
+            }
+
+            div.onclick = (e) => {
+                e.stopPropagation(); // Prevent event bubbling
+                selectNode(node.name);
+            };
             parentElement.appendChild(div);
 
             if (node.children) {
-                node.children.forEach(child => createGroupView(child, parentElement));
+                const subGroup = document.createElement("div");
+                subGroup.className = "sub-group";
+                subGroup.style.display = "none";
+                parentElement.appendChild(subGroup);
+
+                node.children.forEach(child => createGroupView(child, subGroup));
             }
         }
 
         createGroupView(data, groupView);
 
-        // Tree View with D3
-        const svg = d3.select(".tree-container"),
-              width = +svg.attr("width") || 400,
-              height = +svg.attr("height") || 400,
-              g = svg.append("g").attr("transform", "translate(50,50)");
+        // Tree View (D3.js)
+        const svg = d3.select("svg"),
+              width = +svg.attr("width"),
+              height = +svg.attr("height"),
+              g = svg.append("g").attr("transform", "translate(40,20)");
 
-        const treeLayout = d3.tree().size([width - 100, height - 100]);
+        const treeLayout = d3.tree().size([height - 40, width - 80]);
         const root = d3.hierarchy(data);
         treeLayout(root);
 
@@ -120,16 +157,16 @@ Expand/Collapse nodes in both views.
             .enter()
             .append("path")
             .attr("class", "link")
-            .attr("d", d3.linkHorizontal()
-                .x(d => d.y)
-                .y(d => d.x));
+            .attr("d", d3.linkVertical()
+                .x(d => d.x)
+                .y(d => d.y));
 
         const node = g.selectAll(".node")
             .data(root.descendants())
             .enter()
             .append("g")
             .attr("class", "node")
-            .attr("transform", d => `translate(${d.y},${d.x})`)
+            .attr("transform", d => `translate(${d.x},${d.y})`)
             .on("click", (event, d) => selectNode(d.data.name));
 
         node.append("circle").attr("r", 10);
@@ -137,14 +174,24 @@ Expand/Collapse nodes in both views.
 
         // Node Selection Synchronization
         function selectNode(name) {
+            // Highlight node in Tree View
             d3.selectAll(".node").classed("selected", d => d.data.name === name);
+
+            // Highlight node in Group View
             document.querySelectorAll(".group").forEach(div => {
-                div.classList.toggle("selected", div.textContent === name);
+                div.classList.toggle("selected", div.textContent.includes(name));
+            });
+
+            // Auto-expand parent groups in Group View
+            document.querySelectorAll(".sub-group").forEach(group => {
+                if (group.innerHTML.includes(name)) {
+                    group.style.display = "block";
+                    const toggleBtn = group.previousElementSibling.querySelector(".toggle");
+                    if (toggleBtn) toggleBtn.textContent = "[-]";
+                }
             });
         }
     </script>
 
 </body>
 </html>
-
-
