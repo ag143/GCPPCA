@@ -26,4 +26,13 @@ git clone https://github.com/naveensilver/Ansible.git
 sleep 60
 git clone https://github.com/fleschutz/PowerShell.git
 sleep 60
+git clone https://github.com/MederD/Kodekloud-Engineer-Tasks.git
+sleep 60
+git clone https://github.com/tabernarious/ansible-learning.git
+sleep 60
+git clone https://github.com/joseeden/notes-kodekloud-ansible-1.git
+sleep 60
+git clone https://github.com/joseeden/KodeKloud_Engineer_Labs.git
+sleep 60
 git clone https://github.com/ag143/GCPPCA.git
+
