@@ -1,0 +1,103 @@
+{
+  "Compute": {
+    "Virtual Machines": [
+      { "name": "Virtual Machines", "file": "azure/virtual_machines.md" }
+    ],
+    "Containers": [
+      { "name": "Azure Kubernetes Service (AKS)", "file": "azure/aks.md" },
+      { "name": "Azure Container Instances", "file": "azure/container_instances.md" },
+      { "name": "Azure Container Apps", "file": "azure/container_apps.md" }
+    ],
+    "Serverless": [
+      { "name": "Azure Functions", "file": "azure/functions.md" },
+      { "name": "App Service", "file": "azure/app_service.md" }
+    ]
+  },
+  "Networking": {
+    "Load Balancing & CDN": [
+      { "name": "Azure Load Balancer", "file": "azure/load_balancer.md" },
+      { "name": "Azure Application Gateway", "file": "azure/application_gateway.md" },
+      { "name": "Azure Front Door", "file": "azure/front_door.md" },
+      { "name": "Azure Content Delivery Network (CDN)", "file": "azure/cdn.md" }
+    ],
+    "Network Infrastructure": [
+      { "name": "Virtual Network", "file": "azure/virtual_network.md" },
+      { "name": "Azure VPN Gateway", "file": "azure/vpn_gateway.md" },
+      { "name": "ExpressRoute", "file": "azure/expressroute.md" },
+      { "name": "Azure Bastion", "file": "azure/bastion.md" }
+    ]
+  },
+  "Storage": {
+    "Object & Block Storage": [
+      { "name": "Azure Blob Storage", "file": "azure/blob_storage.md" },
+      { "name": "Azure Disk Storage", "file": "azure/disk_storage.md" }
+    ],
+    "File Storage": [
+      { "name": "Azure Files", "file": "azure/files.md" }
+    ],
+    "Data Transfer": [
+      { "name": "Azure Data Box", "file": "azure/data_box.md" },
+      { "name": "AzCopy", "file": "azure/azcopy.md" }
+    ]
+  },
+  "Databases": {
+    "Relational": [
+      { "name": "Azure SQL Database", "file": "azure/sql_database.md" },
+      { "name": "Azure Database for MySQL", "file": "azure/mysql.md" },
+      { "name": "Azure Database for PostgreSQL", "file": "azure/postgresql.md" }
+    ],
+    "NoSQL": [
+      { "name": "Azure Cosmos DB", "file": "azure/cosmos_db.md" }
+    ],
+    "In-Memory": [
+      { "name": "Azure Cache for Redis", "file": "azure/cache_for_redis.md" }
+    ]
+  },
+  "AI & Machine Learning": {
+    "ML Tools": [
+      { "name": "Azure Machine Learning", "file": "azure/machine_learning.md" },
+      { "name": "Azure Databricks", "file": "azure/databricks.md" }
+    ],
+    "APIs": [
+      { "name": "Azure Cognitive Services", "file": "azure/cognitive_services.md" }
+    ]
+  },
+  "DevOps & Monitoring": {
+    "CI/CD": [
+      { "name": "Azure DevOps Services", "file": "azure/devops_services.md" },
+      { "name": "GitHub Actions", "file": "azure/github_actions.md" }
+    ],
+    "Monitoring & Logging": [
+      { "name": "Azure Monitor", "file": "azure/monitor.md" },
+      { "name": "Azure Log Analytics", "file": "azure/log_analytics.md" },
+      { "name": "Azure Application Insights", "file": "azure/application_insights.md" }
+    ],
+    "Tools": [
+      { "name": "Azure Cloud Shell", "file": "azure/cloud_shell.md" },
+      { "name": "Azure CLI", "file": "azure/cli.md" }
+    ]
+  },
+  "Security & Identity": {
+    "IAM & Access": [
+      { "name": "Azure Active Directory", "file": "azure/active_directory.md" },
+      { "name": "Azure Role-Based Access Control (RBAC)", "file": "azure/rbac.md" }
+    ],
+    "Data Protection": [
+      { "name": "Azure Key Vault", "file": "azure/key_vault.md" },
+      { "name": "Azure Confidential Computing", "file": "azure/confidential_computing.md" }
+    ]
+  },
+  "Big Data & Analytics": {
+    "Data Processing": [
+      { "name": "Azure Data Factory", "file": "azure/data_factory.md" },
+      { "name": "Azure Synapse Analytics", "file": "azure/synapse_analytics.md" }
+    ],
+    "Analytics": [
+      { "name": "Power BI", "file": "azure/power_bi.md" }
+    ],
+    "Messaging": [
+      { "name": "Azure Service Bus", "file": "azure/service_bus.md" },
+      { "name": "Azure Event Hubs", "file": "azure/event_hubs.md" }
+    ]
+  }
+}

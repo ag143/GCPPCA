@@ -1,0 +1,102 @@
+{
+  "Compute": {
+    "Virtual Machines": [
+      { "name": "Compute Engine", "file": "GCP/topics/Compute/compute_Engine.md" }
+    ],
+    "Containers": [
+      { "name": "Kubernetes Engine (GKE)", "file": "GCP/topics/Compute/GKE.md" },
+      { "name": "Cloud Run", "file": "GCP/topics/Compute/CloudRun.md" }
+    ],
+    "Serverless": [
+      { "name": "Cloud Functions", "file": "GCP/topics/Compute/cloudFunction.md" },
+      { "name": "App Engine", "file": "GCP/topics/Compute/App_Engine.md" }
+    ]
+  },
+  "Networking": {
+    "Load Balancing & CDN": [
+      { "name": "Cloud Load Balancing", "file": "GCP/topics/Networking/Cloud_Load_Balancing.md" },
+      { "name": "Cloud CDN", "file": "GCP/topics/Networking/Cloud_CDN.md" }
+    ],
+    "Network Infrastructure": [
+      { "name": "VPC", "file": "GCP/topics/Networking/VPC.md" },
+      { "name": "Cloud NAT", "file": "GCP/topics/Networking/Cloud_NAT.md" },
+      { "name": "Cloud VPN", "file": "GCP/topics/Networking/Cloud_VPN.md" },
+      { "name": "Cloud Interconnect", "file": "GCP/topics/Networking/CLoud_Interconnect.md" }
+    ]
+  },
+  "Storage": {
+    "Object & Block Storage": [
+      { "name": "Cloud Storage", "file": "GCP/topics/Storage/Cloud_Storage.md" },
+      { "name": "Persistent Disks", "file": "GCP/topics/Storage/Persistent_Disks.md" }
+    ],
+    "File Storage": [
+      { "name": "Filestore", "file": "GCP/topics/Storage/FileStore.md" }
+    ],
+    "Data Transfer": [
+      { "name": "Transfer Service", "file": "GCP/topics/Storage/Transfer_Service.md" },
+      { "name": "Storage Transfer Appliance", "file": "GCP/topics/Storage/Storage_Transfer_Appliance.md" }
+    ]
+  },
+  "Databases": {
+    "Relational": [
+      { "name": "Cloud SQL", "file": "GCP/topics/Databases/cloud_sql.md" },
+      { "name": "Cloud Spanner", "file": "GCP/topics/Databases/cloud_Spanner.md" }
+    ],
+    "NoSQL": [
+      { "name": "Firestore", "file": "GCP/topics/Databases/firestore.md" },
+      { "name": "Cloud Bigtable", "file": "GCP/topics/Databases/cloud_bigtable.md" }
+    ],
+    "In-Memory": [
+      { "name": "Memorystore", "file": "GCP/topics/Databases/memorystore.md" }
+    ]
+  },
+  "AI & Machine Learning": {
+    "ML Tools": [
+      { "name": "Vertex AI", "file": "GCP/topics/AI_Machine_Learning/vertex_AI.md" },
+      { "name": "AutoML", "file": "GCP/topics/AI_Machine_Learning/AutoML.md" }
+    ],
+    "APIs": [
+      { "name": "Vision API", "file": "GCP/topics/AI_Machine_Learning/Vision_API.md" },
+      { "name": "Speech-to-Text", "file": "GCP/topics/AI_Machine_Learning/Speech_to_text.md" },
+      { "name": "Natural Language API", "file": "GCP/topics/AI_Machine_Learning/Natural_language_API.md" }
+    ]
+  },
+  "DevOps & Monitoring": {
+    "CI/CD": [
+      { "name": "Cloud Build", "file": "GCP/topics/Devops_and_Monitoring/cloud_Build.md" },
+      { "name": "Cloud Deploy", "file": "GCP/topics/Devops_and_Monitoring/cloud_Deploy.md" }
+    ],
+    "Monitoring & Logging": [
+      { "name": "Cloud Monitoring", "file": "GCP/topics/Devops_and_Monitoring/cloud_Monitoring.md" },
+      { "name": "Cloud Logging", "file": "GCP/topics/Devops_and_Monitoring/cloud_Logging.md" },
+      { "name": "Error Reporting", "file": "GCP/topics/Devops_and_Monitoring/Error_reporting.md" }
+    ],
+    "Tools": [
+      { "name": "Cloud Shell", "file": "GCP/topics/Devops_and_Monitoring/cloud_Shell.md" },
+      { "name": "Cloud SDK", "file": "GCP/topics/Devops_and_Monitoring/cloud_Sdk.md" }
+    ]
+  },
+  "Security & Identity": {
+    "IAM & Access": [
+      { "name": "Identity and Access Management (IAM)", "file": "GCP/topics/Security_and_Identity/Identity_AccessManagement.md" },
+      { "name": "Workload Identity Federation", "file": "GCP/topics/Security_and_Identity/workload_IdentityFederation.md" }
+    ],
+    "Data Protection": [
+      { "name": "Cloud KMS", "file": "GCP/topics/Security_and_Identity/CloudKMS.md" },
+      { "name": "Confidential Computing", "file": "GCP/topics/Security_and_Identity/confidentialComputing.md" }
+    ]
+  },
+  "Big Data & Analytics": {
+    "Data Processing": [
+      { "name": "Dataflow", "file": "GCP/topics/BigData_and_Analytics/DataFlow.md" },
+      { "name": "Dataproc", "file": "GCP/topics/BigData_and_Analytics/DataProc.md" }
+    ],
+    "Analytics": [
+      { "name": "BigQuery", "file": "GCP/topics/BigData_and_Analytics/BigQuery.md" },
+      { "name": "Looker", "file": "GCP/topics/BigData_and_Analytics/Looker.md" }
+    ],
+    "Messaging": [
+      { "name": "Pub/Sub", "file": "GCP/topics/BigData_and_Analytics/PubSub.md" }
+    ]
+  }
+}

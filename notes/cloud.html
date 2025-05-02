@@ -1,0 +1,32 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cloud Notes</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+  <div class="topbar">
+    <h1>☂️ Cloud Notes</h1>
+    <div class="controls">
+      <label for="category-select">Provider</label>
+      <select id="category-select"></select>
+      <input type="text" id="searchInput" placeholder="Search...">
+      <button id="darkModeToggle">🌙</button>
+      <button id="toggleMenu">☰</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="sidebar" id="list-menu"></div>
+    <div class="main-content" id="content">
+      <p>Select a topic from the menu to begin.</p>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

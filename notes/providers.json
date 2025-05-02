@@ -1,0 +1,17 @@
+[
+  {
+    "name": "GCP",
+    "file": "gcp.json",
+    "icon": "🔵"
+  },
+  {
+    "name": "AWS",
+    "file": "aws.json",
+    "icon": "🟧"
+  },
+  {
+    "name": "Azure",
+    "file": "azure.json",
+    "icon": "🔷"
+  }
+]

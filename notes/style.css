@@ -1,0 +1,233 @@
+:root {
+  --bg: #ffffff;
+  --text: #333333;
+  --accent: #007acc;
+  --sidebar-bg: #f0f0f0;
+  --menu-hover: #d9eaff;
+  --border: #ccc;
+}
+
+body.dark {
+  --bg: #1e1e1e;
+  --text: #dddddd;
+  --accent: #569cd6;
+  --sidebar-bg: #2e2e2e;
+  --menu-hover: #3a3a3a;
+  --border: #444;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+  transition: all 0.3s ease;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--sidebar-bg);
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.topbar h1 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.container {
+  display: flex;
+  flex-direction: row;
+  height: calc(100vh - 60px);
+  transition: all 0.3s ease;
+}
+
+.sidebar {
+  width: 300px;
+  max-width: 100%;
+  background-color: var(--sidebar-bg);
+  overflow-y: auto;
+  padding: 10px 15px;
+  border-right: 1px solid var(--border);
+  transition: transform 0.3s ease;
+}
+
+.sidebar.collapsed {
+  display: none;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.sidebar li {
+  padding: 6px 10px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.3s ease;
+  border: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+
+.sidebar li:hover {
+  background-color: var(--menu-hover);
+  border-color: var(--accent);
+}
+
+.sidebar li.active {
+  background-color: var(--accent);
+  color: white;
+}
+
+.sidebar .group > span {
+  font-weight: bold;
+  display: block;
+  padding: 6px 8px;
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background-color: rgba(0, 122, 204, 0.1);
+}
+
+.sidebar .group {
+  margin-left: 10px;
+}
+
+.sidebar .group.collapsed > ul {
+  display: none;
+}
+
+.sidebar .leaf::before {
+  content: "";
+  margin-right: 5px;
+}
+
+.main-content {
+  flex-grow: 1;
+  padding: 20px;
+  overflow-y: auto;
+  transition: all 0.3s ease;
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+#darkModeToggle {
+  background-color: var(--accent);
+  color: white;
+  border: none;
+  padding: 5px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#category-select {
+  padding: 5px;
+}
+
+#toggleMenu {
+  font-size: 1.4rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.search-box {
+  margin: 10px 0;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background-color: var(--bg);
+  color: var(--text);
+}
+
+/* Mobile Layout */
+@media screen and (max-width: 768px) {
+  .container {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: 50vh;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar.collapsed {
+    display: none;
+    height: 0;
+  }
+
+  .main-content {
+    height: 50vh;
+  }
+
+  .sidebar.collapsed + .main-content {
+    height: calc(100vh - 60px);
+  }
+}
+
+/* Group levels background color variations */
+.sidebar .level-1 {
+  margin-left: 10px;
+  background-color: rgba(0, 120, 215, 0.1);
+}
+
+.sidebar .level-2 {
+  margin-left: 20px;
+  background-color: rgba(0, 120, 215, 0.15);
+}
+
+.sidebar .level-3 {
+  margin-left: 30px;
+  background-color: rgba(0, 120, 215, 0.2);
+}
+
+.sidebar .level-4 {
+  margin-left: 40px;
+  background-color: rgba(0, 120, 215, 0.25);
+}
+
+/* Leaf node appearance */
+.sidebar li.leaf {
+  cursor: pointer;
+  padding: 8px 10px;
+  background-color: rgba(255, 165, 0, 0.1); /* Orange shade */
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  margin: 4px 0;
+}
+
+.sidebar li.leaf:hover {
+  background-color: rgba(255, 165, 0, 0.25);
+}
+
+.sidebar li.leaf.active {
+  background-color: orange;
+  color: white;
+  font-weight: bold;
+}
+
+/* Clickable item styling */
+.sidebar li {
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}

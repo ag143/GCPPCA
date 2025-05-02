@@ -1,0 +1,104 @@
+{
+  "Compute": {
+    "Virtual Machines": [
+      { "name": "Amazon EC2", "file": "aws/ec2.md" }
+    ],
+    "Containers": [
+      { "name": "Amazon ECS", "file": "aws/ecs.md" },
+      { "name": "Amazon EKS", "file": "aws/eks.md" },
+      { "name": "AWS Fargate", "file": "aws/fargate.md" }
+    ],
+    "Serverless": [
+      { "name": "AWS Lambda", "file": "aws/lambda.md" },
+      { "name": "AWS Elastic Beanstalk", "file": "aws/elastic_beanstalk.md" }
+    ]
+  },
+  "Networking": {
+    "Load Balancing & CDN": [
+      { "name": "Elastic Load Balancing (ELB)", "file": "aws/elb.md" },
+      { "name": "Amazon CloudFront", "file": "aws/cloudfront.md" }
+    ],
+    "Network Infrastructure": [
+      { "name": "Amazon VPC", "file": "aws/vpc.md" },
+      { "name": "AWS Transit Gateway", "file": "aws/transit_gateway.md" },
+      { "name": "AWS VPN", "file": "aws/vpn.md" },
+      { "name": "AWS Direct Connect", "file": "aws/direct_connect.md" }
+    ]
+  },
+  "Storage": {
+    "Object & Block Storage": [
+      { "name": "Amazon S3", "file": "aws/s3.md" },
+      { "name": "Amazon EBS", "file": "aws/ebs.md" }
+    ],
+    "File Storage": [
+      { "name": "Amazon EFS", "file": "aws/efs.md" },
+      { "name": "Amazon FSx", "file": "aws/fsx.md" }
+    ],
+    "Data Transfer": [
+      { "name": "AWS Snowball", "file": "aws/snowball.md" },
+      { "name": "AWS DataSync", "file": "aws/datasync.md" }
+    ]
+  },
+  "Databases": {
+    "Relational": [
+      { "name": "Amazon RDS", "file": "aws/rds.md" },
+      { "name": "Amazon Aurora", "file": "aws/aurora.md" }
+    ],
+    "NoSQL": [
+      { "name": "Amazon DynamoDB", "file": "aws/dynamodb.md" }
+    ],
+    "In-Memory": [
+      { "name": "Amazon ElastiCache", "file": "aws/elasticache.md" }
+    ]
+  },
+  "AI & Machine Learning": {
+    "ML Tools": [
+      { "name": "Amazon SageMaker", "file": "aws/sagemaker.md" }
+    ],
+    "APIs": [
+      { "name": "Amazon Rekognition", "file": "aws/rekognition.md" },
+      { "name": "Amazon Polly", "file": "aws/polly.md" },
+      { "name": "Amazon Comprehend", "file": "aws/comprehend.md" }
+    ]
+  },
+  "DevOps & Monitoring": {
+    "CI/CD": [
+      { "name": "AWS CodeBuild", "file": "aws/codebuild.md" },
+      { "name": "AWS CodePipeline", "file": "aws/codepipeline.md" }
+    ],
+    "Monitoring & Logging": [
+      { "name": "Amazon CloudWatch", "file": "aws/cloudwatch.md" },
+      { "name": "AWS CloudTrail", "file": "aws/cloudtrail.md" },
+      { "name": "AWS X-Ray", "file": "aws/xray.md" }
+    ],
+    "Tools": [
+      { "name": "AWS CLI", "file": "aws/cli.md" },
+      { "name": "AWS CloudShell", "file": "aws/cloudshell.md" }
+    ]
+  },
+  "Security & Identity": {
+    "IAM & Access": [
+      { "name": "AWS IAM", "file": "aws/iam.md" },
+      { "name": "AWS STS", "file": "aws/sts.md" }
+    ],
+    "Data Protection": [
+      { "name": "AWS KMS", "file": "aws/kms.md" },
+      { "name": "AWS Secrets Manager", "file": "aws/secrets_manager.md" }
+    ]
+  },
+  "Big Data & Analytics": {
+    "Data Processing": [
+      { "name": "AWS Glue", "file": "aws/glue.md" },
+      { "name": "Amazon EMR", "file": "aws/emr.md" }
+    ],
+    "Analytics": [
+      { "name": "Amazon Redshift", "file": "aws/redshift.md" },
+      { "name": "Amazon QuickSight", "file": "aws/quicksight.md" }
+    ],
+    "Messaging": [
+      { "name": "Amazon SNS", "file": "aws/sns.md" },
+      { "name": "Amazon SQS", "file": "aws/sqs.md" },
+      { "name": "Amazon EventBridge", "file": "aws/eventbridge.md" }
+    ]
+  }
+}
