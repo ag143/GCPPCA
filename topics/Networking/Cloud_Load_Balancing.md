@@ -1,0 +1,7 @@
+Terraform can be used to deploy Google Cloud Platform (GCP) load balancers, including both external and internal Application Load Balancers. Here are some examples of Terraform code for GCP load balancing:
+
+External Application Load Balancer with Managed Instance Groups: This example includes a Cloud CDN-enabled backend service and custom request and response headers. The code sets up a VPC network, subnet, forwarding rule, HTTP proxy, URL map, backend service, instance template, health check, and MIG (Managed Instance Group). 
+Regional Internal Application Load Balancer with Managed Instance Group Backend: This example sets up an internal HTTP load balancer with a managed instance group backend. The code includes a VPC network, proxy-only subnet, backend subnet, forwarding rule, HTTP target proxy, URL map, backend service, instance template, health check, MIG, and firewalls. 
+Shared VPC Setup: This example uses Terraform to create a regional internal Application Load Balancer in a Shared VPC setup, including a VPC network, subnetwork, Cloud Router, and backend instance group. 
+HTTP-to-HTTPS Redirect: This example creates a regional internal Application Load Balancer with an HTTP-to-HTTPS redirect, including a VPC network, proxy-only subnet, backend subnet, forwarding rule, HTTP target proxy, URL map, backend service, instance template, health check, and MIG. 
+These examples can be found in the official GCP documentation and GitHub repositories, providing detailed instructions on how to deploy GCP load balancers using Terraform.
