@@ -15,3 +15,9 @@
 - https://github.com/ksumesh431/AWS-GCP-architecture-diagrams
 - https://github.com/ozzysp/GCP_Architeture_Diagram
 - https://github.com/reddyfull/gcp-diagram-maker/tree/master
+- https://github.com/lynnlangit/gcp-essentials/tree/master
+- https://github.com/GoogleCloudPlatform/microservices-demo
+- https://github.com/larrybotha/gcp-fundamentals/tree/master
+- https://github.com/Ulminator/gcp-certification-notes/tree/master
+- https://github.com/arjunvish30/edureka-GCP-PCA25-notes-Public/tree/main
+- https://github.com/priyankavergadia/GCPSketchnote
