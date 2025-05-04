@@ -3,3 +3,15 @@
 - https://github.com/rr948/ArchitectingWithGCP.git
 - https://github.com/lynnlangit/gcp-essentials.git
 - https://github.com/arjunvish30/edureka-GCP-PCA25-notes-Public.git
+- https://medium.com/google-cloud/20-google-cloud-reference-architecture-to-start-your-gcp-architect-journey-2a85e8728507
+- https://www.edrawsoft.com/google-cloud-platform/google-cloud-platform-templates.html
+- https://github.com/grucloud/grucloud/tree/main/examples/google/storage
+- https://github.com/HariSekhon/Diagrams-as-Code
+- https://github.com/gammastudios/GCP-C4-PlantUML
+- https://github.com/n0531m/gcp_diagram_tools
+- https://github.com/amit894/diagrams
+- https://github.com/DRpandaMD/gcp-certified-associate-cloud-engineer-2020
+- https://github.com/di-mro/gcp-assets-diagrams/tree/master
+- https://github.com/ksumesh431/AWS-GCP-architecture-diagrams
+- https://github.com/ozzysp/GCP_Architeture_Diagram
+- https://github.com/reddyfull/gcp-diagram-maker/tree/master
