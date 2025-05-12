@@ -1,4 +1,11 @@
 # GCPPCA.html
+
+- https://www.reddit.com/r/googlecloud/comments/1g2stqf/creating_gcp_architecture_diagrams/?rdt=45254
+- https://docs.google.com/presentation/d/1fD1AwQo4E9Un6012zyPEb7NvUAGlzF6L-vo5DbUe4NQ/edit?pli=1&slide=id.g19a830e0af_5_0#slide=id.g19a830e0af_5_0
+- https://d2lang.com/
+- https://medium.com/google-cloud/20-google-cloud-reference-architecture-to-start-your-gcp-architect-journey-2a85e8728507
+- https://medium.com/google-cloud/some-more-gcp-flowcharts-dc0bb6f7c94e
+- https://grumpygrace.dev/posts/gcp-flowcharts/
 - https://github.com/larrybotha/gcp-fundamentals.git
 - https://github.com/rr948/ArchitectingWithGCP.git
 - https://github.com/lynnlangit/gcp-essentials.git
