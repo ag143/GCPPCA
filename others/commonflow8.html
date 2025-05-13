@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Cloud Architecture Diagram</title>
+  <script src="https://unpkg.com/gojs/release/go.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      height: 100vh;
+    }
+    #sidebar {
+      width: 280px;
+      background: #f9f9f9;
+      padding: 15px;
+      border-right: 1px solid #ccc;
+      box-sizing: border-box;
+      overflow-y: auto;
+    }
+    #sidebar h3 {
+      margin-top: 0;
+    }
+    #myDiagramDiv {
+      flex: 1;
+      background-color: #f0f0f0;
+    }
+    .flow-list li.active {
+      background-color: #007bff;
+      color: white;
+    }
+    ul.flow-list {
+      list-style: none;
+      padding: 0;
+    }
+    ul.flow-list li {
+      padding: 6px 10px;
+      margin-bottom: 5px;
+      background: #e0e0e0;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    ul.flow-list li:hover {
+      background-color: #ccc;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="sidebar">
+    <h3>Select Provider</h3>
+    <label><input type="radio" name="provider" value="AWS" checked> AWS</label><br>
+    <label><input type="radio" name="provider" value="GCP"> GCP</label><br>
+    <label><input type="radio" name="provider" value="Azure"> Azure</label><br>
+
+    <h3>Architecture Flows</h3>
+    <ul class="flow-list" id="flowList">
+      <li data-flow="Basic">Basic</li>
+      <li data-flow="Serverless">Serverless</li>
+      <li data-flow="Networking">Networking</li>
+      <li data-flow="Storage">Storage</li>
+    </ul>
+  </div>
+
+  <div id="myDiagramDiv"></div>
+
+  <script>
+    const $ = go.GraphObject.make;
+
+    const groupTemplate = $(go.Group, "Auto",
+      {
+        layout: $(go.GridLayout, { wrappingColumn: 2 }),
+        background: "#ffffff",
+        margin: 10
+      },
+      $(go.Shape, "RoundedRectangle", { fill: "#dae4f0", stroke: "#6b8db4", strokeWidth: 2 }),
+      $(go.Panel, "Vertical",
+        { margin: 5 },
+        $(go.TextBlock, { font: "bold 14px sans-serif", margin: new go.Margin(2, 0, 4, 0) },
+          new go.Binding("text", "text")),
+        $(go.Placeholder, { padding: 10 })
+      )
+    );
+
+    const nodeTemplate = $(go.Node, "Vertical",
+      { toolTip: $("ToolTip", $(go.TextBlock, { margin: 5 }, new go.Binding("text", "description"))) },
+      $(go.Picture, { width: 40, height: 40 }, new go.Binding("source")),
+      $(go.TextBlock, { margin: 4, font: "bold 10pt sans-serif" }, new go.Binding("text"))
+    );
+
+    const diagram = $(go.Diagram, "myDiagramDiv", {
+      "undoManager.isEnabled": true,
+      layout: $(go.LayeredDigraphLayout, { direction: 0 }),
+      groupTemplate: groupTemplate,
+      nodeTemplate: nodeTemplate
+    });
+
+    const resources = {
+      AWS: [
+        { key: "AWS", isGroup: true, text: "AWS Services" },
+        { key: 1, text: "EC2", group: "AWS", source: "https://img.icons8.com/color/48/000000/amazon-ec2.png", description: "Compute service" },
+        { key: 2, text: "S3", group: "AWS", source: "https://img.icons8.com/color/48/000000/cloud.png", description: "Storage" },
+        { key: 3, text: "VPC", group: "AWS", source: "https://img.icons8.com/color/48/000000/internet.png", description: "Networking" },
+        { key: 4, text: "Lambda", group: "AWS", source: "https://img.icons8.com/color/48/000000/aws-lambda.png", description: "Serverless compute" }
+      ],
+      GCP: [
+        { key: "GCP", isGroup: true, text: "GCP Services" },
+        { key: 1, text: "Compute Engine", group: "GCP", source: "https://img.icons8.com/color/48/000000/google-cloud.png", description: "Compute service" },
+        { key: 2, text: "Cloud Storage", group: "GCP", source: "https://img.icons8.com/color/48/000000/cloud.png", description: "Storage" },
+        { key: 3, text: "VPC", group: "GCP", source: "https://img.icons8.com/color/48/000000/internet.png", description: "Networking" },
+        { key: 4, text: "Cloud Functions", group: "GCP", source: "https://img.icons8.com/color/48/000000/code.png", description: "Serverless compute" }
+      ],
+      Azure: [
+        { key: "Azure", isGroup: true, text: "Azure Services" },
+        { key: 1, text: "Azure VM", group: "Azure", source: "https://img.icons8.com/color/48/000000/azure-virtual-machine.png", description: "Compute service" },
+        { key: 2, text: "Blob Storage", group: "Azure", source: "https://img.icons8.com/color/48/000000/cloud.png", description: "Storage" },
+        { key: 3, text: "VNet", group: "Azure", source: "https://img.icons8.com/color/48/000000/internet.png", description: "Networking" },
+        { key: 4, text: "Functions", group: "Azure", source: "https://img.icons8.com/color/48/000000/code.png", description: "Serverless compute" }
+      ]
+    };
+
+    const linkSets = {
+      Basic: [{ from: 1, to: 3 }],
+      Serverless: [{ from: 4, to: 2 }],
+      Networking: [{ from: 3, to: 1 }],
+      Storage: [{ from: 1, to: 2 }]
+    };
+
+    let selectedProvider = "AWS";
+    let selectedFlow = "Basic";
+
+    function loadDiagram(provider, flow) {
+      const nodeData = resources[provider];
+      const linkData = linkSets[flow];
+      diagram.model = new go.GraphLinksModel(nodeData, linkData);
+    }
+
+    // Initialize
+    document.querySelectorAll('input[name="provider"]').forEach(input => {
+      input.addEventListener("change", e => {
+        selectedProvider = e.target.value;
+        loadDiagram(selectedProvider, selectedFlow);
+      });
+    });
+
+    document.querySelectorAll(".flow-list li").forEach(li => {
+      li.addEventListener("click", () => {
+        document.querySelectorAll(".flow-list li").forEach(item => item.classList.remove("active"));
+        li.classList.add("active");
+        selectedFlow = li.dataset.flow;
+        loadDiagram(selectedProvider, selectedFlow);
+      });
+    });
+
+    loadDiagram(selectedProvider, selectedFlow);
+  </script>
+
+</body>
+</html>

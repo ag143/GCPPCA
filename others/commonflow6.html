@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cloud Architecture Diagram with Groups</title>
+  <script src="https://unpkg.com/gojs/release/go.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      background-color: #f5f8fa;
+    }
+    #myDiagramDiv {
+      width: 100%;
+      height: 90vh;
+      background: white;
+      border: 1px solid #ccc;
+    }
+    .controls {
+      padding: 10px;
+      background: #fff;
+      display: flex;
+      gap: 1rem;
+    }
+    select, button {
+      padding: 5px 10px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="controls">
+  <label>Provider:
+    <select id="providerSelect">
+      <option value="AWS">AWS</option>
+      <option value="GCP">GCP</option>
+    </select>
+  </label>
+  <label>Flow:
+    <select id="flowSelect">
+      <option value="Basic Flow">Basic Flow</option>
+      <option value="Serverless Flow">Serverless Flow</option>
+    </select>
+  </label>
+  <button onclick="loadSelectedData()">Load Flow</button>
+</div>
+
+<div id="myDiagramDiv"></div>
+
+<script>
+const $ = go.GraphObject.make;
+let myDiagram;
+
+const allNodes = {
+  AWS: [
+    { key: 1, text: "EC2", group: "Compute", source: "https://img.icons8.com/color/48/000000/amazon-ec2.png" },
+    { key: 2, text: "Lambda", group: "Serverless", source: "https://img.icons8.com/color/48/000000/amazon-web-services.png" },
+    { key: 3, text: "S3", group: "Storage", source: "https://img.icons8.com/color/48/000000/cloud.png" },
+    { key: 4, text: "VPC", group: "Networking", source: "https://img.icons8.com/color/48/000000/internet.png" },
+  ],
+  GCP: [
+    { key: 5, text: "Compute Engine", group: "Compute", source: "https://img.icons8.com/color/48/000000/google-cloud.png" },
+    { key: 6, text: "Cloud Functions", group: "Serverless", source: "https://img.icons8.com/color/48/000000/code.png" },
+    { key: 7, text: "Cloud Storage", group: "Storage", source: "https://img.icons8.com/color/48/000000/cloud.png" },
+    { key: 8, text: "VPC", group: "Networking", source: "https://img.icons8.com/color/48/000000/internet.png" },
+  ]
+};
+
+const linkSets = {
+  AWS: {
+    "Basic Flow": [ { from: 1, to: 3 }, { from: 3, to: 4 } ],
+    "Serverless Flow": [ { from: 2, to: 3 } ]
+  },
+  GCP: {
+    "Basic Flow": [ { from: 5, to: 7 }, { from: 7, to: 8 } ],
+    "Serverless Flow": [ { from: 6, to: 7 } ]
+  }
+};
+
+// Group definitions (same for all providers)
+const logicalGroups = [
+  { key: "Compute", isGroup: true, text: "Compute" },
+  { key: "Storage", isGroup: true, text: "Storage" },
+  { key: "Networking", isGroup: true, text: "Networking" },
+  { key: "Serverless", isGroup: true, text: "Serverless" }
+];
+
+function initDiagram() {
+  myDiagram = $(go.Diagram, "myDiagramDiv", {
+    layout: $(go.LayeredDigraphLayout, { direction: 0 }),
+    "undoManager.isEnabled": true
+  });
+
+  // Group Template
+  myDiagram.groupTemplate =
+    $(go.Group, "Auto",
+      {
+        layout: $(go.GridLayout),
+        background: "#f0f8ff",
+        isSubGraphExpanded: true,
+        margin: 10
+      },
+      $(go.Shape, "RoundedRectangle",
+        { fill: "#ddeeff", stroke: "#91b9e3", strokeWidth: 2 }),
+      $(go.Panel, "Vertical",
+        $(go.TextBlock,
+          { font: "bold 12px sans-serif", margin: 4 },
+          new go.Binding("text")),
+        $(go.Placeholder, { padding: 5 })
+      )
+    );
+
+  // Node Template
+  myDiagram.nodeTemplate =
+    $(go.Node, "Vertical",
+      $(go.Picture, { width: 40, height: 40 },
+        new go.Binding("source")),
+      $(go.TextBlock,
+        { margin: 5, font: "bold 11px sans-serif" },
+        new go.Binding("text"))
+    );
+
+  // Link Template
+  myDiagram.linkTemplate =
+    $(go.Link,
+      $(go.Shape, { strokeWidth: 2, stroke: "#3c8dbc" }),
+      $(go.Shape, { toArrow: "Standard", stroke: null, fill: "#3c8dbc" })
+    );
+}
+
+function loadSelectedData() {
+  const provider = document.getElementById("providerSelect").value;
+  const flow = document.getElementById("flowSelect").value;
+
+  const baseNodes = allNodes[provider] || [];
+  const links = linkSets[provider][flow] || [];
+
+  const model = new go.GraphLinksModel();
+  model.nodeDataArray = [...logicalGroups, ...baseNodes];
+  model.linkDataArray = links;
+  myDiagram.model = model;
+}
+
+window.addEventListener("load", () => {
+  initDiagram();
+  loadSelectedData();
+});
+</script>
+
+</body>
+</html>

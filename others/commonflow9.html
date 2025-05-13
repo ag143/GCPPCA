@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Cloud Architecture Diagram</title>
+  <script src="https://unpkg.com/gojs/release/go.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      height: 100vh;
+    }
+    #sidebar {
+      width: 260px;
+      background: #f4f4f4;
+      padding: 15px;
+      border-right: 1px solid #ccc;
+      box-sizing: border-box;
+      overflow-y: auto;
+    }
+    #myDiagramDiv {
+      flex: 1;
+      background-color: #f0f0f0;
+      height: 100%;
+    }
+    ul.flow-list {
+      list-style: none;
+      padding: 0;
+    }
+    ul.flow-list li {
+      cursor: pointer;
+      padding: 6px;
+      margin: 4px 0;
+      background: #e0e0e0;
+      border-radius: 4px;
+    }
+    ul.flow-list li:hover {
+      background: #c0c0c0;
+    }
+    ul.flow-list li.active {
+      background-color: #007bff;
+      color: white;
+    }
+    h3 {
+      margin-bottom: 5px;
+    }
+    #searchBox {
+      width: 100%;
+      padding: 5px;
+      margin-bottom: 10px;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+  <div id="sidebar">
+    <h3>Cloud Provider</h3>
+    <label><input type="radio" name="provider" value="AWS" checked> AWS</label>
+    <label><input type="radio" name="provider" value="GCP"> GCP</label>
+    <label><input type="radio" name="provider" value="Azure"> Azure</label>
+    <label><input type="radio" name="provider" value="OpenSource"> Open Source</label>
+
+    <h3>Architecture Flows</h3>
+    <input type="text" id="searchBox" placeholder="Search flows...">
+    <ul class="flow-list" id="flowList"></ul>
+  </div>
+
+  <div id="myDiagramDiv"></div>
+
+  <script>
+    const $ = go.GraphObject.make;
+    let myDiagram;
+    let selectedProvider = "AWS";
+    let selectedFlow = "Basic Flow";
+
+    const flows = {
+      "Basic Flow": ["Compute", "Networking"],
+      "Serverless Flow": ["Serverless", "Networking"],
+      "Kubernetes Flow": ["Containers", "Networking"],
+      "Infrastructure Flow": ["Compute", "Storage", "Networking"],
+      "Storage Flow": ["Storage", "Networking"],
+      "Networking Flow": ["Networking"],
+      "Multi-Provider Flow": ["Compute", "Networking"]
+    };
+
+    const providerServices = {
+      AWS: {
+        Compute: [
+          { key: 1, text: "EC2", group: "AWS-Compute" },
+          { key: 2, text: "AutoScaling", group: "AWS-Compute" }
+        ],
+        Storage: [
+          { key: 3, text: "S3", group: "AWS-Storage" },
+          { key: 4, text: "EBS", group: "AWS-Storage" }
+        ],
+        Networking: [
+          { key: 5, text: "VPC", group: "AWS-Networking" },
+          { key: 6, text: "Route 53", group: "AWS-Networking" }
+        ],
+        Serverless: [
+          { key: 7, text: "Lambda", group: "AWS-Serverless" }
+        ],
+        Containers: [
+          { key: 8, text: "EKS", group: "AWS-Containers" }
+        ]
+      },
+      GCP: {
+        Compute: [
+          { key: 9, text: "Compute Engine", group: "GCP-Compute" },
+          { key: 10, text: "Instance Groups", group: "GCP-Compute" }
+        ],
+        Storage: [
+          { key: 11, text: "Cloud Storage", group: "GCP-Storage" }
+        ],
+        Networking: [
+          { key: 12, text: "VPC", group: "GCP-Networking" }
+        ],
+        Serverless: [
+          { key: 13, text: "Cloud Functions", group: "GCP-Serverless" }
+        ],
+        Containers: [
+          { key: 14, text: "GKE", group: "GCP-Containers" }
+        ]
+      },
+      Azure: {
+        Compute: [
+          { key: 15, text: "Azure VM", group: "Azure-Compute" }
+        ],
+        Storage: [
+          { key: 16, text: "Blob Storage", group: "Azure-Storage" }
+        ],
+        Networking: [
+          { key: 17, text: "VNet", group: "Azure-Networking" }
+        ],
+        Serverless: [
+          { key: 18, text: "Azure Functions", group: "Azure-Serverless" }
+        ],
+        Containers: [
+          { key: 19, text: "AKS", group: "Azure-Containers" }
+        ]
+      },
+      OpenSource: {
+        Compute: [
+          { key: 20, text: "OpenStack Nova", group: "OS-Compute" }
+        ],
+        Storage: [
+          { key: 21, text: "MinIO", group: "OS-Storage" }
+        ],
+        Networking: [
+          { key: 22, text: "Flannel", group: "OS-Networking" }
+        ],
+        Serverless: [
+          { key: 23, text: "OpenFaaS", group: "OS-Serverless" }
+        ],
+        Containers: [
+          { key: 24, text: "K3s", group: "OS-Containers" }
+        ]
+      }
+    };
+
+    function buildFlowList(provider) {
+      const flowList = document.getElementById("flowList");
+      flowList.innerHTML = "";
+      for (let flow in flows) {
+        const item = document.createElement("li");
+        item.textContent = flow;
+        item.dataset.flow = flow;
+        if (flow === selectedFlow) item.classList.add("active");
+        item.addEventListener("click", () => {
+          document.querySelectorAll("#flowList li").forEach(li => li.classList.remove("active"));
+          item.classList.add("active");
+          selectedFlow = flow;
+          loadDiagram();
+        });
+        flowList.appendChild(item);
+      }
+    }
+
+    function initDiagram() {
+      myDiagram = $(go.Diagram, "myDiagramDiv", {
+        layout: $(go.LayeredDigraphLayout),
+        "undoManager.isEnabled": true
+      });
+
+      myDiagram.groupTemplate =
+        $(go.Group, "Auto",
+          {
+            layout: $(go.GridLayout, { wrappingColumn: 1, spacing: new go.Size(5, 5) }),
+            background: "#e1ecf4",
+            margin: 10
+          },
+          $(go.Shape, "Rectangle", { fill: "#cde", stroke: "#555", strokeWidth: 2 }),
+          $(go.Panel, "Vertical",
+            $(go.TextBlock,
+              { font: "bold 12pt sans-serif", margin: 4 },
+              new go.Binding("text", "text")),
+            $(go.Placeholder, { padding: 10 })
+          )
+        );
+
+      myDiagram.nodeTemplate =
+        $(go.Node, "Auto",
+          $(go.Shape, "RoundedRectangle", { fill: "#fff", stroke: "#333" }),
+          $(go.TextBlock, { margin: 6 }, new go.Binding("text", "text"))
+        );
+    }
+
+    function loadDiagram() {
+      const nodeDataArray = [];
+      const linkDataArray = [];
+      const services = providerServices[selectedProvider];
+      const categories = flows[selectedFlow];
+
+      // Add groups and nodes
+      categories.forEach(cat => {
+        const groupKey = `${selectedProvider}-${cat}`;
+        nodeDataArray.push({ key: groupKey, isGroup: true, text: cat });
+
+        (services[cat] || []).forEach(service => {
+          nodeDataArray.push({ ...service });
+        });
+
+        // Add sample links within group
+        const items = services[cat];
+        if (items && items.length > 1) {
+          for (let i = 0; i < items.length - 1; i++) {
+            linkDataArray.push({ from: items[i].key, to: items[i + 1].key });
+          }
+        }
+      });
+
+      myDiagram.model = new go.GraphLinksModel(nodeDataArray, linkDataArray);
+    }
+
+    // Provider selection
+    document.querySelectorAll('input[name="provider"]').forEach(input => {
+      input.addEventListener("change", () => {
+        selectedProvider = input.value;
+        buildFlowList(selectedProvider);
+        loadDiagram();
+      });
+    });
+
+    // Filter flows
+    document.getElementById("searchBox").addEventListener("input", (e) => {
+      const text = e.target.value.toLowerCase();
+      document.querySelectorAll("#flowList li").forEach(li => {
+        li.style.display = li.textContent.toLowerCase().includes(text) ? "block" : "none";
+      });
+    });
+
+    initDiagram();
+    buildFlowList(selectedProvider);
+    loadDiagram();
+  </script>
+</body>
+</html>

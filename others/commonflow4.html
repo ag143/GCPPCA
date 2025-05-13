@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cloud Architecture Diagram</title>
+  <script src="https://unpkg.com/gojs/release/go.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f7fb;
+      margin: 0;
+      padding: 0;
+    }
+    #myDiagramDiv {
+      height: 600px;
+      border: 1px solid #ccc;
+      background-color: #ffffff;
+      margin: 20px;
+      border-radius: 8px;
+    }
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      margin: 10px 20px;
+    }
+    select, button {
+      padding: 8px 12px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    select {
+      background-color: #fff;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    #legend {
+      margin: 10px 20px;
+      font-size: 14px;
+    }
+    #legend span {
+      margin-right: 10px;
+      font-weight: bold;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="controls">
+    <div>
+      <label for="providerSelect">Select Provider:</label>
+      <select id="providerSelect">
+        <option value="AWS">AWS</option>
+        <option value="GCP">GCP</option>
+        <option value="Azure">Azure</option>
+        <option value="OpenSource">Open Source</option>
+      </select>
+    </div>
+    <div>
+      <label for="flowSelect">Select Flow:</label>
+      <select id="flowSelect">
+        <option value="Basic Flow">Basic Flow</option>
+        <option value="Serverless Flow">Serverless Flow</option>
+        <option value="Kubernetes Flow">Kubernetes Flow</option>
+        <option value="Storage Flow">Storage Flow</option>
+        <option value="Networking Flow">Networking Flow</option>
+        <option value="Multi-Provider Flow">Multi-Provider Flow</option>
+      </select>
+    </div>
+    <button onclick="loadSelectedData()">Load Flow</button>
+  </div>
+
+  <div id="myDiagramDiv"></div>
+
+  <div id="legend">
+    <span>Compute:</span><img src="https://img.icons8.com/color/48/000000/amazon-ec2.png" alt="compute icon" />
+    <span>Storage:</span><img src="https://img.icons8.com/color/48/000000/cloud.png" alt="storage icon" />
+    <span>Networking:</span><img src="https://img.icons8.com/color/48/000000/internet.png" alt="networking icon" />
+    <span>Serverless:</span><img src="https://img.icons8.com/color/48/000000/code.png" alt="serverless icon" />
+    <span>Database:</span><img src="https://img.icons8.com/color/48/000000/amazon-rds.png" alt="database icon" />
+  </div>
+
+  <script>
+    const $ = go.GraphObject.make;
+    let myDiagram;
+    let selectedFlow = "Basic Flow";
+    let selectedProvider = 'AWS';
+
+    // Shared nodes with logical groups (services grouped into categories)
+    const allNodes = {
+      "AWS": [
+        { key: 1, text: "EC2", group: "Compute", source: "https://img.icons8.com/color/48/000000/amazon-ec2.png", url: "https://docs.aws.amazon.com/ec2/", description: "Elastic Compute Cloud" },
+        { key: 2, text: "Lambda", group: "Serverless", source: "https://img.icons8.com/color/48/000000/amazon-web-services.png", url: "https://docs.aws.amazon.com/lambda/", description: "Serverless compute" },
+        { key: 13, text: "S3", group: "Storage", source: "https://img.icons8.com/color/48/000000/cloud.png", url: "https://docs.aws.amazon.com/s3/", description: "Simple Storage Service" },
+        { key: 17, text: "VPC", group: "Networking", source: "https://img.icons8.com/color/48/000000/internet.png", url: "https://docs.aws.amazon.com/vpc/", description: "Virtual Private Cloud" },
+        { key: 18, text: "RDS", group: "Database", source: "https://img.icons8.com/color/48/000000/amazon-rds.png", url: "https://docs.aws.amazon.com/rds/", description: "Relational Database Service" },
+        { key: 19, text: "ECS", group: "Compute", source: "https://img.icons8.com/color/48/000000/amazon-ecs.png", url: "https://docs.aws.amazon.com/ecs/", description: "Elastic Container Service" }
+      ],
+      "GCP": [
+        { key: 4, text: "Compute Engine", group: "Compute", source: "https://img.icons8.com/color/48/000000/google-cloud.png", url: "https://cloud.google.com/compute", description: "Google Compute Engine" },
+        { key: 5, text: "Cloud Functions", group: "Serverless", source: "https://img.icons8.com/color/48/000000/code.png", url: "https://cloud.google.com/functions", description: "GCP Serverless" },
+        { key: 14, text: "Cloud Storage", group: "Storage", source: "https://img.icons8.com/color/48/000000/cloud.png", url: "https://cloud.google.com/storage", description: "Object storage on GCP" },
+        { key: 15, text: "BigQuery", group: "Database", source: "https://img.icons8.com/color/48/000000/google-bigquery.png", url: "https://cloud.google.com/bigquery", description: "Big Data Analytics" },
+        { key: 17, text: "Cloud Run", group: "Compute", source: "https://img.icons8.com/color/48/000000/cloud-run.png", url: "https://cloud.google.com/run", description: "Fully managed compute platform" },
+        { key: 18, text: "VPC", group: "Networking", source: "https://img.icons8.com/color/48/000000/internet.png", url: "https://cloud.google.com/vpc", description: "Virtual Private Cloud" }
+      ],
+      "Azure": [
+        { key: 7, text: "Azure VM", group: "Compute", source: "https://img.icons8.com/color/48/000000/azure-virtual-machine.png", url: "https://learn.microsoft.com/en-us/azure/virtual-machines/", description: "Virtual Machines" },
+        { key: 8, text: "Azure Functions", group: "Serverless", source: "https://img.icons8.com/color/48/000000/code.png", url: "https://learn.microsoft.com/en-us/azure/azure-functions/", description: "Serverless functions" },
+        { key: 9, text: "AKS", group: "Compute", source: "https://img.icons8.com/color/48/000000/kubernetes.png", url: "https://learn.microsoft.com/en-us/azure/aks/", description: "Azure Kubernetes Service" },
+        { key: 14, text: "Azure Blob Storage", group: "Storage", source: "https://img.icons8.com/color/48/000000/azure-storage.png", url: "https://learn.microsoft.com/en-us/azure/storage/blobs/", description: "Object storage" },
+        { key: 15, text: "Azure SQL", group: "Database", source: "https://img.icons8.com/color/48/000000/azure-sql-database.png", url: "https://learn.microsoft.com/en-us/azure/sql-database/", description: "Relational database" },
+        { key: 20, text: "Azure VNet", group: "Networking", source: "https://img.icons8.com/color/48/000000/internet.png", url: "https://learn.microsoft.com/en-us/azure/virtual-network/", description: "Virtual Network" }
+      ],
+      "OpenSource": [
+        { key: 10, text: "OpenStack Nova", group: "Compute", source: "https://img.icons8.com/color/48/000000/linux.png", url: "https://docs.openstack.org/nova/", description: "Compute service for OpenStack" },
+        { key: 11, text: "K3s", group: "Compute", source: "https://img.icons8.com/color/48/000000/kubernetes.png", url: "https://k3s.io", description: "Lightweight Kubernetes" },
+        { key: 13, text: "MinIO", group: "Storage", source: "https://img.icons8.com/color/48/000000/cloud.png", url: "https://min.io", description: "S3-compatible object storage" },
+        { key: 14, text: "Ceph", group: "Storage", source: "https://img.icons8.com/color/48/000000/cloud.png", url: "https://ceph.io", description: "Distributed storage system" },
+        { key: 17, text: "Flannel", group: "Networking", source: "https://img.icons8.com/color/48/000000/internet.png", url: "https://github.com/flannel-io/flannel", description: "Virtual network fabric for Kubernetes" },
+        { key: 18, text: "Docker", group: "Compute", source: "https://img.icons8.com/color/48/000000/docker.png", url: "https://www.docker.com", description: "Containerization platform" }
+      ]
+    };
+
+    // Link sets for each provider and flow
+    const linkSets = {
+      "AWS": {
+        "Basic Flow": [{ from: 1, to: 17 }, { from: 13, to: 17 }],
+        "Serverless Flow": [{ from: 2, to: 13 }],
+        "Kubernetes Flow": [{ from: 1, to: 19 }],
+        "Storage Flow": [{ from: 13, to: 17 }],
+        "Networking Flow": [{ from: 17, to: 18 }],
+        "Multi-Provider Flow": [{ from: 1, to: 4 }]
+      },
+      "GCP": {
+        "Basic Flow": [{ from: 4, to: 17 }, { from: 14, to: 17 }],
+        "Serverless Flow": [{ from: 5, to: 13 }],
+        "Kubernetes Flow": [{ from: 4, to: 17 }],
+        "Storage Flow": [{ from: 14, to: 17 }],
+        "Networking Flow": [{ from: 17, to: 18 }],
+        "Multi-Provider Flow": [{ from: 4, to: 7 }]
+      },
+      "Azure": {
+        "Basic Flow": [{ from: 7, to: 20 }],
+        "Serverless Flow": [{ from: 8, to: 13 }],
+        "Kubernetes Flow": [{ from: 9, to: 14 }],
+        "Storage Flow": [{ from: 14, to: 15 }],
+        "Networking Flow": [{ from: 20, to: 19 }],
+        "Multi-Provider Flow": [{ from: 7, to: 4 }]
+      },
+      "OpenSource": {
+        "Basic Flow": [{ from: 10, to: 18 }],
+        "Serverless Flow": [{ from: 11, to: 13 }],
+        "Kubernetes Flow": [{ from: 17, to: 11 }],
+        "Storage Flow": [{ from: 13, to: 14 }],
+        "Networking Flow": [{ from: 18, to: 17 }],
+        "Multi-Provider Flow": [{ from: 10, to: 4 }]
+      }
+    };
+
+    // GoJS initialization logic
+    function initDiagram() {
+      myDiagram = $(go.Diagram, "myDiagramDiv", {
+        "undoManager.isEnabled": true,
+        initialContentAlignment: go.Spot.Center
+      });
+
+      // Define the node template with groupings
+      myDiagram.nodeTemplate =
+        $(go.Node, "Auto", { width: 100, height: 100, margin: 10 },
+          $(go.Shape, "RoundedRectangle", { fill: "#F3F3F3", stroke: "#333", strokeWidth: 2 }),
+          $(go.Picture, { margin: 10, width: 40, height: 40 }, new go.Binding("source")),
+          $(go.TextBlock, { margin: 5, font: "bold 12pt sans-serif" }, new go.Binding("text"))
+        );
+
+      // Load diagram's node data
+      myDiagram.model = new go.GraphLinksModel([], []);
+    }
+
+    // Load flow data for selected provider and flow
+    function loadFlowData(flow, provider) {
+      // Get nodes and links for the provider and flow
+      const providerNodes = allNodes[provider];
+      const providerLinks = linkSets[provider][flow];
+
+      // Create nodes
+      const nodeDataArray = providerNodes.map(node => ({
+        key: node.key,
+        text: node.text,
+        source: node.source,
+        group: node.group,
+        url: node.url,
+        description: node.description
+      }));
+
+      // Create links
+      const linkDataArray = providerLinks.map(link => ({
+        from: link.from,
+        to: link.to
+      }));
+
+      // Set the model
+      myDiagram.model = new go.GraphLinksModel(nodeDataArray, linkDataArray);
+    }
+
+    // Initialize diagram and load data
+    initDiagram();
+
+    // Load selected data when provider or flow changes
+    document.getElementById("providerSelect").addEventListener("change", function() {
+      selectedProvider = this.value;
+      loadSelectedData();
+    });
+
+    document.getElementById("flowSelect").addEventListener("change", function() {
+      selectedFlow = this.value;
+      loadSelectedData();
+    });
+
+    function loadSelectedData() {
+      loadFlowData(selectedFlow, selectedProvider);
+    }
+
+    // Initial load
+    loadSelectedData();
+  </script>
+</body>
+</html>

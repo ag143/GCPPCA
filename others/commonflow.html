@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Cloud Architecture Diagram</title>
+  <script src="https://unpkg.com/gojs/release/go.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      height: 100vh;
+    }
+
+    #sidebar {
+      width: 260px;
+      background: #f4f4f4;
+      padding: 15px;
+      border-right: 1px solid #ccc;
+      box-sizing: border-box;
+      overflow-y: auto;
+    }
+
+    #sidebar h3 {
+      margin-top: 0;
+    }
+
+    #sidebar label {
+      display: block;
+      margin: 6px 0;
+    }
+
+    #searchBox {
+      width: 100%;
+      margin-top: 5px;
+      padding: 6px;
+      box-sizing: border-box;
+    }
+
+    ul.flow-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    ul.flow-list li {
+      padding: 8px;
+      cursor: pointer;
+      background-color: #e9e9e9;
+      margin: 4px 0;
+      border-radius: 4px;
+      transition: background 0.2s ease;
+    }
+
+    ul.flow-list li:hover {
+      background-color: #d4d4d4;
+    }
+
+    ul.flow-list li.active {
+      background-color: #007bff;
+      color: white;
+    }
+
+    #myDiagramDiv {
+      flex: 1;
+      background-color: #f0f0f0;
+    }
+  </style>
+</head>
+<body>
+  <div id="sidebar">
+    <h3>Cloud Provider</h3>
+    <label><input type="radio" name="provider" value="AWS" checked> AWS</label>
+    <label><input type="radio" name="provider" value="GCP"> GCP</label>
+    <label><input type="radio" name="provider" value="Azure"> Azure</label>
+    <label><input type="radio" name="provider" value="OpenSource"> Open Source</label>
+
+    <h3>Architecture Flows</h3>
+    <ul class="flow-list" id="flowList">
+      <li data-flow="Basic Flow" class="active">Basic Flow</li>
+      <li data-flow="Serverless Flow">Serverless Flow</li>
+      <li data-flow="Kubernetes Flow">Kubernetes Flow</li>
+      <li data-flow="Infrastructure Flow">Infrastructure Flow</li>
+      <li data-flow="Storage Flow">Storage Flow</li>
+      <li data-flow="Networking Flow">Networking Flow</li>
+      <li data-flow="Multi-Provider Flow">Multi-Provider Flow</li>
+    </ul>
+
+    <h3>Filter Services</h3>
+    <input type="text" id="searchBox" placeholder="Type to filter...">
+  </div>
+
+  <div id="myDiagramDiv"></div>
+
+  <script>
+    const $ = go.GraphObject.make;
+    let myDiagram;
+    let selectedFlow = "Basic Flow";
+
+    // Shared nodes (common flow nodes)
+    const allNodes = [
+      { key: "AWS", isGroup: true, text: "AWS" },
+      { key: "GCP", isGroup: true, text: "GCP" },
+      { key: "Azure", isGroup: true, text: "Azure" },
+      { key: "OpenSource", isGroup: true, text: "Open Source" },
+
+      // AWS Services (substituted by flow later)
+      { key: 1, text: "EC2", group: "AWS", source: "https://img.icons8.com/color/48/000000/amazon-ec2.png", url: "https://docs.aws.amazon.com/ec2/", description: "Elastic Compute Cloud" },
+      { key: 2, text: "Lambda", group: "AWS", source: "https://img.icons8.com/color/48/000000/amazon-web-services.png", url: "https://docs.aws.amazon.com/lambda/", description: "Serverless compute" },
+      { key: 3, text: "Fargate", group: "AWS", source: "https://img.icons8.com/color/48/000000/docker.png", url: "https://docs.aws.amazon.com/fargate/", description: "Containers on ECS" },
+      { key: 13, text: "S3", group: "AWS", source: "https://img.icons8.com/color/48/000000/cloud.png", url: "https://docs.aws.amazon.com/s3/", description: "Simple Storage Service" },
+      { key: 17, text: "VPC", group: "AWS", source: "https://img.icons8.com/color/48/000000/internet.png", url: "https://docs.aws.amazon.com/vpc/", description: "Virtual Private Cloud" },
+
+      // GCP Services (substituted by flow later)
+      { key: 4, text: "Compute Engine", group: "GCP", source: "https://img.icons8.com/color/48/000000/google-cloud.png", url: "https://cloud.google.com/compute", description: "Google Compute Engine" },
+      { key: 5, text: "Cloud Functions", group: "GCP", source: "https://img.icons8.com/color/48/000000/code.png", url: "https://cloud.google.com/functions", description: "GCP Serverless" },
+      { key: 6, text: "GKE", group: "GCP", source: "https://img.icons8.com/color/48/000000/kubernetes.png", url: "https://cloud.google.com/kubernetes-engine", description: "Google Kubernetes Engine" },
+      { key: 14, text: "Cloud Storage", group: "GCP", source: "https://img.icons8.com/color/48/000000/cloud.png", url: "https://cloud.google.com/storage", description: "Object storage on GCP" },
+      { key: 18, text: "VPC", group: "GCP", source: "https://img.icons8.com/color/48/000000/internet.png", url: "https://cloud.google.com/vpc", description: "Virtual Private Cloud" },
+
+      // Azure Services (substituted by flow later)
+      { key: 7, text: "Azure VM", group: "Azure", source: "https://img.icons8.com/color/48/000000/azure-virtual-machine.png", url: "https://learn.microsoft.com/en-us/azure/virtual-machines/", description: "Virtual Machines" },
+      { key: 8, text: "Azure Functions", group: "Azure", source: "https://img.icons8.com/color/48/000000/code.png", url: "https://learn.microsoft.com/en-us/azure/azure-functions/", description: "Serverless functions" },
+      { key: 9, text: "AKS", group: "Azure", source: "https://img.icons8.com/color/48/000000/kubernetes.png", url: "https://learn.microsoft.com/en-us/azure/aks/", description: "Azure Kubernetes Service" },
+      { key: 15, text: "Azure Blob", group: "Azure", source: "https://img.icons8.com/color/48/000000/cloud.png", url: "https://learn.microsoft.com/en-us/azure/storage/blobs/", description: "Blob Storage" },
+      { key: 19, text: "VNet", group: "Azure", source: "https://img.icons8.com/color/48/000000/internet.png", url: "https://learn.microsoft.com/en-us/azure/virtual-network/", description: "Virtual Network" },
+
+      // Open Source Services (substituted by flow later)
+      { key: 10, text: "OpenStack Nova", group: "OpenSource", source: "https://img.icons8.com/color/48/000000/linux.png", url: "https://docs.openstack.org/nova/", description: "Compute service for OpenStack" },
+      { key: 11, text: "K3s", group: "OpenSource", source: "https://img.icons8.com/color/48/000000/kubernetes.png", url: "https://k3s.io", description: "Lightweight Kubernetes" },
+      { key: 12, text: "Docker Swarm", group: "OpenSource", source: "https://img.icons8.com/color/48/000000/docker.png", url: "https://docs.docker.com/engine/swarm/", description: "Container orchestration" },
+      { key: 16, text: "MinIO", group: "OpenSource", source: "https://img.icons8.com/color/48/000000/cloud.png", url: "https://min.io", description: "S3-compatible object storage" },
+      { key: 20, text: "Flannel", group: "OpenSource", source: "https://img.icons8.com/color/48/000000/internet.png", url: "https://github.com/flannel-io/flannel", description: "Virtual network fabric for Kubernetes" }
+    ];
+
+    // Link sets for different flows
+    const linkSets = {
+      "Basic Flow": [ { from: 1, to: 2 }, { from: 1, to: 17 }, { from: 13, to: 17 } ],
+"Serverless Flow": [ { from: 2, to: 3 }, { from: 3, to: 13 } ],
+"Kubernetes Flow": [ { from: 6, to: 5 }, { from: 5, to: 7 } ],
+"Infrastructure Flow": [ { from: 1, to: 19 }, { from: 7, to: 9 } ],
+"Storage Flow": [ { from: 13, to: 15 }, { from: 15, to: 16 } ],
+"Networking Flow": [ { from: 19, to: 20 }, { from: 20, to: 17 } ],
+"Multi-Provider Flow": [ { from: 1, to: 4 }, { from: 4, to: 9 } ]
+};
+
+// GoJS initialization logic
+function initDiagram() {
+  myDiagram = $(go.Diagram, "myDiagramDiv", {
+    "undoManager.isEnabled": true
+  });
+
+  // Define the node template
+  myDiagram.nodeTemplate =
+    $(go.Node, "Auto", {
+        width: 100, height: 100,
+        margin: 10
+      },
+      $(go.Shape, "RoundedRectangle", { fill: "#F3F3F3", stroke: "#333", strokeWidth: 2 }),
+      $(go.TextBlock, { margin: 5, font: "bold 12pt sans-serif" }, new go.Binding("text"))
+    );
+
+  // Load diagram's node data
+  myDiagram.model = new go.GraphLinksModel(allNodes, []);
+}
+
+// Handle provider selection change
+document.querySelectorAll('input[name="provider"]').forEach(input => {
+  input.addEventListener("change", () => {
+    const selectedProvider = document.querySelector('input[name="provider"]:checked').value;
+    loadFlowData(selectedFlow, selectedProvider);
+  });
+});
+
+// Handle architecture flow selection
+document.querySelectorAll('.flow-list li').forEach(li => {
+  li.addEventListener("click", () => {
+    document.querySelectorAll('.flow-list li').forEach(l => l.classList.remove('active'));
+    li.classList.add('active');
+    selectedFlow = li.getAttribute('data-flow');
+    loadFlowData(selectedFlow, document.querySelector('input[name="provider"]:checked').value);
+  });
+});
+
+// Filter architecture flows by search box
+document.getElementById('searchBox').addEventListener('input', () => {
+  const searchText = document.getElementById('searchBox').value.toLowerCase();
+  document.querySelectorAll('.flow-list li').forEach(li => {
+    if (li.textContent.toLowerCase().includes(searchText)) {
+      li.style.display = 'block';
+    } else {
+      li.style.display = 'none';
+    }
+  });
+});
+
+// Load data for selected flow and provider
+function loadFlowData(flow, provider) {
+  const flowLinks = linkSets[flow];
+
+  // Clear the current diagram
+  myDiagram.model = new go.GraphLinksModel([], flowLinks);
+
+  // Load updated node data (based on provider and flow)
+  myDiagram.model.addNodeData(allNodes.filter(node => node.group === provider));
+}
+
+// Initialize the diagram
+initDiagram();
+loadFlowData(selectedFlow, 'AWS');
+</script> </body> </html> 

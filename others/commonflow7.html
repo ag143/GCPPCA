@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Enhanced Cloud Architecture Diagram</title>
+  <script src="https://unpkg.com/gojs/release/go.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      height: 100vh;
+    }
+    #sidebar {
+      width: 280px;
+      background: #f8f8f8;
+      padding: 15px;
+      border-right: 1px solid #ccc;
+      box-sizing: border-box;
+      overflow-y: auto;
+    }
+    #sidebar h3 {
+      margin-top: 0;
+    }
+    #sidebar label {
+      display: block;
+      margin: 6px 0;
+    }
+    ul.flow-list {
+      list-style: none;
+      padding: 0;
+    }
+    ul.flow-list li {
+      padding: 8px;
+      cursor: pointer;
+      margin: 5px 0;
+      background: #e0e0e0;
+      border-radius: 4px;
+    }
+    ul.flow-list li.active {
+      background: #007acc;
+      color: white;
+    }
+    #myDiagramDiv {
+      flex: 1;
+      background-color: #f0f0f0;
+    }
+  </style>
+</head>
+<body>
+
+<div id="sidebar">
+  <h3>Cloud Provider</h3>
+  <label><input type="radio" name="provider" value="AWS" checked> AWS</label>
+  <label><input type="radio" name="provider" value="GCP"> GCP</label>
+  <label><input type="radio" name="provider" value="Azure"> Azure</label>
+
+  <h3>Architecture Flows</h3>
+  <ul class="flow-list" id="flowList">
+    <li data-flow="Compute" class="active">Compute</li>
+    <li data-flow="Storage">Storage</li>
+    <li data-flow="Networking">Networking</li>
+    <li data-flow="Serverless">Serverless</li>
+  </ul>
+</div>
+
+<div id="myDiagramDiv"></div>
+
+<script>
+const $ = go.GraphObject.make;
+let myDiagram = $(go.Diagram, "myDiagramDiv", {
+  "undoManager.isEnabled": true,
+  layout: $(go.LayeredDigraphLayout)
+});
+
+// Node template with icons and tooltips
+myDiagram.nodeTemplate =
+  $(go.Node, "Vertical",
+    $(go.Panel, "Auto",
+      $(go.Shape, "RoundedRectangle", { fill: "#ffffff", stroke: "#2196f3", strokeWidth: 2 }),
+      $(go.Panel, "Vertical",
+        { margin: 4 },
+        $(go.Picture,
+          { width: 40, height: 40 },
+          new go.Binding("source")),
+        $(go.TextBlock,
+          { margin: 4, font: "bold 10pt sans-serif", textAlign: "center" },
+          new go.Binding("text"))
+      )
+    ),
+    {
+      toolTip: $("ToolTip",
+        $(go.TextBlock,
+          { margin: 4 },
+          new go.Binding("description"))
+      )
+    }
+  );
+
+// Group template for logical areas
+myDiagram.groupTemplate =
+  $(go.Group, "Vertical",
+    {
+      layout: $(go.GridLayout, { wrappingWidth: Infinity, spacing: new go.Size(10, 10) }),
+      background: "#e0f7fa",
+      isSubGraphExpanded: true,
+      margin: 8
+    },
+    $(go.TextBlock,
+      { font: "bold 12pt sans-serif", margin: new go.Margin(5, 0, 5, 0) },
+      new go.Binding("text")),
+    $(go.Placeholder)
+  );
+
+// Resource definitions per provider
+const resources = {
+  AWS: [
+    { key: 1, text: "EC2", group: "Compute", source: "https://img.icons8.com/color/48/000000/amazon-ec2.png", description: "Elastic Compute Cloud" },
+    { key: 2, text: "S3", group: "Storage", source: "https://img.icons8.com/color/48/000000/cloud.png", description: "Simple Storage Service" },
+    { key: 3, text: "Lambda", group: "Serverless", source: "https://img.icons8.com/color/48/000000/amazon-web-services.png", description: "AWS Lambda" },
+    { key: 4, text: "VPC", group: "Networking", source: "https://img.icons8.com/color/48/000000/internet.png", description: "Virtual Private Cloud" }
+  ],
+  GCP: [
+    { key: 1, text: "Compute Engine", group: "Compute", source: "https://img.icons8.com/color/48/000000/google-cloud.png", description: "Google Compute Engine" },
+    { key: 2, text: "Cloud Storage", group: "Storage", source: "https://img.icons8.com/color/48/000000/cloud.png", description: "Cloud Storage" },
+    { key: 3, text: "Cloud Functions", group: "Serverless", source: "https://img.icons8.com/color/48/000000/code.png", description: "Serverless compute" },
+    { key: 4, text: "VPC", group: "Networking", source: "https://img.icons8.com/color/48/000000/internet.png", description: "Virtual Private Cloud" }
+  ],
+  Azure: [
+    { key: 1, text: "Azure VM", group: "Compute", source: "https://img.icons8.com/color/48/000000/azure-virtual-machine.png", description: "Virtual Machines" },
+    { key: 2, text: "Blob Storage", group: "Storage", source: "https://img.icons8.com/color/48/000000/cloud.png", description: "Azure Blob Storage" },
+    { key: 3, text: "Functions", group: "Serverless", source: "https://img.icons8.com/color/48/000000/code.png", description: "Azure Functions" },
+    { key: 4, text: "VNet", group: "Networking", source: "https://img.icons8.com/color/48/000000/internet.png", description: "Virtual Network" }
+  ]
+};
+
+// Define groups
+const logicalGroups = ["Compute", "Storage", "Networking", "Serverless"];
+
+function renderFlow(provider, flow) {
+  const nodes = [];
+  const links = [];
+  const groupKeys = new Set();
+
+  // Add group nodes
+  logicalGroups.forEach((group, i) => {
+    if (flow === group) {
+      nodes.push({ key: group, isGroup: true, text: group });
+    }
+  });
+
+  // Add relevant nodes
+  const resList = resources[provider].filter(n => n.group === flow);
+  resList.forEach(node => {
+    nodes.push({ ...node });
+    groupKeys.add(node.group);
+  });
+
+  // Sample links (auto-link all to the group head for now)
+  resList.forEach((node, i) => {
+    if (i > 0) links.push({ from: resList[i - 1].key, to: node.key });
+  });
+
+  myDiagram.model = new go.GraphLinksModel(nodes, links);
+}
+
+// Provider selection
+document.querySelectorAll('input[name="provider"]').forEach(input => {
+  input.addEventListener("change", () => {
+    const provider = document.querySelector('input[name="provider"]:checked').value;
+    const flow = document.querySelector(".flow-list li.active").dataset.flow;
+    renderFlow(provider, flow);
+  });
+});
+
+// Flow selection
+document.querySelectorAll(".flow-list li").forEach(li => {
+  li.addEventListener("click", () => {
+    document.querySelectorAll(".flow-list li").forEach(l => l.classList.remove("active"));
+    li.classList.add("active");
+    const provider = document.querySelector('input[name="provider"]:checked').value;
+    renderFlow(provider, li.dataset.flow);
+  });
+});
+
+// Initial load
+renderFlow("AWS", "Compute");
+</script>
+
+</body>
+</html>

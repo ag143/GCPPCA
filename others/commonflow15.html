@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cloud Architecture Diagram</title>
+  <script src="https://unpkg.com/gojs/release/go.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      height: 100vh;
+      background-color: #f8f9fa;
+    }
+
+    #sidebar {
+      width: 250px;
+      background: #ffffff;
+      border-right: 1px solid #ccc;
+      padding: 20px;
+      box-sizing: border-box;
+      overflow-y: auto;
+    }
+
+    #myDiagramDiv {
+      flex: 1;
+      background-color: #eaeaea;
+    }
+
+    h3 {
+      margin-bottom: 15px;
+      font-size: 1.25em;
+      color: #333;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 10px;
+      font-weight: 500;
+    }
+
+    input[type="radio"] {
+      margin-right: 5px;
+    }
+
+    ul.flow-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    ul.flow-list li {
+      padding: 10px;
+      background: #f0f4f8;
+      margin: 4px 0;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    ul.flow-list li:hover {
+      background: #007bff;
+      color: white;
+    }
+
+    ul.flow-list li.active {
+      background: #007bff;
+      color: white;
+    }
+
+    .service-icon {
+      width: 20px;
+      height: 20px;
+      margin-right: 8px;
+    }
+
+    .service-item {
+      display: flex;
+      align-items: center;
+    }
+
+    .service-item span {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .group-label {
+      font-size: 16px;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .group-box {
+      border-radius: 8px;
+      background-color: #f4f4f4;
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 20px;
+    }
+
+    .fadeout {
+      opacity: 0.2;
+      transition: opacity 0.3s ease;
+    }
+
+    .node-appear {
+      transition: opacity 0.5s ease;
+    }
+
+  </style>
+</head>
+<body>
+
+  <div id="sidebar">
+    <h3>Select Cloud Provider</h3>
+    <label><input type="radio" name="provider" value="AWS" checked> AWS</label>
+    <label><input type="radio" name="provider" value="GCP"> GCP</label>
+    <label><input type="radio" name="provider" value="Azure"> Azure</label>
+
+    <h3>Select Flow</h3>
+    <ul class="flow-list" id="flowList">
+      <li data-flow="Basic Flow" class="active">Basic Flow</li>
+      <li data-flow="Networking Flow">Networking Flow</li>
+      <li data-flow="Storage Flow">Storage Flow</li>
+      <li data-flow="Kubernetes Flow">Kubernetes Flow</li>
+    </ul>
+
+    <div id="serviceGroups"></div>
+  </div>
+
+  <div id="myDiagramDiv"></div>
+
+  <script>
+    const $ = go.GraphObject.make;
+    let myDiagram;
+    let selectedFlow = "Basic Flow";
+
+    const nodes = [
+      // AWS Services
+      { key: "EC2", text: "EC2", group: "AWS-Compute", icon: "https://upload.wikimedia.org/wikipedia/commons/e/e4/Amazon_Web_Services_Logo_2018.svg" },
+      { key: "S3", text: "S3", group: "AWS-Storage", icon: "https://upload.wikimedia.org/wikipedia/commons/3/3a/Amazon_S3_logo.svg" },
+      { key: "VPC", text: "VPC", group: "AWS-Networking", icon: "https://upload.wikimedia.org/wikipedia/commons/c/c9/Amazon_VPC_logo.svg" },
+      { key: "Lambda", text: "Lambda", group: "AWS-Compute", icon: "https://upload.wikimedia.org/wikipedia/commons/a/a3/AWS_Lambda_logo.svg" },
+
+      // GCP Services
+      { key: "Compute Engine", text: "Compute Engine", group: "GCP-Compute", icon: "https://upload.wikimedia.org/wikipedia/commons/5/5f/Google_Cloud_Compute_Engine_logo.svg" },
+      { key: "Cloud Storage", text: "Cloud Storage", group: "GCP-Storage", icon: "https://upload.wikimedia.org/wikipedia/commons/7/72/Google_Cloud_Storage_logo.svg" },
+      { key: "Cloud VPC", text: "Cloud VPC", group: "GCP-Networking", icon: "https://upload.wikimedia.org/wikipedia/commons/a/a3/Google_Cloud_VPC_logo.svg" },
+
+      // Azure Services
+      { key: "Azure VM", text: "Azure VM", group: "Azure-Compute", icon: "https://upload.wikimedia.org/wikipedia/commons/c/cf/Azure_Compute_Logo.svg" },
+      { key: "Blob Storage", text: "Blob Storage", group: "Azure-Storage", icon: "https://upload.wikimedia.org/wikipedia/commons/5/53/Azure_Storage_Logo.svg" },
+      { key: "VNet", text: "VNet", group: "Azure-Networking", icon: "https://upload.wikimedia.org/wikipedia/commons/5/57/Azure_Logo.svg" },
+    ];
+
+    const groups = [
+      { key: "AWS-Compute", isGroup: true, text: "AWS Compute" },
+      { key: "AWS-Storage", isGroup: true, text: "AWS Storage" },
+      { key: "AWS-Networking", isGroup: true, text: "AWS Networking" },
+
+      { key: "GCP-Compute", isGroup: true, text: "GCP Compute" },
+      { key: "GCP-Storage", isGroup: true, text: "GCP Storage" },
+      { key: "GCP-Networking", isGroup: true, text: "GCP Networking" },
+
+      { key: "Azure-Compute", isGroup: true, text: "Azure Compute" },
+      { key: "Azure-Storage", isGroup: true, text: "Azure Storage" },
+      { key: "Azure-Networking", isGroup: true, text: "Azure Networking" }
+    ];
+
+    const linkSets = {
+      "Basic Flow": [
+        { from: "EC2", to: "S3" },
+        { from: "Compute Engine", to: "Cloud Storage" },
+        { from: "Azure VM", to: "Blob Storage" }
+      ],
+      "Networking Flow": [
+        { from: "EC2", to: "VPC" },
+        { from: "Compute Engine", to: "Cloud VPC" },
+        { from: "Azure VM", to: "VNet" }
+      ],
+      "Storage Flow": [
+        { from: "S3", to: "VPC" },
+        { from: "Cloud Storage", to: "Cloud VPC" },
+        { from: "Blob Storage", to: "VNet" }
+      ],
+      "Kubernetes Flow": [
+        { from: "Lambda", to: "EC2" },
+        { from: "Azure VM", to: "VNet" },
+        { from: "Compute Engine", to: "Cloud VPC" }
+      ]
+    };
+
+    function initDiagram() {
+      myDiagram = $(go.Diagram, "myDiagramDiv", {
+        "undoManager.isEnabled": true,
+        layout: $(go.LayeredDigraphLayout)
+      });
+
+      // Group template
+      myDiagram.groupTemplate =
+        $(go.Group, "Auto",
+          { layout: $(go.GridLayout) },
+          $(go.Shape, "RoundedRectangle", { fill: "#ddd", stroke: "#999" }),
+          $(go.Panel, "Vertical",
+            $(go.TextBlock, { font: "bold 12pt sans-serif", margin: 4 },
+              new go.Binding("text", "text")),
+            $(go.Placeholder, { padding: 10 })
+          )
+        );
+
+      // Node template with icon
+      myDiagram.nodeTemplate =
+        $(go.Node, "Auto",
+          $(go.Shape, "Rectangle", { fill: "#ffffff", stroke: "#4a90e2", strokeWidth: 2 }),
+          $(go.Panel, "Horizontal",
+            $(go.Picture, { width: 20, height: 20, margin: 8, source: "" },
+              new go.Binding("source", "icon")),
+            $(go.TextBlock, { margin: 8, font: "10pt sans-serif" },
+              new go.Binding("text"))
+          )
+        );
+
+      // Link template
+      myDiagram.linkTemplate =
+        $(go.Link,
+          { routing: go.Link.AvoidsNodes, curve: go.Link.JumpOver },
+          $(go.Shape),
+          $(go.Shape, { toArrow: "Standard" })
+        );
+
+      updateDiagram();
+    }
+
+    function updateDiagram() {
+      const provider = document.querySelector('input[name="provider"]:checked').value;
+      const flow = selectedFlow;
+
+      const nodeData = nodes.filter(n => n.group.startsWith(provider));
+      const groupData = groups.filter(g => g.key.startsWith(provider));
+      const linkData = linkSets[flow].filter(link =>
+        nodeData.find(n => n.key === link.from) && nodeData.find(n => n.key === link.to)
+      );
+
+      myDiagram.model = new go.GraphLinksModel([...groupData, ...nodeData], linkData);
+
+      fadeOutUnusedGroupsAndNodes(linkData);
+    }
+
+    function fadeOutUnusedGroupsAndNodes(linkData) {
+      // Fade out all nodes and groups
+      myDiagram.nodes.each(node => {
+        node.opacity = 0.2;
+        node.isVisible = false;  // Make it invisible by default
+      });
+
+      myDiagram.links.each(link => {
+        link.opacity = 0.2;
+      });
+
+      // Highlight nodes and groups with links
+      linkData.forEach(link => {
+        const fromNode = myDiagram.findNodeForKey(link.from);
+        const toNode = myDiagram.findNodeForKey(link.to);
+
+        if (fromNode) {
+          fromNode.opacity = 1;
+          fromNode.isVisible = true;
+        }
+
+        if (toNode) {
+          toNode.opacity = 1;
+          toNode.isVisible = true;
+        }
+
+        const fromGroup = fromNode ? fromNode.containingGroup : null;
+        const toGroup = toNode ? toNode.containingGroup : null;
+
+        if (fromGroup) {
+          fromGroup.opacity = 1;
+          fromGroup.isVisible = true;
+        }
+
+        if (toGroup) {
+          toGroup.opacity = 1;
+          toGroup.isVisible = true;
+        }
+      });
+    }
+
+    // Event listener for flow change
+document.querySelectorAll('.flow-list li').forEach(li => {
+li.addEventListener("click", () => {
+document.querySelector('.flow-list li.active')?.classList.remove('active');
+li.classList.add('active');
+selectedFlow = li.getAttribute("data-flow");
+updateDiagram();
+});
+});
+
+// Event listener for provider change
+document.querySelectorAll('input[name="provider"]').forEach(radio => {
+  radio.addEventListener("change", updateDiagram);
+});
+
+initDiagram();
+
+</script> </body> </html> 
+

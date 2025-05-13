@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Cloud Architecture Diagram</title>
+  <script src="https://unpkg.com/gojs/release/go.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      height: 100vh;
+    }
+    #sidebar {
+      width: 260px;
+      background: #f8f9fa;
+      padding: 15px;
+      box-sizing: border-box;
+      border-right: 1px solid #ccc;
+      overflow-y: auto;
+    }
+    #myDiagramDiv {
+      flex: 1;
+      background-color: #e5e5e5;
+    }
+    .flow-list li {
+      padding: 6px;
+      margin: 4px 0;
+      background-color: #ddd;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .flow-list li.active {
+      background-color: #007bff;
+      color: white;
+    }
+    h3 {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div id="sidebar">
+    <h3>Cloud Provider</h3>
+    <label><input type="radio" name="provider" value="AWS" checked> AWS</label><br>
+    <label><input type="radio" name="provider" value="GCP"> GCP</label><br>
+    <label><input type="radio" name="provider" value="Azure"> Azure</label><br>
+    <label><input type="radio" name="provider" value="OpenSource"> Open Source</label>
+
+    <h3>Architecture Flows</h3>
+    <ul class="flow-list" id="flowList"></ul>
+  </div>
+
+  <div id="myDiagramDiv"></div>
+
+  <script>
+    const $ = go.GraphObject.make;
+    let myDiagram;
+
+    const architectureFlows = {
+      "Compute Flow": {
+        nodes: {
+          AWS: [
+            { key: "Compute", isGroup: true },
+            { key: "EC2", group: "Compute", text: "EC2", icon: "https://img.icons8.com/color/48/000000/amazon-ec2.png", url: "https://docs.aws.amazon.com/ec2/" }
+          ],
+          GCP: [
+            { key: "Compute", isGroup: true },
+            { key: "GCE", group: "Compute", text: "Compute Engine", icon: "https://img.icons8.com/color/48/000000/google-cloud.png", url: "https://cloud.google.com/compute" }
+          ]
+        },
+        links: {
+          AWS: [ { from: "EC2", to: "EC2" } ],
+          GCP: [ { from: "GCE", to: "GCE" } ]
+        }
+      },
+      "Storage Flow": {
+        nodes: {
+          AWS: [
+            { key: "Storage", isGroup: true },
+            { key: "S3", group: "Storage", text: "S3", icon: "https://img.icons8.com/color/48/000000/cloud.png", url: "https://docs.aws.amazon.com/s3/" }
+          ],
+          GCP: [
+            { key: "Storage", isGroup: true },
+            { key: "GCS", group: "Storage", text: "Cloud Storage", icon: "https://img.icons8.com/color/48/000000/cloud.png", url: "https://cloud.google.com/storage" }
+          ]
+        },
+        links: {
+          AWS: [ { from: "S3", to: "S3" } ],
+          GCP: [ { from: "GCS", to: "GCS" } ]
+        }
+      },
+      "Networking Flow": {
+        nodes: {
+          AWS: [
+            { key: "Network", isGroup: true },
+            { key: "VPC", group: "Network", text: "VPC", icon: "https://img.icons8.com/color/48/000000/internet.png", url: "https://docs.aws.amazon.com/vpc/" }
+          ],
+          GCP: [
+            { key: "Network", isGroup: true },
+            { key: "GCP-VPC", group: "Network", text: "VPC", icon: "https://img.icons8.com/color/48/000000/internet.png", url: "https://cloud.google.com/vpc" }
+          ]
+        },
+        links: {
+          AWS: [ { from: "VPC", to: "GCP-VPC" } ],
+          GCP: [ { from: "GCP-VPC", to: "GCP-VPC" } ]
+        }
+      }
+    };
+
+    const providers = ["AWS", "GCP", "Azure", "OpenSource"];
+
+    function initDiagram() {
+      myDiagram = $(go.Diagram, "myDiagramDiv", {
+        "undoManager.isEnabled": true,
+        layout: $(go.GridLayout)
+      });
+
+      myDiagram.nodeTemplate =
+        $(go.Node, "Vertical",
+          { background: "#fff", margin: 8 },
+          $(go.Picture, { width: 40, height: 40, margin: 4 },
+            new go.Binding("source", "icon")
+          ),
+          $(go.TextBlock, { margin: 4, font: "bold 12px sans-serif" },
+            new go.Binding("text", "text")
+          ),
+          {
+            toolTip:
+              $("ToolTip",
+                $(go.TextBlock, { margin: 4 },
+                  new go.Binding("text", "url")
+                )
+              ),
+            click: (e, obj) => window.open(obj.part.data.url, "_blank")
+          }
+        );
+
+      myDiagram.groupTemplate =
+        $(go.Group, "Auto",
+          {
+            layout: $(go.GridLayout, { spacing: go.Size.parse("10 10") }),
+            background: "#f0f8ff",
+            padding: 10
+          },
+          $(go.Shape, "RoundedRectangle", { fill: "#cce5ff", stroke: "#339" }),
+          $(go.Panel, "Vertical",
+            $(go.TextBlock,
+              { margin: 5, font: "bold 13px sans-serif", alignment: go.Spot.Center },
+              new go.Binding("key")
+            ),
+            $(go.Placeholder)
+          )
+        );
+    }
+
+    function populateFlowList() {
+      const flowList = document.getElementById("flowList");
+      flowList.innerHTML = "";
+      Object.keys(architectureFlows).forEach(flow => {
+        const li = document.createElement("li");
+        li.textContent = flow;
+        li.onclick = () => {
+          document.querySelectorAll('.flow-list li').forEach(l => l.classList.remove("active"));
+          li.classList.add("active");
+          const provider = document.querySelector('input[name="provider"]:checked').value;
+          loadDiagram(flow, provider);
+        };
+        flowList.appendChild(li);
+      });
+      flowList.firstChild.classList.add("active");
+    }
+
+    function loadDiagram(flowName, provider) {
+      const flow = architectureFlows[flowName];
+      const nodes = (flow.nodes[provider] || []).map(n => Object.assign({}, n));
+      const groups = nodes.filter(n => n.isGroup);
+      const links = flow.links[provider] || [];
+
+      myDiagram.model = new go.GraphLinksModel(nodes, links);
+    }
+
+    document.querySelectorAll('input[name="provider"]').forEach(input => {
+      input.addEventListener("change", () => {
+        const provider = document.querySelector('input[name="provider"]:checked').value;
+        const activeFlow = document.querySelector(".flow-list li.active");
+        if (activeFlow) loadDiagram(activeFlow.textContent, provider);
+      });
+    });
+
+    initDiagram();
+    populateFlowList();
+    loadDiagram("Compute Flow", "AWS");
+  </script>
+</body>
+</html>
