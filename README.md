@@ -1,5 +1,6 @@
 # GCPPCA.html
-
+- https://www.splunk.com/en_us/blog/learn/site-reliability-engineer-interview.html
+- https://github.com/rr948/sre-interview-prep-guide
 - https://www.reddit.com/r/googlecloud/comments/1g2stqf/creating_gcp_architecture_diagrams/?rdt=45254
 - https://docs.google.com/presentation/d/1fD1AwQo4E9Un6012zyPEb7NvUAGlzF6L-vo5DbUe4NQ/edit?pli=1&slide=id.g19a830e0af_5_0#slide=id.g19a830e0af_5_0
 - https://d2lang.com/
