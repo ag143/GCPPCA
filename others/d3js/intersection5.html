@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<meta charset="utf-8" />
+<title>GCP Architecture: Automatic Layout with Repeated Subnet Names</title>
+<style>
+  svg {
+    border: 1px solid #ccc;
+  }
+  .group-rect {
+    fill-opacity: 0.05;
+    stroke-width: 2px;
+    rx: 8px;
+    ry: 8px;
+  }
+  .region {
+    fill: #cce5ff;
+    stroke: #3399ff;
+  }
+  .zone {
+    fill: #d6f5d6;
+    stroke: #33cc33;
+  }
+  .subnet {
+    fill: #fff3cd;
+    stroke: #ffcc00;
+  }
+  .group-label {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    pointer-events: none;
+  }
+  circle.node {
+    fill: #ff9900;
+    stroke: #663300;
+    stroke-width: 1.5px;
+  }
+  text.node-label {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 10px;
+    pointer-events: none;
+  }
+  line.link {
+    stroke: #666;
+    stroke-width: 1.5px;
+    marker-end: url(#arrowhead);
+    stroke-dasharray: 4,4;
+  }
+  .tooltip {
+    position: absolute;
+    background: #f9f9f9;
+    border: 1px solid #ccc;
+    padding: 6px 8px;
+    font-family: sans-serif;
+    font-size: 12px;
+    pointer-events: none;
+    border-radius: 4px;
+    box-shadow: 2px 2px 6px rgba(0,0,0,0.2);
+  }
+</style>
+<body>
+  <svg width="1000" height="700"></svg>
+  <div class="tooltip" style="opacity:0; position:absolute;"></div>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script>
+    const width = 1000, height = 700;
+    const svg = d3.select("svg")
+      .attr("width", width)
+      .attr("height", height);
+
+    const tooltip = d3.select(".tooltip");
+
+    // Arrow marker
+    svg.append("defs").append("marker")
+      .attr("id", "arrowhead")
+      .attr("viewBox", "0 -5 10 10")
+      .attr("refX", 12)
+      .attr("refY", 0)
+      .attr("markerWidth", 6)
+      .attr("markerHeight", 6)
+      .attr("orient", "auto")
+      .append("path")
+      .attr("d", "M0,-5L10,0L0,5")
+      .attr("fill", "#666");
+
+    // Hierarchical data
+    const data = {
+      name: "GCP",
+      children: [
+        {
+          name: "us-east1",
+          type: "region",
+          children: [
+            {
+              name: "us-east1-b",
+              type: "zone",
+              children: [
+                {
+                  name: "prod-subnet",
+                  type: "subnet",
+                  children: [
+                    { name: "VM1", type: "node", url: "https://cloud.google.com/compute" },
+                    { name: "Bucket1", type: "node", url: "https://cloud.google.com/storage" }
+                  ]
+                },
+                {
+                  name: "dev-subnet",
+                  type: "subnet",
+                  children: [
+                    { name: "VM2", type: "node", url: "https://cloud.google.com/compute" }
+                  ]
+                }
+              ]
+            },
+            {
+              name: "us-east1-c",
+              type: "zone",
+              children: [
+                {
+                  name: "prod-subnet",
+                  type: "subnet",
+                  children: [
+                    { name: "VM3", type: "node", url: "https://cloud.google.com/compute" },
+                    { name: "SQL1", type: "node", url: "https://cloud.google.com/sql" }
+                  ]
+                },
+                {
+                  name: "dev-subnet",
+                  type: "subnet",
+                  children: [
+                    { name: "VM4", type: "node", url: "https://cloud.google.com/compute" }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          name: "us-west1",
+          type: "region",
+          children: [
+            {
+              name: "us-west1-a",
+              type: "zone",
+              children: [
+                {
+                  name: "prod-subnet",
+                  type: "subnet",
+                  children: [
+                    { name: "VM5", type: "node", url: "https://cloud.google.com/compute" },
+                    { name: "LB1", type: "node", url: "https://cloud.google.com/load-balancing" }
+                  ]
+                },
+                {
+                  name: "dev-subnet",
+                  type: "subnet",
+                  children: [
+                    { name: "VM6", type: "node", url: "https://cloud.google.com/compute" }
+                  ]
+                }
+              ]
+            },
+            {
+              name: "us-west1-b",
+              type: "zone",
+              children: [
+                {
+                  name: "prod-subnet",
+                  type: "subnet",
+                  children: [
+                    { name: "VM7", type: "node", url: "https://cloud.google.com/compute" },
+                    { name: "Bucket2", type: "node", url: "https://cloud.google.com/storage" }
+                  ]
+                },
+                {
+                  name: "dev-subnet",
+                  type: "subnet",
+                  children: [
+                    { name: "VM8", type: "node", url: "https://cloud.google.com/compute" }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    };
+
+    // Create tree layout with specified size
+    const root = d3.hierarchy(data);
+    const treeLayout = d3.tree().size([width - 60, height - 120]);
+    treeLayout(root);
+
+    // Flatten nodes by type for convenience
+    const allNodes = root.descendants();
+    const nodes = allNodes.filter(d => d.data.type === "node");
+    const subnets = allNodes.filter(d => d.data.type === "subnet");
+    const zones = allNodes.filter(d => d.data.type === "zone");
+    const regions = allNodes.filter(d => d.data.type === "region");
+
+    // Group container
+    const g = svg.append("g").attr("transform", "translate(30,60)");
+
+    // Draw links between parent and child groups/nodes (hierarchical)
+    g.selectAll("path.link")
+      .data(root.links())
+      .enter()
+      .append("path")
+      .attr("class", "link")
+      .attr("fill", "none")
+      .attr("stroke", "#ccc")
+      .attr("stroke-width", 1.5)
+      .attr("d", d3.linkVertical()
+        .x(d => d.x)
+        .y(d => d.y)
+      );
+
+    // Helper function to calculate bounding box for a group’s children nodes
+    function getGroupBBox(groupNodes) {
+      if (groupNodes.length === 0) return null;
+      const xs = groupNodes.map(n => n.x);
+      const ys = groupNodes.map(n => n.y);
+      const minX = Math.min(...xs) - 30;
+      const maxX = Math.max(...xs) + 30;
+      const minY = Math.min(...ys) - 20;
+      const maxY = Math.max(...ys) + 20;
+      return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+    }
+
+    // Draw regions (outermost groups)
+    regions.forEach(region => {
+      const childrenNodes = region.descendants().filter(d => d.data.type !== "region");
+      const bbox = getGroupBBox(childrenNodes);
+      if (!bbox) return;
+
+      g.append("rect")
+        .attr("class", "group-rect region")
+        .attr("x", bbox.x)
+        .attr("y", bbox.y)
+        .attr("width", bbox.width)
+        .attr("height", bbox.height);
+
+      g.append("text")
+        .attr("class", "group-label")
+        .attr("x", bbox.x + 6)
+        .attr("y", bbox.y + 14)
+        .text(`Region: ${region.data.name}`);
+    });
+
+    // Draw zones (nested groups)
+    zones.forEach(zone => {
+      const childrenNodes = zone.descendants().filter(d => d.data.type !== "zone");
+      const bbox = getGroupBBox(childrenNodes);
+      if (!bbox) return;
+
+      g.append("rect")
+        .attr("class", "group-rect zone")
+        .attr("x", bbox.x)
+        .attr("y", bbox.y)
+        .attr("width", bbox.width)
+        .attr("height", bbox.height);
+
+      g.append("text")
+        .attr("class", "group-label")
+        .attr("x", bbox.x + 6)
+        .attr("y", bbox.y + 14)
+        .text(`Zone: ${zone.data.name}`);
+    });
+
+    // Draw subnets (innermost groups)
+    subnets.forEach(subnet => {
+      const childrenNodes = subnet.descendants().filter(d => d.data.type === "node");
+      const bbox = getGroupBBox(childrenNodes);
+      if (!bbox) return;
+
+      g.append("rect")
+        .attr("class", "group-rect subnet")
+        .attr("x", bbox.x)
+        .attr("y", bbox.y)
+        .attr("width", bbox.width)
+        .attr("height", bbox.height);
+
+      g.append("text")
+        .attr("class", "group-label")
+        .attr("x", bbox.x + 6)
+        .attr("y", bbox.y + 14)
+        .text(`Subnet: ${subnet.data.name}`);
+    });
+
+    // Draw nodes as circles with labels
+    const nodeGroup = g.append("g").attr("class", "nodes");
+    nodes.forEach(node => {
+      nodeGroup.append("circle")
+        .attr("class", "node")
+        .attr("cx", node.x)
+        .attr("cy", node.y)
+        .attr("r", 10)
+        .on("mouseover", (event) => {
+          tooltip.style("opacity", 1)
+            .html(`<strong>${node.data.name}</strong><br/><a href="${node.data.url}" target="_blank">${node.data.url}</a>`)
+            .style("left", (event.pageX + 10) + "px")
+            .style("top", (event.pageY + 10) + "px");
+        })
+        .on("mouseout", () => tooltip.style("opacity", 0));
+      nodeGroup.append("text")
+        .attr("class", "node-label")
+        .attr("x", node.x)
+        .attr("y", node.y + 18)
+        .attr("text-anchor", "middle")
+        .text(node.data.name);
+    });
+
+  </script>
+</body>

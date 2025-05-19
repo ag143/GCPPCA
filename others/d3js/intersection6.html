@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<meta charset="utf-8" />
+<title>GCP Architecture Diagrams by Resource Category</title>
+<style>
+  body {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    margin: 10px;
+  }
+  svg {
+    border: 1px solid #ccc;
+    background: #fff;
+  }
+  select {
+    margin-bottom: 10px;
+    font-size: 14px;
+  }
+  .group-rect {
+    fill-opacity: 0.05;
+    stroke-width: 2px;
+    rx: 8px;
+    ry: 8px;
+  }
+  .region {
+    fill: #cce5ff;
+    stroke: #3399ff;
+  }
+  .zone {
+    fill: #d6f5d6;
+    stroke: #33cc33;
+  }
+  .subnet {
+    fill: #fff3cd;
+    stroke: #ffcc00;
+  }
+  .group-label {
+    font-weight: 700;
+    font-size: 12px;
+    pointer-events: none;
+  }
+  circle.node {
+    fill: #ff9900;
+    stroke: #663300;
+    stroke-width: 1.5px;
+    cursor: pointer;
+  }
+  text.node-label {
+    font-size: 10px;
+    pointer-events: none;
+  }
+  line.link {
+    stroke: #666;
+    stroke-width: 1.5px;
+    marker-end: url(#arrowhead);
+    stroke-dasharray: 4,4;
+  }
+  .tooltip {
+    position: absolute;
+    background: #f9f9f9;
+    border: 1px solid #ccc;
+    padding: 6px 8px;
+    font-size: 12px;
+    pointer-events: none;
+    border-radius: 4px;
+    box-shadow: 2px 2px 6px rgba(0,0,0,0.2);
+  }
+</style>
+<body>
+  <h2>GCP Architecture Diagrams by Resource Category</h2>
+  <label for="categorySelect">Select category: </label>
+  <select id="categorySelect">
+    <option value="compute">Compute</option>
+    <option value="storage">Storage</option>
+    <option value="database">Database</option>
+    <option value="security">Security</option>
+    <option value="network">Network</option>
+    <option value="analytics">Analytics</option>
+    <option value="ml">Machine Learning</option>
+  </select>
+  <br/>
+  <svg width="1000" height="700"></svg>
+  <div class="tooltip" style="opacity:0; position:absolute;"></div>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script>
+    const width = 1000, height = 700;
+    const svg = d3.select("svg").attr("width", width).attr("height", height);
+    const tooltip = d3.select(".tooltip");
+    const categorySelect = d3.select("#categorySelect");
+
+    // Arrow marker
+    svg.append("defs").append("marker")
+      .attr("id", "arrowhead")
+      .attr("viewBox", "0 -5 10 10")
+      .attr("refX", 12)
+      .attr("refY", 0)
+      .attr("markerWidth", 6)
+      .attr("markerHeight", 6)
+      .attr("orient", "auto")
+      .append("path")
+      .attr("d", "M0,-5L10,0L0,5")
+      .attr("fill", "#666");
+
+    // Base data structure for nested groups (regions, zones, subnets)
+    // Nodes vary by category, each node has name, url, and unique id
+    const baseStructure = {
+      name: "GCP",
+      children: [
+        {
+          name: "us-east1",
+          type: "region",
+          children: [
+            {
+              name: "us-east1-b",
+              type: "zone",
+              children: [
+                { name: "prod-subnet", type: "subnet" },
+                { name: "dev-subnet", type: "subnet" }
+              ]
+            },
+            {
+              name: "us-east1-c",
+              type: "zone",
+              children: [
+                { name: "prod-subnet", type: "subnet" },
+                { name: "dev-subnet", type: "subnet" }
+              ]
+            }
+          ]
+        },
+        {
+          name: "us-west1",
+          type: "region",
+          children: [
+            {
+              name: "us-west1-a",
+              type: "zone",
+              children: [
+                { name: "prod-subnet", type: "subnet" },
+                { name: "dev-subnet", type: "subnet" }
+              ]
+            },
+            {
+              name: "us-west1-b",
+              type: "zone",
+              children: [
+                { name: "prod-subnet", type: "subnet" },
+                { name: "dev-subnet", type: "subnet" }
+              ]
+            }
+          ]
+        }
+      ]
+    };
+
+    // Nodes per category keyed by subnet id
+    // Use unique IDs for nodes (name + subnet + zone + region) for clarity
+    const nodesByCategory = {
+      compute: [
+        { id: "us-east1-b-prod-subnet-VM1", name: "VM1", subnet: "prod-subnet", zone: "us-east1-b", region: "us-east1", url:"https://cloud.google.com/compute" },
+        { id: "us-east1-c-prod-subnet-VM3", name: "VM3", subnet: "prod-subnet", zone: "us-east1-c", region: "us-east1", url:"https://cloud.google.com/compute" },
+        { id: "us-west1-a-prod-subnet-VM5", name: "VM5", subnet: "prod-subnet", zone: "us-west1-a", region: "us-west1", url:"https://cloud.google.com/compute" },
+        { id: "us-west1-b-prod-subnet-VM7", name: "VM7", subnet: "prod-subnet", zone: "us-west1-b", region: "us-west1", url:"https://cloud.google.com/compute" },
+        { id: "us-east1-b-dev-subnet-VM2", name: "VM2", subnet: "dev-subnet", zone: "us-east1-b", region: "us-east1", url:"https://cloud.google.com/compute" },
+        { id: "us-east1-c-dev-subnet-VM4", name: "VM4", subnet: "dev-subnet", zone: "us-east1-c", region: "us-east1", url:"https://cloud.google.com/compute" },
+        { id: "us-west1-a-dev-subnet-VM6", name: "VM6", subnet: "dev-subnet", zone: "us-west1-a", region: "us-west1", url:"https://cloud.google.com/compute" },
+        { id: "us-west1-b-dev-subnet-VM8", name: "VM8", subnet: "dev-subnet", zone: "us-west1-b", region: "us-west1", url:"https://cloud.google.com/compute" }
+      ],
+      storage: [
+        { id: "us-east1-b-prod-subnet-Bucket1", name: "Bucket1", subnet: "prod-subnet", zone: "us-east1-b", region: "us-east1", url:"https://cloud.google.com/storage" },
+        { id: "us-west1-b-prod-subnet-Bucket2", name: "Bucket2", subnet: "prod-subnet", zone: "us-west1-b", region: "us-west1", url:"https://cloud.google.com/storage" }
+      ],
+      database: [
+        { id: "us-east1-c-prod-subnet-SQL1", name: "SQL1", subnet: "prod-subnet", zone: "us-east1-c", region: "us-east1", url:"https://cloud.google.com/sql" }
+      ],
+      security: [
+        { id: "us-east1-b-prod-subnet-Firewall1", name: "Firewall1", subnet: "prod-subnet", zone: "us-east1-b", region: "us-east1", url:"https://cloud.google.com/firewall" },
+        { id: "us-west1-a-dev-subnet-IDS1", name: "IDS1", subnet: "dev-subnet", zone: "us-west1-a", region: "us-west1", url:"https://cloud.google.com/security" }
+      ],
+      network: [
+        { id: "us-west1-a-prod-subnet-LB1", name: "LB1", subnet: "prod-subnet", zone: "us-west1-a", region: "us-west1", url:"https://cloud.google.com/load-balancing" }
+      ],
+      analytics: [
+        { id: "us-west1-b-prod-subnet-BigQuery1", name: "BigQuery1", subnet: "prod-subnet", zone: "us-west1-b", region: "us-west1", url:"https://cloud.google.com/bigquery" }
+      ],
+      ml: [
+        { id: "us-east1-c-prod-subnet-MLModel1", name: "MLModel1", subnet: "prod-subnet", zone: "us-east1-c", region: "us-east1", url:"https://cloud.google.com/ai-platform" }
+      ]
+    };
+
+    // Helper: deep clone baseStructure (so original stays unchanged)
+    function cloneDeep(obj) {
+      return JSON.parse(JSON.stringify(obj));
+    }
+
+    // Attach nodes into baseStructure for a given category
+    function buildHierarchyForCategory(category) {
+      let root = cloneDeep(baseStructure);
+      const nodes = nodesByCategory[category] || [];
+
+      // Create a map: region -> zone -> subnet for quick access
+      const regionMap = new Map();
+      root.children.forEach(region => {
+        regionMap.set(region.name, region);
+        region.children.forEach(zone => {
+          const zoneMap = region._zoneMap || new Map();
+          zoneMap.set(zone.name, zone);
+          region._zoneMap = zoneMap;
+          zone.children.forEach(subnet => {
+            const subnetMap = zone._subnetMap || new Map();
+            subnetMap.set(subnet.name, subnet);
+            zone._subnetMap = subnetMap;
+            subnet.children = [];
+          });
+        });
+      });
+
+      // For each node, find its subnet object and add node as child
+      nodes.forEach(node => {
+        const region = regionMap.get(node.region);
+        if (!region) return;
+        const zone = region._zoneMap.get(node.zone);
+        if (!zone) return;
+        const subnet = zone._subnetMap.get(node.subnet);
+        if (!subnet) return;
+        subnet.children.push({
+          name: node.name,
+          type: "node",
+          url: node.url,
+          id: node.id
+        });
+      });
+
+      return root;
+    }
+
+    // Function to get bounding box around a set of nodes
+    function getGroupBBox(groupNodes) {
+      if (groupNodes.length === 0) return null;
+      const xs = groupNodes.map(n => n.x);
+      const ys = groupNodes.map(n => n.y);
+      const minX = Math.min(...xs) - 30;
+      const maxX = Math.max(...xs) + 30;
+      const minY = Math.min(...ys) - 20;
+      const maxY = Math.max(...ys) + 20;
+      return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+    }
+
+    // Draw the diagram for a given category
+    function drawDiagram(category) {
+      svg.selectAll("*").remove();
+
+      // Redraw arrow marker
+      svg.append("defs").append("marker")
+        .attr("id", "arrowhead")
+        .attr("viewBox", "0 -5 10 10")
+        .attr("refX", 12)
+        .attr("refY", 0)
+        .attr("markerWidth", 6)
+        .attr("markerHeight", 6)
+        .attr("orient", "auto")
+        .append("path")
+        .attr("d", "M0,-5L10,0L0,5")
+        .attr("fill", "#666");
+
+      const rootData = buildHierarchyForCategory(category);
+      const root = d3.hierarchy(rootData);
+
+      const treeLayout = d3.tree().size([width - 60, height - 120]);
+      treeLayout(root);
+
+      const allNodes = root.descendants();
+      const nodes = allNodes.filter(d => d.data.type === "node");
+      const subnets = allNodes.filter(d => d.data.type === "subnet");
+const zones = allNodes.filter(d => d.data.type === "zone");
+const regions = allNodes.filter(d => d.data.type === "region");
+  // Draw groups as rectangles behind children nodes
+  // Regions
+  regions.forEach(region => {
+    const childrenNodes = region.descendants().filter(n => n.data.type === "node");
+    if (childrenNodes.length === 0) return;
+    const bbox = getGroupBBox(childrenNodes);
+    if (!bbox) return;
+
+    svg.append("rect")
+      .attr("class", "group-rect region")
+      .attr("x", bbox.x)
+      .attr("y", bbox.y)
+      .attr("width", bbox.width)
+      .attr("height", bbox.height)
+      .attr("rx", 12)
+      .attr("ry", 12);
+    svg.append("text")
+      .attr("class", "group-label")
+      .attr("x", bbox.x + 8)
+      .attr("y", bbox.y + 16)
+      .text(region.data.name);
+  });
+
+  // Zones
+  zones.forEach(zone => {
+    const childrenNodes = zone.descendants().filter(n => n.data.type === "node");
+    if (childrenNodes.length === 0) return;
+    const bbox = getGroupBBox(childrenNodes);
+    if (!bbox) return;
+
+    svg.append("rect")
+      .attr("class", "group-rect zone")
+      .attr("x", bbox.x)
+      .attr("y", bbox.y)
+      .attr("width", bbox.width)
+      .attr("height", bbox.height)
+      .attr("rx", 10)
+      .attr("ry", 10);
+    svg.append("text")
+      .attr("class", "group-label")
+      .attr("x", bbox.x + 8)
+      .attr("y", bbox.y + 14)
+      .text(zone.data.name);
+  });
+
+  // Subnets
+  subnets.forEach(subnet => {
+    const childrenNodes = subnet.descendants().filter(n => n.data.type === "node");
+    if (childrenNodes.length === 0) return;
+    const bbox = getGroupBBox(childrenNodes);
+    if (!bbox) return;
+
+    svg.append("rect")
+      .attr("class", "group-rect subnet")
+      .attr("x", bbox.x)
+      .attr("y", bbox.y)
+      .attr("width", bbox.width)
+      .attr("height", bbox.height)
+      .attr("rx", 8)
+      .attr("ry", 8);
+    svg.append("text")
+      .attr("class", "group-label")
+      .attr("x", bbox.x + 8)
+      .attr("y", bbox.y + 12)
+      .text(subnet.data.name);
+  });
+
+  // Draw nodes as circles
+  const nodeGroup = svg.append("g").attr("class", "nodes");
+  const nodeElements = nodeGroup.selectAll("g.node")
+    .data(nodes)
+    .enter()
+    .append("g")
+    .attr("class", "node")
+    .attr("transform", d => `translate(${d.x},${d.y})`)
+    .style("cursor", "pointer")
+    .on("click", (event, d) => {
+      if (d.data.url) window.open(d.data.url, "_blank");
+    })
+    .on("mouseover", (event, d) => {
+      tooltip.style("opacity", 1)
+        .html(`<strong>${d.data.name}</strong><br/>Category: ${category.charAt(0).toUpperCase() + category.slice(1)}<br/>Region: ${d.parent.parent.parent.data.name}<br/>Zone: ${d.parent.parent.data.name}<br/>Subnet: ${d.parent.data.name}`)
+        .style("left", (event.pageX + 12) + "px")
+        .style("top", (event.pageY + 8) + "px");
+    })
+    .on("mouseout", () => tooltip.style("opacity", 0));
+
+  nodeElements.append("circle")
+    .attr("r", 10)
+    .attr("class", "node");
+
+  nodeElements.append("text")
+    .attr("class", "node-label")
+    .attr("dy", 4)
+    .attr("x", 14)
+    .text(d => d.data.name);
+
+  // Draw links as lines between nodes and subnets (just as visual connectors)
+  // For simplicity, link each node to its subnet center
+  const linksData = nodes.map(d => {
+    return {
+      source: { x: d.x, y: d.y },
+      target: { x: d.parent.x, y: d.parent.y }
+    };
+  });
+
+  svg.selectAll("line.link")
+    .data(linksData)
+    .enter()
+    .append("line")
+    .attr("class", "link")
+    .attr("x1", d => d.source.x)
+    .attr("y1", d => d.source.y)
+    .attr("x2", d => d.target.x)
+    .attr("y2", d => d.target.y);
+}
+
+// Initial draw
+drawDiagram(categorySelect.node().value);
+
+categorySelect.on("change", function() {
+  drawDiagram(this.value);
+});
+
+</script> </body>

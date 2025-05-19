@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<meta charset="utf-8" />
+<title>GCP Architecture with Group Border Legends & Animated Links</title>
+<style>
+  svg {
+    border: 1px solid #ccc;
+    cursor: grab;
+  }
+  svg:active {
+    cursor: grabbing;
+  }
+  .group-rect {
+    fill-opacity: 0.05;
+    stroke-width: 3px;
+    rx: 8px;
+    ry: 8px;
+  }
+  .group1 {
+    fill: #cce5ff;
+    stroke: #3399ff;
+  }
+  .group2 {
+    fill: #d6f5d6;
+    stroke: #33cc33;
+  }
+  .group3 {
+    fill: #fff3cd;
+    stroke: #ffcc00;
+  }
+  .group-label-bg {
+    fill: white;
+    opacity: 0.8;
+  }
+  .group-label-text {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    fill: #333;
+    user-select: none;
+    pointer-events: none;
+  }
+  circle.node {
+    fill: #ff9900;
+    stroke: #663300;
+    stroke-width: 1.5px;
+    cursor: default;
+  }
+  text.node-label {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 12px;
+    pointer-events: none;
+    user-select: none;
+  }
+  line.link {
+    stroke: #666;
+    stroke-width: 2px;
+    marker-end: url(#arrowhead);
+    stroke-dasharray: 6,6;
+  }
+  a {
+    fill: #0000ee;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .tooltip {
+    position: absolute;
+    background: #f9f9f9;
+    border: 1px solid #ccc;
+    padding: 6px 8px;
+    font-family: sans-serif;
+    font-size: 12px;
+    pointer-events: none;
+    border-radius: 4px;
+    box-shadow: 2px 2px 6px rgba(0,0,0,0.2);
+  }
+</style>
+
+<body>
+  <svg width="900" height="600"></svg>
+  <div class="tooltip" style="opacity:0; position:absolute;"></div>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script>
+    const width = 900, height = 600;
+    const svg = d3.select("svg")
+      .attr("width", width)
+      .attr("height", height);
+
+    const tooltip = d3.select(".tooltip");
+
+    // Zoom and pan
+    const zoom = d3.zoom()
+      .scaleExtent([0.5, 3])
+      .on("zoom", (event) => {
+        container.attr("transform", event.transform);
+      });
+    svg.call(zoom);
+
+    // Container group for zoom/pan
+    const container = svg.append("g");
+
+    // Arrow marker definition
+    container.append("defs").append("marker")
+      .attr("id", "arrowhead")
+      .attr("viewBox", "0 -5 10 10")
+      .attr("refX", 22)
+      .attr("refY", 0)
+      .attr("markerWidth", 8)
+      .attr("markerHeight", 8)
+      .attr("orient", "auto")
+      .append("path")
+      .attr("d", "M0,-5L10,0L0,5")
+      .attr("fill", "#666");
+
+    // Example groups (regions, zones, subnets)
+    // Use nesting levels for color coding
+    // We'll use 3 groups: Region, Zone, Subnet to simulate previous example style
+
+    // Groups with fixed bounding boxes (x,y,width,height)
+    // In a real dynamic example you compute based on nodes, here fixed for demo
+    const groups = [
+      { id: "region-us-east1", label: "Region: us-east1", x: 50, y: 50, width: 800, height: 500, class: "group1" },
+      { id: "zone-us-east1-b", label: "Zone: us-east1-b", x: 80, y: 80, width: 360, height: 220, class: "group2" },
+      { id: "zone-us-east1-c", label: "Zone: us-east1-c", x: 460, y: 80, width: 370, height: 220, class: "group2" },
+      { id: "subnet-prod", label: "Subnet: prod-subnet", x: 100, y: 110, width: 320, height: 150, class: "group3" },
+      { id: "subnet-dev", label: "Subnet: dev-subnet", x: 480, y: 110, width: 320, height: 150, class: "group3" }
+    ];
+
+    // Nodes (GCP resources), fixed positions inside subnets/zones
+    const nodes = [
+      { id: "vm1", label: "VM Instance 1", url: "https://cloud.google.com/compute", x: 180, y: 160, groups: ["subnet-prod", "zone-us-east1-b", "region-us-east1"] },
+      { id: "vm2", label: "VM Instance 2", url: "https://cloud.google.com/compute", x: 300, y: 200, groups: ["subnet-prod", "zone-us-east1-b", "region-us-east1"] },
+      { id: "bucket1", label: "Storage Bucket", url: "https://cloud.google.com/storage", x: 200, y: 270, groups: ["subnet-prod", "zone-us-east1-b", "region-us-east1"] },
+      { id: "vm3", label: "VM Instance 3", url: "https://cloud.google.com/compute", x: 550, y: 160, groups: ["subnet-dev", "zone-us-east1-c", "region-us-east1"] },
+      { id: "sql1", label: "Cloud SQL", url: "https://cloud.google.com/sql", x: 700, y: 190, groups: ["subnet-dev", "zone-us-east1-c", "region-us-east1"] },
+      { id: "lb1", label: "Load Balancer", url: "https://cloud.google.com/load-balancing", x: 650, y: 250, groups: ["subnet-dev", "zone-us-east1-c", "region-us-east1"] }
+    ];
+
+    // Links between nodes by id
+    const links = [
+      { source: "vm1", target: "vm2" },
+      { source: "vm2", target: "bucket1" },
+      { source: "vm3", target: "sql1" },
+      { source: "sql1", target: "lb1" },
+      { source: "vm1", target: "lb1" }
+    ];
+
+    // Draw groups rectangles with border and label
+    const groupG = container.append("g").attr("class", "groups");
+
+    groups.forEach(g => {
+      // Rectangle
+      groupG.append("rect")
+        .attr("class", `group-rect ${g.class}`)
+        .attr("x", g.x)
+        .attr("y", g.y)
+        .attr("width", g.width)
+        .attr("height", g.height)
+        .attr("rx", 10)
+        .attr("ry", 10)
+        .attr("stroke-width", 3)
+        .attr("fill-opacity", 0.05);
+
+      // Label with white background for better readability
+      const padding = 6;
+      const text = groupG.append("text")
+        .attr("class", "group-label-text")
+        .attr("x", g.x + padding)
+        .attr("y", g.y + 20)
+        .text(g.label);
+
+      // Get text bbox to create background rectangle
+      const bbox = text.node().getBBox();
+      groupG.insert("rect", "text")
+        .attr("class", "group-label-bg")
+        .attr("x", bbox.x - 4)
+        .attr("y", bbox.y - 2)
+        .attr("width", bbox.width + 8)
+        .attr("height", bbox.height + 4)
+        .attr("rx", 3)
+        .attr("ry", 3);
+    });
+
+    // Draw links
+    const link = container.append("g")
+      .attr("stroke", "#666")
+      .attr("stroke-width", 2)
+      .selectAll("line")
+      .data(links)
+      .join("line")
+      .attr("class", "link")
+      .attr("marker-end", "url(#arrowhead)")
+      .attr("stroke-dasharray", "6,6");
+
+    // Draw nodes group
+    const nodeGroup = container.append("g")
+      .selectAll("g")
+      .data(nodes)
+      .join("g")
+      .attr("class", "node")
+      .attr("transform", d => `translate(${d.x},${d.y})`);
+
+    // Append hyperlinks + circles + labels
+    nodeGroup.append("a")
+      .attr("xlink:href", d => d.url)
+      .attr("target", "_blank")
+      .append("circle")
+      .attr("r", 20)
+      .attr("class", "node");
+
+    nodeGroup.append("a")
+      .attr("xlink:href", d => d.url)
+      .attr("target", "_blank")
+      .append("text")
+      .attr("dy", 5)
+      .attr("text-anchor", "middle")
+      .attr("class", "node-label")
+      .text(d => d.label);
+
+    // Tooltip on nodes
+    nodeGroup.on("mouseover", (event, d) => {
+      tooltip.style("opacity", 1)
+        .html(`<strong>${d.label}</strong><br/>Groups: ${d.groups.join(", ")}`)
+        .style("left", (event.pageX + 10) + "px")
+        .style("top", (event.pageY + 10) + "px");
+    })
+    .on("mousemove", (event) => {
+      tooltip.style("left", (event.pageX + 10) + "px")
+             .style("top", (event.pageY + 10) + "px");
+    })
+    .on("mouseout", () => {
+      tooltip.style("opacity", 0);
+    });
+
+    // Position links based on fixed nodes
+    function positionLinks() {
+      link
+        .attr("x1", d => {
+          const sourceNode = nodes.find(n => n.id === d.source);
+          return sourceNode.x;
+        })
+        .attr("y1", d => {
+          const sourceNode = nodes.find(n => n.id === d.source);
+          return sourceNode.y;
+        })
+        .attr("x2", d => {
+          const targetNode = nodes.find(n => n.id === d.target);
+          return targetNode.x;
+        })
+        .attr("y2", d => {
+          const targetNode = nodes.find(n => n.id === d.target);
+          return targetNode.y;
+        });
+    }
+    positionLinks();
+
+    // Animate links dash offset for moving dash effect
+    let dashOffset = 0;
+    d3.timer(() => {
+      dashOffset -= 1;
+      link.attr("stroke-dashoffset", dashOffset);
+    });
+  </script>
+</body>

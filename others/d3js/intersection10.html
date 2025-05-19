@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<meta charset="utf-8" />
+<title>GCP Architecture Diagram - D3.js</title>
+<style>
+  svg {
+    border: 1px solid #ccc;
+  }
+  .group-rect {
+    fill-opacity: 0.1;
+    stroke-width: 3px;
+    rx: 12;
+    ry: 12;
+  }
+  .compute { fill: #e3f2fd; stroke: #2196f3; }
+  .storage { fill: #f3e5f5; stroke: #9c27b0; }
+  .networking { fill: #e8f5e9; stroke: #4caf50; }
+  .security { fill: #fff3e0; stroke: #ff9800; }
+  .analytics { fill: #ede7f6; stroke: #673ab7; }
+  circle.node {
+    fill: #ffcc80;
+    stroke: #333;
+    stroke-width: 1.5px;
+    cursor: pointer;
+  }
+  text {
+    font-family: sans-serif;
+    font-size: 11px;
+    pointer-events: none;
+  }
+  line.link {
+    stroke: #999;
+    stroke-width: 2px;
+    stroke-dasharray: 4;
+  }
+</style>
+<body>
+<svg width="1000" height="800"></svg>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+const width = 2000, height = 8000;
+const svg = d3.select("svg").attr("width", width).attr("height", height);
+
+const groups = ["compute", "storage", "networking", "security", "analytics"];
+
+const nodes = [
+  // Compute
+  { id: "instance-1", label: "VM Instance 1", groups: ["compute"] },
+  { id: "instance-2", label: "VM Instance 2", groups: ["compute"] },
+  { id: "gke-1", label: "GKE Cluster", groups: ["compute"] },
+  { id: "subnet-c1", label: "Subnet C1", groups: ["compute"] },
+  { id: "subnet-c2", label: "Subnet C2", groups: ["compute"] },
+  { id: "subnet-c3", label: "Subnet C3", groups: ["compute"] },
+  { id: "us-central1-a", label: "Zone A", groups: ["compute"] },
+  { id: "us-central1-b", label: "Zone B", groups: ["compute"] },
+  { id: "europe-west1-b", label: "Zone C", groups: ["compute"] },
+  { id: "us-central1", label: "Region US-Central1", groups: ["compute"] },
+  { id: "europe-west1", label: "Region EU-West1", groups: ["compute"] },
+
+  // Storage
+  { id: "bucket-1", label: "Cloud Storage", groups: ["storage"] },
+  { id: "filestore-1", label: "Filestore", groups: ["storage"] },
+  { id: "subnet-s1", label: "Subnet S1", groups: ["storage"] },
+  { id: "subnet-s2", label: "Subnet S2", groups: ["storage"] },
+  { id: "asia-east1-b", label: "Zone AE1", groups: ["storage"] },
+  { id: "asia-east1", label: "Region AE1", groups: ["storage"] },
+
+  // Networking
+  { id: "vpc-1", label: "VPC Network", groups: ["networking"] },
+  { id: "cloud-router-1", label: "Cloud Router", groups: ["networking"] },
+  { id: "cloud-nat-1", label: "Cloud NAT", groups: ["networking"] },
+  { id: "subnet-net1", label: "Subnet Net1", groups: ["networking"] },
+  { id: "us-west1-a", label: "Zone W1", groups: ["networking"] },
+  { id: "us-west1", label: "Region W1", groups: ["networking"] },
+
+  // Security
+  { id: "firewall-1", label: "Firewall Rules", groups: ["security"] },
+  { id: "iam-1", label: "IAM Policy", groups: ["security"] },
+  { id: "cloud-armor-1", label: "Cloud Armor", groups: ["security"] },
+  { id: "subnet-sec", label: "Subnet Sec", groups: ["security"] },
+  { id: "global-zone", label: "Global Zone", groups: ["security"] },
+  { id: "global", label: "Global Region", groups: ["security"] },
+
+  // Analytics
+  { id: "bigquery-1", label: "BigQuery", groups: ["analytics"] },
+  { id: "dataproc-1", label: "Dataproc", groups: ["analytics"] },
+  { id: "dataflow-1", label: "Dataflow", groups: ["analytics"] },
+  { id: "subnet-analytics", label: "Subnet Analytics", groups: ["analytics"] }
+];
+
+const links = [
+  // Compute
+  { source: "instance-1", target: "subnet-c1" },
+  { source: "instance-2", target: "subnet-c2" },
+  { source: "gke-1", target: "subnet-c3" },
+  { source: "subnet-c1", target: "us-central1-a" },
+  { source: "subnet-c2", target: "us-central1-b" },
+  { source: "subnet-c3", target: "europe-west1-b" },
+  { source: "us-central1-a", target: "us-central1" },
+  { source: "us-central1-b", target: "us-central1" },
+  { source: "europe-west1-b", target: "europe-west1" },
+
+  // Storage
+  { source: "bucket-1", target: "subnet-s1" },
+  { source: "filestore-1", target: "subnet-s2" },
+  { source: "subnet-s1", target: "us-central1-a" },
+  { source: "subnet-s2", target: "asia-east1-b" },
+  { source: "asia-east1-b", target: "asia-east1" },
+
+  // Networking
+  { source: "vpc-1", target: "subnet-net1" },
+  { source: "cloud-router-1", target: "subnet-net1" },
+  { source: "cloud-nat-1", target: "subnet-net1" },
+  { source: "subnet-net1", target: "us-west1-a" },
+  { source: "us-west1-a", target: "us-west1" },
+
+  // Security
+  { source: "firewall-1", target: "subnet-sec" },
+  { source: "iam-1", target: "subnet-sec" },
+  { source: "cloud-armor-1", target: "subnet-sec" },
+  { source: "subnet-sec", target: "global-zone" },
+  { source: "global-zone", target: "global" },
+
+  // Analytics
+  { source: "bigquery-1", target: "subnet-analytics" },
+  { source: "dataproc-1", target: "subnet-analytics" },
+  { source: "dataflow-1", target: "subnet-analytics" },
+  { source: "subnet-analytics", target: "us-central1-a" },
+  { source: "us-central1-a", target: "us-central1" }
+];
+
+const simulation = d3.forceSimulation(nodes)
+  .force("link", d3.forceLink(links).id(d => d.id).distance(100))
+  .force("charge", d3.forceManyBody().strength(-250))
+  .force("center", d3.forceCenter(width / 2, height / 2))
+  .force("collide", d3.forceCollide(35))
+  .on("tick", ticked);
+
+const link = svg.append("g").selectAll("line")
+  .data(links).join("line")
+  .attr("class", "link");
+
+const node = svg.append("g").selectAll("g")
+  .data(nodes).join("g").call(drag(simulation));
+
+node.append("circle")
+  .attr("r", 20)
+  .attr("class", "node");
+
+node.append("text")
+  .attr("dy", 4)
+  .attr("text-anchor", "middle")
+  .text(d => d.label);
+
+const groupRects = svg.append("g").selectAll("rect")
+  .data(groups).enter()
+  .append("rect")
+  .attr("class", d => `group-rect ${d}`);
+
+function ticked() {
+  link
+    .attr("x1", d => d.source.x)
+    .attr("y1", d => d.source.y)
+    .attr("x2", d => d.target.x)
+    .attr("y2", d => d.target.y);
+
+  node.attr("transform", d => `translate(${d.x},${d.y})`);
+
+  groups.forEach((group, i) => {
+    const groupNodes = nodes.filter(n => n.groups.includes(group));
+    if (!groupNodes.length) return;
+    const xs = groupNodes.map(n => n.x);
+    const ys = groupNodes.map(n => n.y);
+    const [minX, maxX] = [Math.min(...xs), Math.max(...xs)];
+    const [minY, maxY] = [Math.min(...ys), Math.max(...ys)];
+    groupRects.filter((d, j) => j === i)
+      .attr("x", minX - 50)
+      .attr("y", minY - 50)
+      .attr("width", maxX - minX + 100)
+      .attr("height", maxY - minY + 100);
+  });
+}
+
+function drag(sim) {
+  return d3.drag()
+    .on("start", (event, d) => {
+      if (!event.active) sim.alphaTarget(0.3).restart();
+      d.fx = d.x;
+      d.fy = d.y;
+    })
+    .on("drag", (event, d) => {
+      d.fx = event.x;
+      d.fy = event.y;
+    })
+    .on("end", (event, d) => {
+      if (!event.active) sim.alphaTarget(0);
+      d.fx = null;
+      d.fy = null;
+    });
+}
+</script>
+</body>

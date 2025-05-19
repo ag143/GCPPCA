@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<meta charset="utf-8" />
+<title>GCP Architecture Diagram with Linkset Menu</title>
+<style>
+  body {
+    display: flex;
+    font-family: sans-serif;
+  }
+  #sidebar {
+    width: 200px;
+    border-right: 1px solid #ccc;
+    padding: 10px;
+  }
+  #sidebar h3 {
+    margin-top: 0;
+  }
+  #sidebar ul {
+    list-style: none;
+    padding-left: 0;
+  }
+  #sidebar li {
+    margin-bottom: 5px;
+    cursor: pointer;
+    color: blue;
+    text-decoration: underline;
+  }
+  svg {
+    flex-grow: 1;
+    border: 1px solid #ccc;
+  }
+  rect.node {
+    fill: orange;
+    stroke: #333;
+    stroke-width: 1.5px;
+    cursor: pointer;
+  }
+  text {
+    font-size: 12px;
+    pointer-events: none;
+  }
+  line.link {
+    stroke: #999;
+    stroke-width: 2px;
+  }
+  .group-rect {
+    fill-opacity: 0.1;
+    stroke-width: 2px;
+  }
+  .compute { fill: lightblue; stroke: steelblue; }
+  .storage { fill: lightgreen; stroke: green; }
+  .network { fill: lavender; stroke: purple; }
+  .security { fill: pink; stroke: crimson; }
+  .analytics { fill: lightyellow; stroke: goldenrod; }
+</style>
+
+<body>
+  <div id="sidebar">
+    <h3>Linksets</h3>
+    <ul id="linkset-menu"></ul>
+  </div>
+  <svg width="900" height="600"></svg>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script>
+    const svg = d3.select("svg");
+    const width = +svg.attr("width");
+    const height = +svg.attr("height");
+
+    const allNodes = [
+      { id: "vm", label: "Compute Engine", url: "https://cloud.google.com/compute", groups: ["compute"] },
+      { id: "gke", label: "GKE", url: "https://cloud.google.com/kubernetes-engine", groups: ["compute"] },
+      { id: "bucket", label: "Cloud Storage", url: "https://cloud.google.com/storage", groups: ["storage"] },
+      { id: "filestore", label: "Filestore", url: "https://cloud.google.com/filestore", groups: ["storage"] },
+      { id: "vpc", label: "VPC", url: "https://cloud.google.com/vpc", groups: ["network"] },
+      { id: "loadbalancer", label: "Load Balancer", url: "https://cloud.google.com/load-balancing", groups: ["network"] },
+      { id: "kms", label: "KMS", url: "https://cloud.google.com/kms", groups: ["security"] },
+      { id: "iam", label: "IAM", url: "https://cloud.google.com/iam", groups: ["security"] },
+      { id: "bq", label: "BigQuery", url: "https://cloud.google.com/bigquery", groups: ["analytics"] },
+      { id: "dataproc", label: "Dataproc", url: "https://cloud.google.com/dataproc", groups: ["analytics"] }
+    ];
+
+    const linksets = {
+      compute: ["vm", "gke"],
+      storage: ["bucket", "filestore"],
+      network: ["vpc", "loadbalancer"],
+      security: ["kms", "iam"],
+      analytics: ["bq", "dataproc"]
+    };
+
+    const links = [
+      { source: "vm", target: "bucket" },
+      { source: "gke", target: "vpc" },
+      { source: "bucket", target: "kms" },
+      { source: "loadbalancer", target: "gke" },
+      { source: "bq", target: "dataproc" },
+      { source: "iam", target: "vm" }
+    ];
+
+    const simulation = d3.forceSimulation(allNodes)
+      .force("link", d3.forceLink(links).id(d => d.id).distance(150))
+      .force("charge", d3.forceManyBody().strength(-300))
+      .force("center", d3.forceCenter(width / 2, height / 2))
+      .on("tick", ticked);
+
+    const linkGroup = svg.append("g").selectAll("line")
+      .data(links)
+      .join("line")
+      .attr("class", "link");
+
+    const nodeGroup = svg.append("g").selectAll("g")
+      .data(allNodes)
+      .join("g")
+      .attr("class", "node");
+
+    nodeGroup.append("rect")
+      .attr("width", 100)
+      .attr("height", 30)
+      .attr("rx", 6)
+      .attr("ry", 6)
+      .attr("class", d => `node ${d.groups[0]}`);
+
+    nodeGroup.append("a")
+      .attr("xlink:href", d => d.url)
+      .attr("target", "_blank")
+      .append("text")
+      .attr("x", 50)
+      .attr("y", 18)
+      .attr("text-anchor", "middle")
+      .text(d => d.label);
+
+    function ticked() {
+      nodeGroup.attr("transform", d => `translate(${d.x - 50},${d.y - 15})`);
+
+      linkGroup
+        .attr("x1", d => d.source.x)
+        .attr("y1", d => d.source.y)
+        .attr("x2", d => d.target.x)
+        .attr("y2", d => d.target.y);
+    }
+
+    const menu = d3.select("#linkset-menu");
+    Object.keys(linksets).forEach(set => {
+      menu.append("li")
+        .text(set.charAt(0).toUpperCase() + set.slice(1))
+        .on("click", () => {
+          const activeIds = new Set(linksets[set]);
+          nodeGroup.style("display", d => activeIds.has(d.id) ? null : "none");
+          linkGroup.style("display", d =>
+            activeIds.has(d.source.id) && activeIds.has(d.target.id) ? null : "none"
+          );
+        });
+    });
+  </script>
+</body>

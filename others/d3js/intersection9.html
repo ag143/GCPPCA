@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Beautified GCP Architecture Diagram</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 24px;
+    background: #f5f7fa;
+    color: #333;
+  }
+  h2 {
+    margin-bottom: 12px;
+  }
+  select {
+    padding: 8px 14px;
+    font-size: 16px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    margin-bottom: 20px;
+    background-color: #fff;
+    cursor: pointer;
+    transition: border-color 0.3s ease;
+  }
+  select:hover {
+    border-color: #5c9ded;
+  }
+  svg {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    width: 100%;
+    height: 600px;
+  }
+  .group-rect {
+    fill: #e4ecf7;
+    stroke: #8eaadf;
+    stroke-width: 2px;
+    filter: drop-shadow(2px 2px 3px rgba(0,0,0,0.08));
+    transition: fill 0.3s ease;
+    rx: 12px;
+    ry: 12px;
+  }
+  .group-rect.region {
+    fill: url(#gradRegion);
+    stroke: #5a85cc;
+  }
+  .group-rect.zone {
+    fill: url(#gradZone);
+    stroke: #5a9a5a;
+  }
+  .group-rect.subnet {
+    fill: url(#gradSubnet);
+    stroke: #d9775d;
+  }
+  .group-rect:hover {
+    fill-opacity: 0.85;
+    stroke-width: 3px;
+    cursor: pointer;
+  }
+  .group-label {
+    font-weight: 700;
+    fill: #33475b;
+    font-size: 14px;
+    user-select: none;
+    pointer-events: none;
+    text-shadow: 0 0 2px rgba(255,255,255,0.9);
+  }
+  .node circle {
+    fill: #ff8c00;
+    stroke: #cc7000;
+    stroke-width: 2px;
+    filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.12));
+    transition: fill 0.3s ease, r 0.3s ease;
+    cursor: pointer;
+  }
+  .node:hover circle {
+    fill: #ffa733;
+    r: 14;
+  }
+  .node-label {
+    font-weight: 600;
+    font-size: 13px;
+    fill: #2c3e50;
+    pointer-events: none;
+    user-select: none;
+  }
+  path.link {
+    fill: none;
+    stroke: #a1aab3;
+    stroke-width: 2px;
+    marker-end: url(#arrowhead);
+    transition: stroke 0.3s ease;
+  }
+  path.link:hover {
+    stroke: #3a85f7;
+  }
+  /* Tooltip styling */
+  .tooltip {
+    position: absolute;
+    text-align: left;
+    padding: 8px 12px;
+    background: rgba(50, 50, 50, 0.85);
+    color: white;
+    font-size: 13px;
+    border-radius: 6px;
+    pointer-events: none;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.25);
+    line-height: 1.4;
+  }
+</style>
+</head>
+<body>
+<h2>Beautified GCP Architecture Diagram</h2>
+
+<label for="category-select">Select Category:</label>
+<select id="category-select">
+  <option value="compute">Compute</option>
+  <option value="storage">Storage</option>
+  <option value="networking">Networking</option>
+  <option value="security">Security</option>
+  <option value="analytics">Analytics</option>
+</select>
+
+<svg></svg>
+
+<script>
+  const svg = d3.select("svg");
+  const width = parseInt(svg.style("width"));
+  const height = parseInt(svg.style("height"));
+  const padding = 50;
+
+  // Define gradients and arrow marker
+  const defs = svg.append("defs");
+
+  defs.append("linearGradient")
+    .attr("id", "gradRegion")
+    .attr("x1", "0%").attr("y1", "0%")
+    .attr("x2", "100%").attr("y2", "100%")
+    .selectAll("stop")
+    .data([
+      {offset: "0%", color: "#b0d4f1"},
+      {offset: "100%", color: "#7aace5"}
+    ])
+    .enter()
+    .append("stop")
+    .attr("offset", d => d.offset)
+    .attr("stop-color", d => d.color);
+
+  defs.append("linearGradient")
+    .attr("id", "gradZone")
+    .attr("x1", "0%").attr("y1", "0%")
+    .attr("x2", "100%").attr("y2", "100%")
+    .selectAll("stop")
+    .data([
+      {offset: "0%", color: "#cde7d8"},
+      {offset: "100%", color: "#8cc38f"}
+    ])
+    .enter()
+    .append("stop")
+    .attr("offset", d => d.offset)
+    .attr("stop-color", d => d.color);
+
+  defs.append("linearGradient")
+    .attr("id", "gradSubnet")
+    .attr("x1", "0%").attr("y1", "0%")
+    .attr("x2", "100%").attr("y2", "100%")
+    .selectAll("stop")
+    .data([
+      {offset: "0%", color: "#f7dfd9"},
+      {offset: "100%", color: "#e48f80"}
+    ])
+    .enter()
+    .append("stop")
+    .attr("offset", d => d.offset)
+    .attr("stop-color", d => d.color);
+
+  defs.append("marker")
+    .attr("id", "arrowhead")
+    .attr("viewBox", "-0 -5 10 10")
+    .attr("refX", 14)
+    .attr("refY", 0)
+    .attr("orient", "auto")
+    .attr("markerWidth", 7)
+    .attr("markerHeight", 7)
+    .attr("xoverflow", "visible")
+    .append("path")
+    .attr("d", "M 0,-5 L 10 ,0 L 0,5")
+    .attr("fill", "#a1aab3")
+    .style("stroke", "none");
+
+  // Tooltip div
+  const tooltip = d3.select("body").append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0);
+
+  // Sample data for categories (same structure as before)
+const dataByCategory = {
+  compute: {
+    regions: [
+      { id: "us-central1", name: "us-central1" },
+      { id: "europe-west1", name: "europe-west1" }
+    ],
+    zones: [
+      { id: "us-central1-a", name: "us-central1-a", region: "us-central1" },
+      { id: "us-central1-b", name: "us-central1-b", region: "us-central1" },
+      { id: "europe-west1-b", name: "europe-west1-b", region: "europe-west1" }
+    ],
+    subnets: [
+      { id: "subnet-c1", name: "subnet-c1", zone: "us-central1-a" },
+      { id: "subnet-c2", name: "subnet-c2", zone: "us-central1-b" },
+      { id: "subnet-c3", name: "subnet-c3", zone: "europe-west1-b" }
+    ],
+    nodes: [
+      { id: "instance-1", name: "Compute Engine VM 1", subnet: "subnet-c1", url: "https://cloud.google.com/compute" },
+      { id: "instance-2", name: "Compute Engine VM 2", subnet: "subnet-c2", url: "https://cloud.google.com/compute" },
+      { id: "gke-1", name: "GKE Cluster 1", subnet: "subnet-c3", url: "https://cloud.google.com/kubernetes-engine" }
+    ]
+  },
+  storage: {
+    regions: [
+      { id: "us-central1", name: "us-central1" },
+      { id: "asia-east1", name: "asia-east1" }
+    ],
+    zones: [
+      { id: "us-central1-a", name: "us-central1-a", region: "us-central1" },
+      { id: "asia-east1-b", name: "asia-east1-b", region: "asia-east1" }
+    ],
+    subnets: [
+      { id: "subnet-s1", name: "subnet-s1", zone: "us-central1-a" },
+      { id: "subnet-s2", name: "subnet-s2", zone: "asia-east1-b" }
+    ],
+    nodes: [
+      { id: "bucket-1", name: "Cloud Storage Bucket 1", subnet: "subnet-s1", url: "https://cloud.google.com/storage" },
+      { id: "filestore-1", name: "Filestore Instance 1", subnet: "subnet-s2", url: "https://cloud.google.com/filestore" }
+    ]
+  },
+  networking: {
+    regions: [{ id: "us-west1", name: "us-west1" }],
+    zones: [{ id: "us-west1-a", name: "us-west1-a", region: "us-west1" }],
+    subnets: [{ id: "subnet-net1", name: "subnet-net1", zone: "us-west1-a" }],
+    nodes: [
+      { id: "vpc-1", name: "VPC Network 1", subnet: "subnet-net1", url: "https://cloud.google.com/vpc" },
+      { id: "cloud-router-1", name: "Cloud Router 1", subnet: "subnet-net1", url: "https://cloud.google.com/network-connectivity/docs/router" },
+      { id: "cloud-nat-1", name: "Cloud NAT 1", subnet: "subnet-net1", url: "https://cloud.google.com/nat" }
+    ]
+  },
+  security: {
+    regions: [{ id: "global", name: "Global" }],
+    zones: [{ id: "global-zone", name: "Global Zone", region: "global" }],
+    subnets: [{ id: "subnet-sec", name: "Security Subnet", zone: "global-zone" }],
+    nodes: [
+      { id: "firewall-1", name: "Firewall Rule 1", subnet: "subnet-sec", url: "https://cloud.google.com/vpc/docs/firewalls" },
+      { id: "iam-1", name: "IAM Policy 1", subnet: "subnet-sec", url: "https://cloud.google.com/iam" },
+      { id: "cloud-armor-1", name: "Cloud Armor", subnet: "subnet-sec", url: "https://cloud.google.com/armor" }
+    ]
+  },
+  analytics: {
+    regions: [{ id: "us-central1", name: "us-central1" }],
+    zones: [{ id: "us-central1-a", name: "us-central1-a", region: "us-central1" }],
+    subnets: [{ id: "subnet-analytics", name: "Analytics Subnet", zone: "us-central1-a" }],
+    nodes: [
+      { id: "bigquery-1", name: "BigQuery Dataset 1", subnet: "subnet-analytics", url: "https://cloud.google.com/bigquery" },
+      { id: "dataproc-1", name: "Dataproc Cluster 1", subnet: "subnet-analytics", url: "https://cloud.google.com/dataproc" },
+      { id: "dataflow-1", name: "Dataflow Job 1", subnet: "subnet-analytics", url: "https://cloud.google.com/dataflow" }
+    ]
+  }
+};
+
+  // Links for example (connect nodes simply by order)
+  const exampleLinks = {
+     compute: [
+    // Compute instances connected to their subnets
+    { source: "instance-1", target: "subnet-c1" },
+    { source: "instance-2", target: "subnet-c2" },
+    { source: "gke-1", target: "subnet-c3" },
+    // Subnets connected to zones
+    { source: "subnet-c1", target: "us-central1-a" },
+    { source: "subnet-c2", target: "us-central1-b" },
+    { source: "subnet-c3", target: "europe-west1-b" },
+    // Zones connected to regions
+    { source: "us-central1-a", target: "us-central1" },
+    { source: "us-central1-b", target: "us-central1" },
+    { source: "europe-west1-b", target: "europe-west1" }
+  ],
+  storage: [
+    // Storage nodes linked to subnets
+    { source: "bucket-1", target: "subnet-s1" },
+    { source: "filestore-1", target: "subnet-s2" },
+    // Subnets linked to zones
+    { source: "subnet-s1", target: "us-central1-a" },
+    { source: "subnet-s2", target: "asia-east1-b" },
+    // Zones linked to regions
+    { source: "us-central1-a", target: "us-central1" },
+    { source: "asia-east1-b", target: "asia-east1" }
+  ],
+  networking: [
+    { source: "vpc-1", target: "subnet-net1" },
+    { source: "cloud-router-1", target: "subnet-net1" },
+    { source: "cloud-nat-1", target: "subnet-net1" },
+    { source: "subnet-net1", target: "us-west1-a" },
+    { source: "us-west1-a", target: "us-west1" }
+  ],
+  security: [
+    { source: "firewall-1", target: "subnet-sec" },
+    { source: "iam-1", target: "subnet-sec" },
+    { source: "cloud-armor-1", target: "subnet-sec" },
+    { source: "subnet-sec", target: "global-zone" },
+    { source: "global-zone", target: "global" }
+  ],
+  analytics: [
+    { source: "bigquery-1", target: "subnet-analytics" },
+    { source: "dataproc-1", target: "subnet-analytics" },
+    { source: "dataflow-1", target: "subnet-analytics" },
+    { source: "subnet-analytics", target: "us-central1-a" },
+    { source: "us-central1-a", target: "us-central1" }
+  ]
+  };
+
+  // Clear SVG content for redraw
+  function clearSvg() {
+    svg.selectAll("*").remove();
+  }
+
+  // Draw groups (region, zone, subnet)
+  function drawGroups(data) {
+    // Layout groups in stacked vertical boxes with horizontal indentation for hierarchy
+    // Each group rectangle contains child groups or nodes
+    // Calculate positions for groups & nodes
+
+    // Constants for sizes
+    const regionWidth = width - padding * 2;
+    const regionHeight = 140;
+    const zoneWidth = regionWidth - 60;
+    const zoneHeight = 90;
+    const subnetWidth = zoneWidth - 50;
+    const subnetHeight = 60;
+    const nodeRadius = 12;
+
+    // Positions containers
+    let yOffset = padding;
+
+    // Maps to get groups by id
+    const zonesByRegion = {};
+    const subnetsByZone = {};
+    data.zones.forEach(z => {
+      if (!zonesByRegion[z.region]) zonesByRegion[z.region] = [];
+      zonesByRegion[z.region].push(z);
+    });
+    data.subnets.forEach(s => {
+      if (!subnetsByZone[s.zone]) subnetsByZone[s.zone] = [];
+      subnetsByZone[s.zone].push(s);
+    });
+
+    // Store positions for nodes to position links later
+    const nodePositions = {};
+
+    // Draw Regions
+    const regionGroups = svg.selectAll("g.region")
+      .data(data.regions, d => d.id)
+      .join("g")
+      .attr("class", "region")
+      .attr("transform", (d,i) => `translate(${padding},${yOffset + i * (regionHeight + 40)})`);
+
+    // Region rectangles
+    regionGroups.append("rect")
+      .attr("class", "group-rect region")
+      .attr("width", regionWidth)
+      .attr("height", regionHeight)
+      .attr("rx", 14)
+      .attr("ry", 14);
+
+    // Region labels
+    regionGroups.append("text")
+      .attr("class", "group-label")
+      .attr("x", 12)
+      .attr("y", 20)
+      .text(d => `Region: ${d.name}`);
+
+    // Draw Zones inside Regions
+    regionGroups.each(function(region) {
+      const group = d3.select(this);
+      const zones = zonesByRegion[region.id] || [];
+      const zoneYOffsetStart = 30;
+      zones.forEach((zone, zi) => {
+        const zoneG = group.append("g")
+          .attr("class", "zone")
+          .attr("transform", `translate(30,${zoneYOffsetStart + zi * (zoneHeight + 10)})`);
+
+        zoneG.append("rect")
+          .attr("class", "group-rect zone")
+          .attr("width", zoneWidth)
+          .attr("height", zoneHeight)
+          .attr("rx", 12)
+          .attr("ry", 12);
+
+        zoneG.append("text")
+          .attr("class", "group-label")
+          .attr("x", 12)
+          .attr("y", 20)
+          .text(`Zone: ${zone.name}`);
+
+        // Draw Subnets inside Zone
+        const subnets = subnetsByZone[zone.id] || [];
+        const subnetYOffsetStart = 30;
+        subnets.forEach((subnet, si) => {
+          const subnetG = zoneG.append("g")
+            .attr("class", "subnet")
+            .attr("transform", `translate(30,${subnetYOffsetStart + si * (subnetHeight + 5)})`);
+
+          subnetG.append("rect")
+            .attr("class", "group-rect subnet")
+            .attr("width", subnetWidth)
+            .attr("height", subnetHeight)
+            .attr("rx", 10)
+            .attr("ry", 10);
+
+          subnetG.append("text")
+            .attr("class", "group-label")
+            .attr("x", 10)
+            .attr("y", 20)
+            .text(`Subnet: ${subnet.name}`);
+
+          // Draw nodes inside subnet, horizontally spaced
+          const nodes = data.nodes.filter(n => n.subnet === subnet.id);
+          nodes.forEach((node, ni) => {
+            const nodeX = 25 + ni * (nodeRadius * 4);
+            const nodeY = subnetHeight / 2 + 10;
+
+            const nodeG = subnetG.append("g")
+              .attr("class", "node")
+              .attr("transform", `translate(${nodeX},${nodeY})`)
+              .style("cursor", "pointer")
+              .on("click", () => {
+                if (node.url) window.open(node.url, "_blank");
+              })
+              .on("mouseover", (event) => {
+                tooltip.transition().duration(200).style("opacity", 0.9);
+                tooltip.html(`<strong>${node.name}</strong><br/><a href="${node.url}" target="_blank" style="color:#ffd; text-decoration:underline;">Link</a>`)
+                  .style("left", (event.pageX + 12) + "px")
+                  .style("top", (event.pageY - 28) + "px");
+              })
+              .on("mouseout", () => {
+                tooltip.transition().duration(400).style("opacity", 0);
+              });
+
+            nodeG.append("circle")
+              .attr("r", nodeRadius);
+
+            nodeG.append("text")
+              .attr("class", "node-label")
+              .attr("x", 0)
+              .attr("y", nodeRadius + 14)
+              .attr("text-anchor", "middle")
+              .text(node.name);
+
+            nodePositions[node.id] = { x: padding + 30 + 30 + 30 + nodeX, y: yOffset +  i * (regionHeight + 40) + 30 + zi * (zoneHeight + 10) + 30 + si * (subnetHeight + 5) + nodeY };
+          });
+        });
+      });
+    });
+
+    return nodePositions;
+  }
+
+  // Draw curved links between nodes
+  function drawLinks(links, nodePositions) {
+    const linkPath = d3.linkHorizontal()
+      .x(d => d.x)
+      .y(d => d.y);
+
+    const linkGroup = svg.append("g").attr("class", "links");
+
+    linkGroup.selectAll("path.link")
+      .data(links.filter(l => nodePositions[l.source] && nodePositions[l.target]))
+      .join("path")
+      .attr("class", "link")
+      .attr("d", d => {
+        const source = nodePositions[d.source];
+        const target = nodePositions[d.target];
+        return linkPath({ source, target });
+      });
+  }
+
+  // Main redraw function
+  function redraw(category) {
+    clearSvg();
+
+    // Draw groups and nodes
+    const data = dataByCategory[category];
+    const nodePositions = drawGroups(data);
+
+    // Draw links only for nodes in the selected category
+    const categoryNodeIds = new Set(data.nodes.map(n => n.id));
+    const filteredLinks = exampleLinks.filter(l => categoryNodeIds.has(l.source) && categoryNodeIds.has(l.target));
+    drawLinks(filteredLinks, nodePositions);
+  }
+
+  // Initial draw
+  const select = d3.select("#category-select");
+  redraw(select.property("value"));
+
+  // Update on selection change
+  select.on("change", function() {
+    redraw(this.value);
+  });
+</script>
+</body>
+</html>

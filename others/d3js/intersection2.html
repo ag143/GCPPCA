@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<meta charset="utf-8" />
+<title>D3.js Force Graph with Enhanced Groups, Tooltips, Arrows, and Zoom</title>
+<style>
+  svg {
+    border: 1px solid #ccc;
+    cursor: grab;
+  }
+  svg:active {
+    cursor: grabbing;
+  }
+  .group-rect {
+    fill-opacity: 0.1;
+    stroke-width: 3px;
+    cursor: pointer;
+    transition: fill-opacity 0.3s, stroke 0.3s;
+  }
+  .group-rect:hover {
+    fill-opacity: 0.3;
+  }
+  .group-rect.clicked {
+    fill-opacity: 0.4 !important;
+    stroke-width: 5px !important;
+  }
+  .group1 {
+    fill: lightblue;
+    stroke: steelblue;
+  }
+  .group2 {
+    fill: lightgreen;
+    stroke: green;
+  }
+  .group-label {
+    font-family: sans-serif;
+    font-size: 14px;
+    font-weight: bold;
+    pointer-events: none;
+    user-select: none;
+  }
+  circle.node {
+    fill: orange;
+    stroke: #333;
+    stroke-width: 1.5px;
+    cursor: pointer;
+  }
+  text {
+    font-family: sans-serif;
+    font-size: 12px;
+    pointer-events: none;
+    user-select: none;
+  }
+  a {
+    fill: black;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  line.link {
+    stroke: #999;
+    stroke-width: 2px;
+    marker-end: url(#arrowhead);
+  }
+  /* Tooltip styling */
+  .tooltip {
+    position: absolute;
+    background: #f9f9f9;
+    border: 1px solid #ccc;
+    padding: 6px 8px;
+    font-family: sans-serif;
+    font-size: 12px;
+    pointer-events: none;
+    border-radius: 4px;
+    box-shadow: 2px 2px 6px rgba(0,0,0,0.2);
+  }
+</style>
+
+<body>
+  <svg width="700" height="500"></svg>
+  <div class="tooltip" style="opacity:0; position:absolute;"></div>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script>
+    const width = 700, height = 500;
+    const svg = d3.select("svg")
+      .attr("width", width)
+      .attr("height", height);
+
+    const tooltip = d3.select(".tooltip");
+
+    // Zoom and pan
+    const zoom = d3.zoom()
+      .scaleExtent([0.5, 3])
+      .on("zoom", (event) => {
+        container.attr("transform", event.transform);
+      });
+
+    svg.call(zoom);
+
+    // Container group for zoom/pan
+    const container = svg.append("g");
+
+    // Define arrow marker
+    container.append("defs").append("marker")
+      .attr("id", "arrowhead")
+      .attr("viewBox", "0 -5 10 10")
+      .attr("refX", 22)
+      .attr("refY", 0)
+      .attr("markerWidth", 8)
+      .attr("markerHeight", 8)
+      .attr("orient", "auto")
+      .append("path")
+      .attr("d", "M0,-5L10,0L0,5")
+      .attr("fill", "#999");
+
+    // Nodes, each with groups array
+    const nodes = [
+      { id: "1", label: "Node 1", url: "https://example.com/node1", groups: ["group1"] },
+      { id: "2", label: "Node 2", url: "https://example.com/node2", groups: ["group2"] },
+      { id: "3", label: "Node 3 (both)", url: "https://example.com/node3", groups: ["group1", "group2"] },
+      { id: "4", label: "Node 4", url: "https://example.com/node4", groups: ["group1"] },
+      { id: "5", label: "Node 5", url: "https://example.com/node5", groups: ["group2"] }
+    ];
+
+    // Links between nodes by id
+    const links = [
+      { source: "1", target: "3" },
+      { source: "2", target: "3" },
+      { source: "4", target: "1" },
+      { source: "5", target: "2" }
+    ];
+
+    const groupIds = ["group1", "group2"];
+    const padding = 30; // padding around group rectangles
+
+    // Create simulation
+    const simulation = d3.forceSimulation(nodes)
+      .force("link", d3.forceLink(links).id(d => d.id).distance(150).strength(1))
+      .force("charge", d3.forceManyBody().strength(-400))
+      .force("center", d3.forceCenter(width / 2, height / 2))
+      .force("collide", d3.forceCollide(30))
+      .on("tick", ticked);
+
+    // Draw group rectangles behind nodes
+    const groupRects = container.append("g").attr("class", "groups")
+      .selectAll("rect")
+      .data(groupIds)
+      .enter()
+      .append("rect")
+      .attr("class", d => `group-rect ${d}`)
+      .attr("rx", 10) // rounded corners
+      .attr("ry", 10)
+      .on("mouseover", function(event, d) {
+        d3.select(this).attr("fill-opacity", 0.4);
+      })
+      .on("mouseout", function(event, d) {
+        if (!d3.select(this).classed("clicked")) {
+          d3.select(this).attr("fill-opacity", 0.1);
+        }
+      })
+      .on("click", function(event, d) {
+        // Toggle clicked class, remove from others
+        groupRects.classed("clicked", false).attr("fill-opacity", 0.1).attr("stroke-width", 3);
+        const clicked = d3.select(this);
+        if (!clicked.classed("clicked")) {
+          clicked.classed("clicked", true).attr("fill-opacity", 0.4).attr("stroke-width", 5);
+        } else {
+          clicked.classed("clicked", false).attr("fill-opacity", 0.1).attr("stroke-width", 3);
+        }
+      });
+
+    // Add group labels
+    const groupLabels = container.append("g").attr("class", "group-labels")
+      .selectAll("text")
+      .data(groupIds)
+      .enter()
+      .append("text")
+      .attr("class", d => `group-label ${d}`)
+      .attr("font-weight", "bold")
+      .attr("fill", d => d === "group1" ? "steelblue" : "green")
+      .text(d => d.toUpperCase());
+
+    // Draw links
+    const link = container.append("g")
+      .attr("stroke", "#999")
+      .attr("stroke-width", 2)
+      .selectAll("line")
+      .data(links)
+      .join("line")
+      .attr("class", "link");
+
+    // Animate links by changing stroke-dashoffset on tick
+    let dashOffset = 0;
+
+    // Draw nodes group
+    const nodeGroup = container.append("g")
+      .selectAll("g")
+      .data(nodes)
+      .join("g")
+      .attr("class", "node")
+      .call(drag(simulation));
+
+    // Append hyperlinks + circles + labels
+    nodeGroup.append("a")
+      .attr("xlink:href", d => d.url)
+      .attr("target", "_blank")
+      .append("circle")
+      .attr("r", 20)
+      .attr("class", "node");
+
+    nodeGroup.append("a")
+      .attr("xlink:href", d => d.url)
+      .attr("target", "_blank")
+      .append("text")
+      .attr("dy", 5)
+      .attr("text-anchor", "middle")
+      .text(d => d.label);
+
+    // Tooltip behavior on nodes
+    nodeGroup.on("mouseover", (event, d) => {
+      tooltip.style("opacity", 1)
+        .html(`<strong>${d.label}</strong><br/>Groups: ${d.groups.join(", ")}`)
+        .style("left", (event.pageX + 10) + "px")
+        .style("top", (event.pageY + 10) + "px");
+    })
+    .on("mousemove", (event) => {
+      tooltip.style("left", (event.pageX + 10) + "px")
+             .style("top", (event.pageY + 10) + "px");
+    })
+    .on("mouseout", () => {
+      tooltip.style("opacity", 0);
+    });
+
+    // Drag handler
+    function drag(simulation) {
+      function dragstarted(event, d) {
+        if (!event.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+      }
+      function dragged(event, d) {
+        d.fx = event.x;
+        d.fy = event.y;
+      }
+      function dragended(event, d) {
+        if (!event.active) simulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+      }
+      return d3.drag()
+        .on("start", dragstarted)
+        .on("drag", dragged)
+        .on("end", dragended);
+    }
+
+    // Update positions on tick
+    function ticked() {
+      // Animate dash offset for links
+      dashOffset -= 1;
+      link
+        .attr("x1", d => d.source.x)
+        .attr("y1", d => d.source.y)
+        .attr("x2", d => d.target.x)
+        .attr("y2", d => d.target.y)
+        .attr("stroke-dasharray", "6,6")
+        .attr("stroke-dashoffset", dashOffset);
+
+      // Update nodes
+      nodeGroup.attr("transform", d => `translate(${d.x},${d.y})`);
+
+      // Calculate bounding boxes for each group dynamically
+      groupIds.forEach((groupId, i) => {
+        const groupNodes = nodes.filter(n => n.groups.includes(groupId));
+        if (groupNodes.length === 0) {
+          groupRects.filter((d, idx) => idx === i).attr("width", 0).attr("height", 0);
+          groupLabels.filter((d, idx) => idx === i).attr("display", "none");
+          return;
+        }
+        const xs = groupNodes.map(n => n.x);
+        const ys = groupNodes.map(n => n.y);
+        const minX = Math.min(...xs) - padding;
+        const maxX = Math.max(...xs) + padding;
+        const minY = Math.min(...ys) - padding;
+        const maxY = Math.max(...ys) + padding;
+
+        groupRects
+          .filter((d, idx) => idx === i)
+          .attr("x", minX)
+          .attr("y", minY)
+          .attr("width", maxX - minX)
+          .attr("height", maxY - minY);
+
+        groupLabels
+          .filter((d, idx) => idx === i)
+          .attr("x", minX + 10)
+          .attr("y", minY + 20)
+          .attr("display", null);
+      });
+    }
+  </script>
+</body>

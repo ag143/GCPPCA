@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<meta charset="utf-8" />
+<title>D3.js Node in Multiple Groups with Links and Hyperlinks</title>
+<style>
+  svg {
+    border: 1px solid #ccc;
+  }
+  .group1 {
+    fill: lightblue;
+    fill-opacity: 0.3;
+  }
+  .group2 {
+    fill: lightgreen;
+    fill-opacity: 0.3;
+  }
+  circle.node {
+    fill: orange;
+    stroke: #333;
+    stroke-width: 1.5px;
+    cursor: pointer;
+  }
+  text {
+    font-family: sans-serif;
+    font-size: 12px;
+    pointer-events: none;
+  }
+  a {
+    fill: black;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  line.link {
+    stroke: #999;
+    stroke-width: 2px;
+  }
+</style>
+
+<body>
+  <svg width="600" height="400"></svg>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script>
+    const svg = d3.select("svg");
+
+    // Define groups (visual circles)
+    const groups = [
+      { id: "group1", cx: 200, cy: 200, r: 150, class: "group1", label: "Group 1" },
+      { id: "group2", cx: 300, cy: 200, r: 150, class: "group2", label: "Group 2" }
+    ];
+
+    // Nodes — note node '3' belongs to both groups
+    const nodes = [
+      { id: "1", x: 150, y: 150, label: "Node 1", url: "https://example.com/node1", groups: ["group1"] },
+      { id: "2", x: 350, y: 150, label: "Node 2", url: "https://example.com/node2", groups: ["group2"] },
+      { id: "3", x: 250, y: 220, label: "Node 3 (in both)", url: "https://example.com/node3", groups: ["group1", "group2"] }
+    ];
+
+    // Links
+    const links = [
+      { source: "1", target: "3" },
+      { source: "2", target: "3" }
+    ];
+
+    // Draw groups as translucent circles
+    svg.selectAll("circle.group")
+      .data(groups)
+      .enter()
+      .append("circle")
+      .attr("class", d => d.class + " group")
+      .attr("cx", d => d.cx)
+      .attr("cy", d => d.cy)
+      .attr("r", d => d.r);
+
+    // Add group labels
+    svg.selectAll("text.grouplabel")
+      .data(groups)
+      .enter()
+      .append("text")
+      .attr("class", "grouplabel")
+      .attr("x", d => d.cx)
+      .attr("y", d => d.cy - d.r - 10)
+      .attr("text-anchor", "middle")
+      .text(d => d.label)
+      .style("font-weight", "bold")
+      .style("fill", d => d.class === "group1" ? "blue" : "green");
+
+    // Draw links as lines
+    svg.selectAll("line.link")
+      .data(links)
+      .enter()
+      .append("line")
+      .attr("class", "link")
+      .attr("x1", d => nodes.find(n => n.id === d.source).x)
+      .attr("y1", d => nodes.find(n => n.id === d.source).y)
+      .attr("x2", d => nodes.find(n => n.id === d.target).x)
+      .attr("y2", d => nodes.find(n => n.id === d.target).y);
+
+    // Draw nodes as circles wrapped in <a> for hyperlinks
+    const nodeGroup = svg.selectAll("g.node")
+      .data(nodes)
+      .enter()
+      .append("g")
+      .attr("class", "node")
+      .attr("transform", d => `translate(${d.x},${d.y})`);
+
+    nodeGroup.append("a")
+      .attr("xlink:href", d => d.url)
+      .attr("target", "_blank")
+      .append("circle")
+      .attr("r", 20)
+      .attr("class", "node");
+
+    nodeGroup.append("a")
+      .attr("xlink:href", d => d.url)
+      .attr("target", "_blank")
+      .append("text")
+      .attr("dy", 5)
+      .attr("text-anchor", "middle")
+      .text(d => d.label);
+
+  </script>
+</body>

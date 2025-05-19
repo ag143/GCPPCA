@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<meta charset="utf-8" />
+<title>D3.js Force Graph with Dynamic Group Rectangles and Multi-group Nodes</title>
+<style>
+  svg {
+    border: 1px solid #ccc;
+  }
+  .group-rect {
+    fill-opacity: 0.1;
+    stroke-width: 3px;
+  }
+  .group1 {
+    fill: lightblue;
+    stroke: steelblue;
+  }
+  .group2 {
+    fill: lightgreen;
+    stroke: green;
+  }
+  circle.node {
+    fill: orange;
+    stroke: #333;
+    stroke-width: 1.5px;
+    cursor: pointer;
+  }
+  text {
+    font-family: sans-serif;
+    font-size: 12px;
+    pointer-events: none;
+  }
+  a {
+    fill: black;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  line.link {
+    stroke: #999;
+    stroke-width: 2px;
+  }
+</style>
+
+<body>
+  <svg width="700" height="500"></svg>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script>
+    const width = 700, height = 500;
+    const svg = d3.select("svg")
+      .attr("width", width)
+      .attr("height", height);
+
+    // Nodes, each with groups array
+    const nodes = [
+      { id: "1", label: "Node 1", url: "https://example.com/node1", groups: ["group1"] },
+      { id: "2", label: "Node 2", url: "https://example.com/node2", groups: ["group2"] },
+      { id: "3", label: "Node 3 (both)", url: "https://example.com/node3", groups: ["group1", "group2"] },
+      { id: "4", label: "Node 4", url: "https://example.com/node4", groups: ["group1"] },
+      { id: "5", label: "Node 5", url: "https://example.com/node5", groups: ["group2"] }
+    ];
+
+    // Links between nodes by id
+    const links = [
+      { source: "1", target: "3" },
+      { source: "2", target: "3" },
+      { source: "4", target: "1" },
+      { source: "5", target: "2" }
+    ];
+
+    const groupIds = ["group1", "group2"];
+    const padding = 30; // padding around group rectangles
+
+    // Create simulation
+    const simulation = d3.forceSimulation(nodes)
+      .force("link", d3.forceLink(links).id(d => d.id).distance(150).strength(1))
+      .force("charge", d3.forceManyBody().strength(-400))
+      .force("center", d3.forceCenter(width / 2, height / 2))
+      .force("collide", d3.forceCollide(30))
+      .on("tick", ticked);
+
+    // Draw group rectangles behind nodes
+    const groupRects = svg.append("g").attr("class", "groups")
+      .selectAll("rect")
+      .data(groupIds)
+      .enter()
+      .append("rect")
+      .attr("class", d => `group-rect ${d}`)
+      .attr("rx", 10) // rounded corners
+      .attr("ry", 10);
+
+    // Draw links
+    const link = svg.append("g")
+      .attr("stroke", "#999")
+      .attr("stroke-width", 2)
+      .selectAll("line")
+      .data(links)
+      .join("line")
+      .attr("class", "link");
+
+    // Draw nodes group
+    const nodeGroup = svg.append("g")
+      .selectAll("g")
+      .data(nodes)
+      .join("g")
+      .attr("class", "node")
+      .call(drag(simulation));
+
+    // Append hyperlinks + circles + labels
+    nodeGroup.append("a")
+      .attr("xlink:href", d => d.url)
+      .attr("target", "_blank")
+      .append("circle")
+      .attr("r", 20)
+      .attr("class", "node");
+
+    nodeGroup.append("a")
+      .attr("xlink:href", d => d.url)
+      .attr("target", "_blank")
+      .append("text")
+      .attr("dy", 5)
+      .attr("text-anchor", "middle")
+      .text(d => d.label);
+
+    // Drag handler
+    function drag(simulation) {
+      function dragstarted(event, d) {
+        if (!event.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+      }
+      function dragged(event, d) {
+        d.fx = event.x;
+        d.fy = event.y;
+      }
+      function dragended(event, d) {
+        if (!event.active) simulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+      }
+      return d3.drag()
+        .on("start", dragstarted)
+        .on("drag", dragged)
+        .on("end", dragended);
+    }
+
+    // Update positions on tick
+    function ticked() {
+      // Update links
+      link
+        .attr("x1", d => d.source.x)
+        .attr("y1", d => d.source.y)
+        .attr("x2", d => d.target.x)
+        .attr("y2", d => d.target.y);
+
+      // Update nodes
+      nodeGroup.attr("transform", d => `translate(${d.x},${d.y})`);
+
+      // Calculate bounding boxes for each group dynamically
+      groupIds.forEach((groupId, i) => {
+        const groupNodes = nodes.filter(n => n.groups.includes(groupId));
+        if (groupNodes.length === 0) {
+          groupRects.filter((d, idx) => idx === i).attr("width", 0).attr("height", 0);
+          return;
+        }
+        const xs = groupNodes.map(n => n.x);
+        const ys = groupNodes.map(n => n.y);
+        const minX = Math.min(...xs) - padding;
+        const maxX = Math.max(...xs) + padding;
+        const minY = Math.min(...ys) - padding;
+        const maxY = Math.max(...ys) + padding;
+
+        groupRects
+          .filter((d, idx) => idx === i)
+          .attr("x", minX)
+          .attr("y", minY)
+          .attr("width", maxX - minX)
+          .attr("height", maxY - minY);
+      });
+    }
+  </script>
+</body>

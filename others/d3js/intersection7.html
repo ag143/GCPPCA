@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Beautified GCP Architecture Diagram</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 24px;
+    background: #f5f7fa;
+    color: #333;
+  }
+  h2 {
+    margin-bottom: 12px;
+  }
+  select {
+    padding: 8px 14px;
+    font-size: 16px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    margin-bottom: 20px;
+    background-color: #fff;
+    cursor: pointer;
+    transition: border-color 0.3s ease;
+  }
+  select:hover {
+    border-color: #5c9ded;
+  }
+  svg {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    width: 100%;
+    height: 600px;
+  }
+  .group-rect {
+    fill: #e4ecf7;
+    stroke: #8eaadf;
+    stroke-width: 2px;
+    filter: drop-shadow(2px 2px 3px rgba(0,0,0,0.08));
+    transition: fill 0.3s ease;
+  }
+  .group-rect.region {
+    fill: linear-gradient(135deg, #b0d4f1 0%, #7aace5 100%);
+    stroke: #5a85cc;
+  }
+  .group-rect.zone {
+    fill: linear-gradient(135deg, #cde7d8 0%, #8cc38f 100%);
+    stroke: #5a9a5a;
+  }
+  .group-rect.subnet {
+    fill: linear-gradient(135deg, #f7dfd9 0%, #e48f80 100%);
+    stroke: #d9775d;
+  }
+  .group-rect:hover {
+    fill: #a3c6f1 !important;
+    stroke: #3a66aa !important;
+  }
+  .group-label {
+    font-weight: 700;
+    fill: #33475b;
+    font-size: 14px;
+    user-select: none;
+    pointer-events: none;
+    text-shadow: 0 0 2px rgba(255,255,255,0.9);
+  }
+  .node circle {
+    fill: #ff8c00;
+    stroke: #cc7000;
+    stroke-width: 2px;
+    filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.12));
+    transition: fill 0.3s ease, r 0.3s ease;
+  }
+  .node:hover circle {
+    fill: #ffa733;
+    r: 14;
+    cursor: pointer;
+  }
+  .node-label {
+    font-weight: 600;
+    font-size: 13px;
+    fill: #2c3e50;
+    pointer-events: none;
+    user-select: none;
+  }
+  line.link {
+    stroke: #a1aab3;
+    stroke-width: 2px;
+    fill: none;
+    marker-end: url(#arrowhead);
+    transition: stroke 0.3s ease;
+  }
+  line.link:hover {
+    stroke: #3a85f7;
+  }
+  /* Tooltip styling */
+  .tooltip {
+    position: absolute;
+    text-align: left;
+    padding: 8px 12px;
+    background: rgba(50, 50, 50, 0.85);
+    color: white;
+    font-size: 13px;
+    border-radius: 6px;
+    pointer-events: none;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.25);
+    line-height: 1.4;
+  }
+</style>
+</head>
+<body>
+<h2>Beautified GCP Architecture Diagram</h2>
+
+<label for="category-select">Select Category:</label>
+<select id="category-select">
+  <option value="compute">Compute</option>
+  <option value="storage">Storage</option>
+  <option value="networking">Networking</option>
+  <option value="security">Security</option>
+  <option value="analytics">Analytics</option>
+</select>
+
+<svg></svg>
+
+<script>
+  const svg = d3.select("svg");
+  const width = parseInt(svg.style("width"));
+  const height = parseInt(svg.style("height"));
+  const padding = 50;
+
+  // Arrowhead marker definition for links
+  svg.append("defs").append("marker")
+    .attr("id", "arrowhead")
+    .attr("viewBox", "-0 -5 10 10")
+    .attr("refX", 14)
+    .attr("refY", 0)
+    .attr("orient", "auto")
+    .attr("markerWidth", 7)
+    .attr("markerHeight", 7)
+    .attr("xoverflow", "visible")
+    .append("svg:path")
+    .attr("d", "M 0,-5 L 10 ,0 L 0,5")
+    .attr("fill", "#a1aab3")
+    .style("stroke", "none");
+
+  // Tooltip div
+  const tooltip = d3.select("body").append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0);
+
+  // Sample data for each category (same as before)
+  const dataByCategory = {
+    compute: {
+      regions: [
+        { id: "us-central1", name: "us-central1" },
+        { id: "europe-west1", name: "europe-west1" },
+      ],
+      zones: [
+        { id: "us-central1-a", name: "us-central1-a", region: "us-central1" },
+        { id: "us-central1-b", name: "us-central1-b", region: "us-central1" },
+        { id: "europe-west1-b", name: "europe-west1-b", region: "europe-west1" },
+      ],
+      subnets: [
+        { id: "subnet-1", name: "subnet-1", zone: "us-central1-a" },
+        { id: "subnet-2", name: "subnet-2", zone: "us-central1-b" },
+        { id: "subnet-3", name: "subnet-3", zone: "europe-west1-b" },
+      ],
+      nodes: [
+        { id: "instance-1", name: "Instance 1", subnet: "subnet-1", url: "https://cloud.google.com/compute" },
+        { id: "instance-2", name: "Instance 2", subnet: "subnet-2", url: "https://cloud.google.com/compute" },
+        { id: "instance-3", name: "Instance 3", subnet: "subnet-3", url: "https://cloud.google.com/compute" },
+      ]
+    },
+    storage: {
+      regions: [
+        { id: "us-east1", name: "us-east1" },
+        { id: "asia-east1", name: "asia-east1" },
+      ],
+      zones: [
+        { id: "us-east1-b", name: "us-east1-b", region: "us-east1" },
+        { id: "asia-east1-a", name: "asia-east1-a", region: "asia-east1" },
+      ],
+      subnets: [
+        { id: "storage-subnet-1", name: "storage-subnet-1", zone: "us-east1-b" },
+        { id: "storage-subnet-2", name: "storage-subnet-2", zone: "asia-east1-a" },
+      ],
+      nodes: [
+        { id: "bucket-1", name: "Bucket 1", subnet: "storage-subnet-1", url: "https://cloud.google.com/storage" },
+        { id: "bucket-2", name: "Bucket 2", subnet: "storage-subnet-2", url: "https://cloud.google.com/storage" },
+      ]
+    },
+    networking: {
+      regions: [
+        { id: "us-west1", name: "us-west1" },
+      ],
+      zones: [
+        { id: "us-west1-a", name: "us-west1-a", region: "us-west1" },
+      ],
+      subnets: [
+        { id: "net-subnet-1", name: "net-subnet-1", zone: "us-west1-a" },
+      ],
+      nodes: [
+        { id: "vpc-1", name: "VPC Network", subnet: "net-subnet-1", url: "https://cloud.google.com/vpc" },
+      ]
+    },
+    security: {
+      regions: [
+        { id: "us-central1", name: "us-central1" },
+      ],
+      zones: [
+        { id: "us-central1-c", name: "us-central1-c", region: "us-central1" },
+      ],
+      subnets: [
+        { id: "sec-subnet-1", name: "sec-subnet-1", zone: "us-central1-c" },
+      ],
+      nodes: [
+        { id: "firewall-1", name: "Firewall Rule", subnet: "sec-subnet-1", url: "https://cloud.google.com/firewalls" },
+      ]
+    },
+    analytics: {
+      regions: [
+        { id: "us-central1", name: "us-central1" },
+      ],
+      zones: [
+        { id: "us-central1-a", name: "us-central1-a", region: "us-central1" },
+      ],
+      subnets: [
+        { id: "analytics-subnet-1", name: "analytics-subnet-1", zone: "us-central1-a" },
+      ],
+      nodes: [
+        { id: "bigquery-1", name: "BigQuery Dataset", subnet: "analytics-subnet-1", url: "https://cloud.google.com/bigquery" },
+      ]
+    }
+  };
+
+  // Build hierarchy structure from flat data
+  function buildHierarchy(categoryData) {
+    // Create map lookups
+    const regionMap = new Map();
+    const zoneMap = new Map();
+    const subnetMap = new Map();
+
+    // Regions
+    const regions = categoryData.regions.map(r => ({ ...r, children: [], data: r, type: "region" }));
+    regions.forEach(r => regionMap.set(r.id, r));
+
+    // Zones
+    const zones = categoryData.zones.map(z => ({ ...z, children: [], data: z, type: "zone" }));
+    zones.forEach(z => {
+      zoneMap.set(z.id, z);
+      const parentRegion = regionMap.get(z.region);
+      if (parentRegion) parentRegion.children.push(z);
+    });
+
+    // Subnets
+    const subnets = categoryData.subnets.map(s => ({ ...s, children: [], data: s, type: "subnet" }));
+    subnets.forEach(s => {
+      subnetMap.set(s.id, s);
+      const parentZone = zoneMap.get(s.zone);
+      if (parentZone) parentZone.children.push(s);
+    });
+
+    // Nodes
+    const nodes = categoryData.nodes.map(n => ({ ...n, data: n, type: "node" }));
+    nodes.forEach(n => {
+      const parentSubnet = subnetMap.get(n.subnet);
+      if (parentSubnet) parentSubnet.children.push(n);
+    });
+
+    return regions;
+  }
+
+  // Calculate bounding box for group rectangle around children nodes
+  function getGroupBBox(children) {
+    if (!children || children.length === 0) return null;
+    const xs = children.map(c => c.x);
+    const ys = children.map(c => c.y);
+    const minX = Math.min(...xs) - 30;
+    const maxX = Math.max(...xs) + 60;
+    const minY = Math.min(...ys) - 30;
+    const maxY = Math.max(...ys) + 30;
+    return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+  }
+
+  // Layout the nodes horizontally grouped by their parents with spacing
+  function layoutTree(rootNodes) {
+    const verticalSpacing = 100;
+    const horizontalSpacing = 220;
+
+    // Flatten all nodes for convenience
+    const allNodes = [];
+
+    // Position regions horizontally
+    rootNodes.forEach((region, i) => {
+      region.x = padding + i * horizontalSpacing;
+      region.y = padding;
+      allNodes.push(region);
+
+      // Position zones vertically under region
+      region.children.forEach((zone, j) => {
+        zone.x = region.x;
+        zone.y = region.y + (j + 1) * verticalSpacing;
+        allNodes.push(zone);
+
+        // Position subnets horizontally under zone
+        zone.children.forEach((subnet, k) => {
+          subnet.x = zone.x + (k + 1) * 140;
+          subnet.y = zone.y + verticalSpacing / 2;
+          allNodes.push(subnet);
+
+          // Position nodes vertically under subnet
+          subnet.children.forEach((node, m) => {
+            node.x = subnet.x;
+            node.y = subnet.y + (m + 1) * 40;
+            allNodes.push(node);
+          });
+        });
+      });
+    });
+
+    return allNodes;
+  }
+
+  // Draw diagram for selected category
+  function drawDiagram(category) {
+    svg.selectAll("*:not(defs)").remove();
+
+    const data = dataByCategory[category];
+    if (!data) return;
+
+    // Build hierarchy & layout
+    const hierarchy = buildHierarchy(data);
+    const allNodes = layoutTree(hierarchy);
+
+    // Separate by type for group drawing
+    const regions = allNodes.filter(d => d.type === "region");
+    const zones = allNodes.filter(d => d.type === "zone");
+    const subnets = allNodes.filter(d => d.type === "subnet");
+    const nodes = allNodes.filter(d => d.type === "node");
+
+    // Draw groups with rounded rects
+    function drawGroups(groups, className, rx, ry, fill, stroke) {
+      groups.forEach(group => {
+        const childrenNodes = group.children.filter(c => c.type === "node");
+        if (childrenNodes.length === 0) return;
+        const bbox = getGroupBBox(childrenNodes);
+        if (!bbox) return;
+
+        svg.append("rect")
+          .attr("class", `group-rect ${className}`)
+          .attr("x", bbox.x)
+          .attr("y", bbox.y)
+          .attr("width", bbox.width)
+          .attr("height", bbox.height)
+          .attr("rx", rx)
+          .attr("ry", ry);
+
+        svg.append("text")
+          .attr("class", "group-label")
+          .attr("x", bbox.x + 8)
+          .attr("y", bbox.y + 16)
+          .text(group.name);
+      });
+    }
+
+    drawGroups(regions, "region", 12, 12);
+    drawGroups(zones, "zone", 10, 10);
+    drawGroups(subnets, "subnet", 8, 8);
+
+    // Draw links as smooth curves between nodes and their subnet centers
+    const linksData = nodes.map(d => {
+      return {
+        source: { x: d.x, y: d.y },
+        target: { x: d.parent.x, y: d.parent.y }
+      };
+    });
+
+    svg.selectAll("path.link")
+      .data(linksData)
+      .enter()
+      .append("path")
+      .attr("class", "link")
+      .attr("d", d => {
+        const dx = d.target.x - d.source.x;
+        const dy = d.target.y - d.source.y;
+        const dr = Math.sqrt(dx * dx + dy * dy) * 1.5;
+        return `M${d.source.x},${d.source.y} A${dr},${dr} 0 0,1 ${d.target.x},${d.target.y}`;
+      });
+
+    // Draw nodes
+    const nodeGroup = svg.append("g").attr("class", "nodes");
+    const nodeElements = nodeGroup.selectAll("g.node")
+      .data(nodes)
+      .enter()
+      .append("g")
+      .attr("class", "node")
+      .attr("transform", d => `translate(${d.x},${d.y})`)
+      .style("cursor", "pointer")
+      .on("click", (event, d) => {
+        if (d.data.url) window.open(d.data.url, "_blank");
+      })
+      .on("mouseover", (event, d) => {
+        tooltip.transition().duration(200).style("opacity", 0.9);
+        tooltip.html(`<strong>${d.data.name}</strong><br/>Category: ${category.charAt(0).toUpperCase() + category.slice(1)}<br/>Region: ${d.parent.parent.parent.name}<br/>Zone: ${d.parent.parent.name}<br/>Subnet: ${d.parent.name}`)
+          .style("left", (event.pageX + 14) + "px")
+          .style("top", (event.pageY + 10) + "px");
+      })
+      .on("mouseout", () => {
+        tooltip.transition().duration(500).style("opacity", 0);
+      });
+
+    nodeElements.append("circle")
+      .attr("r", 12);
+
+    nodeElements.append("text")
+      .attr("class", "node-label")
+      .attr("dy", 5)
+      .attr("x", 16)
+      .text(d => d.data.name);
+  }
+
+  const categorySelect = d3.select("#category-select");
+  drawDiagram(categorySelect.node().value);
+
+  categorySelect.on("change", function() {
+    drawDiagram(this.value);
+  });
+</script>
+</body>
+</html>
