@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>GCP Architecture Diagram - D3.js</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+    }
+    #sidebar {
+      width: 200px;
+      background: #f4f4f4;
+      padding: 10px;
+      border-right: 1px solid #ccc;
+    }
+    #sidebar h3 {
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+    #sidebar ul {
+      list-style: none;
+      padding: 0;
+    }
+    #sidebar li {
+      margin: 5px 0;
+      cursor: pointer;
+      color: #007acc;
+    }
+    #diagram {
+      flex: 1;
+    }
+    svg {
+      width: 100%;
+      height: 100vh;
+      background-color: #fff;
+    }
+    rect.node {
+      fill: #ffa500;
+      stroke: #333;
+      stroke-width: 1.5px;
+      cursor: pointer;
+    }
+    text {
+      pointer-events: none;
+      font-size: 12px;
+    }
+    .link {
+      stroke: #999;
+      stroke-width: 2px;
+    }
+    .group-rect {
+      fill-opacity: 0.1;
+      stroke-width: 2px;
+      rx: 10;
+      ry: 10;
+    }
+    .Compute { fill: lightblue; stroke: steelblue; }
+    .Storage { fill: lightgreen; stroke: green; }
+    .Database { fill: lightcoral; stroke: darkred; }
+    .Network { fill: lightgoldenrodyellow; stroke: goldenrod; }
+    .Security { fill: lightpink; stroke: crimson; }
+    .Analytics { fill: lightcyan; stroke: teal; }
+    .ML { fill: lavender; stroke: indigo; }
+  </style>
+</head>
+<body>
+  <div id="sidebar">
+    <h3>Linksets</h3>
+    <ul id="linksetMenu"></ul>
+  </div>
+  <div id="diagram">
+    <svg></svg>
+  </div>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script>
+    const svg = d3.select("svg");
+    const width = window.innerWidth - 200;
+    const height = window.innerHeight;
+
+    const groups = ["Compute", "Storage", "Database", "Network", "Security", "Analytics", "ML"];
+
+    const nodes = [
+      // Compute (10)
+  { id: "Compute Engine", category: "Compute", url: "https://cloud.google.com/compute" },
+  { id: "App Engine", category: "Compute", url: "https://cloud.google.com/appengine" },
+  { id: "Cloud Run", category: "Compute", url: "https://cloud.google.com/run" },
+  { id: "GKE", category: "Compute", url: "https://cloud.google.com/kubernetes-engine" },
+  { id: "Cloud Functions", category: "Compute", url: "https://cloud.google.com/functions" },
+  { id: "Anthos", category: "Compute", url: "https://cloud.google.com/anthos" },
+  { id: "VM Instance Templates", category: "Compute", url: "https://cloud.google.com/compute/docs/instance-templates" },
+  { id: "Preemptible VMs", category: "Compute", url: "https://cloud.google.com/preemptible-vms" },
+  { id: "Cloud Run for Anthos", category: "Compute", url: "https://cloud.google.com/run/docs/anthos" },
+  { id: "Cloud Scheduler", category: "Compute", url: "https://cloud.google.com/scheduler" },
+
+  // Storage (8)
+  { id: "Cloud Storage", category: "Storage", url: "https://cloud.google.com/storage" },
+  { id: "Filestore", category: "Storage", url: "https://cloud.google.com/filestore" },
+  { id: "Persistent Disk", category: "Storage", url: "https://cloud.google.com/compute/docs/disks" },
+  { id: "Cloud Storage Nearline", category: "Storage", url: "https://cloud.google.com/storage" },
+  { id: "Cloud Storage Coldline", category: "Storage", url: "https://cloud.google.com/storage" },
+  { id: "Cloud Storage Archive", category: "Storage", url: "https://cloud.google.com/storage" },
+  { id: "Backup and DR", category: "Storage", url: "https://cloud.google.com/backup-dr" },
+  { id: "Cloud Data Transfer", category: "Storage", url: "https://cloud.google.com/data-transfer" },
+
+  // Database (8)
+  { id: "Cloud SQL", category: "Database", url: "https://cloud.google.com/sql" },
+  { id: "Firestore", category: "Database", url: "https://cloud.google.com/firestore" },
+  { id: "Bigtable", category: "Database", url: "https://cloud.google.com/bigtable" },
+  { id: "Spanner", category: "Database", url: "https://cloud.google.com/spanner" },
+  { id: "Memorystore", category: "Database", url: "https://cloud.google.com/memorystore" },
+  { id: "Cloud BigQuery Omni", category: "Database", url: "https://cloud.google.com/bigquery-omni" },
+  { id: "Cloud SQL Insights", category: "Database", url: "https://cloud.google.com/sql/insights" },
+  { id: "Datastore", category: "Database", url: "https://cloud.google.com/datastore" },
+
+  // Network (8)
+  { id: "VPC", category: "Network", url: "https://cloud.google.com/vpc" },
+  { id: "Cloud Load Balancing", category: "Network", url: "https://cloud.google.com/load-balancing" },
+  { id: "Cloud CDN", category: "Network", url: "https://cloud.google.com/cdn" },
+  { id: "Cloud Interconnect", category: "Network", url: "https://cloud.google.com/interconnect" },
+  { id: "Cloud NAT", category: "Network", url: "https://cloud.google.com/nat" },
+  { id: "Cloud DNS", category: "Network", url: "https://cloud.google.com/dns" },
+  { id: "Traffic Director", category: "Network", url: "https://cloud.google.com/traffic-director" },
+  { id: "Private Service Connect", category: "Network", url: "https://cloud.google.com/private-service-connect" },
+
+  // Security (8)
+  { id: "IAM", category: "Security", url: "https://cloud.google.com/iam" },
+  { id: "Cloud Armor", category: "Security", url: "https://cloud.google.com/armor" },
+  { id: "VPC Service Controls", category: "Security", url: "https://cloud.google.com/vpc-service-controls" },
+  { id: "Security Command Center", category: "Security", url: "https://cloud.google.com/security-command-center" },
+  { id: "Cloud Key Management Service", category: "Security", url: "https://cloud.google.com/kms" },
+  { id: "Cloud Identity", category: "Security", url: "https://cloud.google.com/identity" },
+  { id: "Data Loss Prevention API", category: "Security", url: "https://cloud.google.com/dlp" },
+  { id: "Access Context Manager", category: "Security", url: "https://cloud.google.com/access-context-manager" },
+
+  // Analytics (5)
+  { id: "BigQuery", category: "Analytics", url: "https://cloud.google.com/bigquery" },
+  { id: "Dataflow", category: "Analytics", url: "https://cloud.google.com/dataflow" },
+  { id: "Pub/Sub", category: "Analytics", url: "https://cloud.google.com/pubsub" },
+  { id: "Dataproc", category: "Analytics", url: "https://cloud.google.com/dataproc" },
+  { id: "Looker", category: "Analytics", url: "https://cloud.google.com/looker" },
+
+  // ML/AI (5)
+  { id: "Vertex AI", category: "ML", url: "https://cloud.google.com/vertex-ai" },
+  { id: "AutoML", category: "ML", url: "https://cloud.google.com/automl" },
+  { id: "TPU", category: "ML", url: "https://cloud.google.com/tpu" },
+  { id: "AI Platform Prediction", category: "ML", url: "https://cloud.google.com/ai-platform/prediction" },
+  { id: "Natural Language API", category: "ML", url: "https://cloud.google.com/natural-language" }
+    ];
+
+    const links = [
+      // Compute links
+  { source: "Compute Engine", target: "Persistent Disk" },
+  { source: "Compute Engine", target: "VPC" },
+  { source: "GKE", target: "Cloud Storage" },
+  { source: "GKE", target: "VPC" },
+  { source: "Cloud Run", target: "VPC" },
+  { source: "Cloud Functions", target: "VPC" },
+  { source: "App Engine", target: "Cloud Storage" },
+  { source: "Anthos", target: "GKE" },
+  { source: "Preemptible VMs", target: "Compute Engine" },
+  { source: "Cloud Scheduler", target: "Cloud Functions" },
+
+  // Storage links
+  { source: "Cloud Storage", target: "BigQuery" },
+  { source: "Cloud Storage Nearline", target: "Backup and DR" },
+  { source: "Cloud Storage Coldline", target: "Backup and DR" },
+  { source: "Cloud Storage Archive", target: "Backup and DR" },
+  { source: "Filestore", target: "GKE" },
+  { source: "Persistent Disk", target: "Compute Engine" },
+  { source: "Cloud Data Transfer", target: "Cloud Storage" },
+
+  // Database links
+  { source: "Cloud SQL", target: "App Engine" },
+  { source: "Cloud SQL", target: "Compute Engine" },
+  { source: "Firestore", target: "Cloud Functions" },
+  { source: "Bigtable", target: "GKE" },
+  { source: "Spanner", target: "App Engine" },
+  { source: "Memorystore", target: "GKE" },
+  { source: "Cloud BigQuery Omni", target: "BigQuery" },
+  { source: "Cloud SQL Insights", target: "Cloud SQL" },
+  { source: "Datastore", target: "App Engine" },
+
+  // Network links
+  { source: "VPC", target: "Compute Engine" },
+  { source: "Cloud Load Balancing", target: "Compute Engine" },
+  { source: "Cloud Load Balancing", target: "App Engine" },
+  { source: "Cloud CDN", target: "Cloud Load Balancing" },
+  { source: "Cloud Interconnect", target: "VPC" },
+  { source: "Cloud NAT", target: "VPC" },
+  { source: "Cloud DNS", target: "VPC" },
+  { source: "Traffic Director", target: "GKE" },
+  { source: "Private Service Connect", target: "VPC" },
+
+  // Security links
+  { source: "IAM", target: "Compute Engine" },
+  { source: "Cloud Armor", target: "Cloud Load Balancing" },
+  { source: "VPC Service Controls", target: "VPC" },
+  { source: "Security Command Center", target: "VPC" },
+  { source: "Cloud Key Management Service", target: "Cloud Storage" },
+  { source: "Cloud Identity", target: "IAM" },
+  { source: "Data Loss Prevention API", target: "Cloud Storage" },
+  { source: "Access Context Manager", target: "IAM" },
+
+  // Analytics links
+  { source: "BigQuery", target: "Dataflow" },
+  { source: "Pub/Sub", target: "Dataflow" },
+  { source: "Dataproc", target: "BigQuery" },
+  { source: "Looker", target: "BigQuery" },
+
+  // ML/AI links
+  { source: "Vertex AI", target: "BigQuery" },
+  { source: "AutoML", target: "Cloud Storage" },
+  { source: "TPU", target: "GKE" },
+  { source: "AI Platform Prediction", target: "Vertex AI" },
+  { source: "Natural Language API", target: "Vertex AI" }
+    ];
+
+    const simulation = d3.forceSimulation(nodes)
+      .force("link", d3.forceLink(links).id(d => d.id).distance(120))
+      .force("charge", d3.forceManyBody().strength(-500))
+      .force("center", d3.forceCenter(width / 2, height / 2))
+      .on("tick", ticked);
+
+    const link = svg.append("g").attr("stroke", "#aaa").selectAll("line")
+      .data(links).enter().append("line")
+      .attr("class", "link");
+
+    const nodeGroup = svg.append("g")
+      .selectAll("g")
+      .data(nodes).enter().append("g")
+      .call(drag(simulation));
+
+    nodeGroup.append("rect")
+      .attr("class", "node")
+      .attr("width", 120)
+      .attr("height", 30)
+      .attr("x", -60)
+      .attr("y", -15);
+
+    nodeGroup.append("a")
+      .attr("xlink:href", d => d.url)
+      .attr("target", "_blank")
+      .append("text")
+      .attr("dy", 5)
+      .attr("text-anchor", "middle")
+      .text(d => d.label);
+
+    const groupRects = svg.append("g").attr("class", "groups")
+      .selectAll("rect")
+      .data(groups)
+      .enter().append("rect")
+      .attr("class", d => `group-rect ${d}`);
+
+    function ticked() {
+      nodeGroup.attr("transform", d => `translate(${d.x},${d.y})`);
+
+      link
+        .attr("x1", d => d.source.x)
+        .attr("y1", d => d.source.y)
+        .attr("x2", d => d.target.x)
+        .attr("y2", d => d.target.y);
+
+      groups.forEach((group, i) => {
+        const members = nodes.filter(n => n.group === group);
+        if (!members.length) return;
+        const xs = members.map(n => n.x);
+        const ys = members.map(n => n.y);
+        const minX = Math.min(...xs) - 80;
+        const maxX = Math.max(...xs) + 80;
+        const minY = Math.min(...ys) - 40;
+        const maxY = Math.max(...ys) + 40;
+        groupRects.filter((d, j) => j === i)
+          .attr("x", minX)
+          .attr("y", minY)
+          .attr("width", maxX - minX)
+          .attr("height", maxY - minY);
+      });
+    }
+
+    function drag(simulation) {
+      function dragstarted(event, d) {
+        if (!event.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+      }
+      function dragged(event, d) {
+        d.fx = event.x;
+        d.fy = event.y;
+      }
+      function dragended(event, d) {
+        if (!event.active) simulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+      }
+      return d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended);
+    }
+
+    const linksets = [...new Set(links.map(l => l.linkset))];
+    const menu = d3.select("#linksetMenu");
+    linksets.forEach(set => {
+      menu.append("li").text(set).on("click", () => {
+        const activeLinks = links.filter(l => l.linkset === set);
+        const ids = new Set(activeLinks.flatMap(l => [l.source.id || l.source, l.target.id || l.target]));
+        nodeGroup.style("display", d => ids.has(d.id) ? null : "none");
+        link.style("display", d => d.linkset === set ? null : "none");
+      });
+    });
+  </script>
+</body>
+</html>

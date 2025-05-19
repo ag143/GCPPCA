@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<meta charset="utf-8" />
+<title>D3.js GCP Architecture Diagram</title>
+<style>
+  body {
+    font-family: sans-serif;
+    margin: 0;
+    display: flex;
+  }
+  #sidebar {
+    width: 200px;
+    background: #f8f8f8;
+    border-right: 1px solid #ccc;
+    padding: 10px;
+  }
+  #sidebar h3 {
+    font-size: 16px;
+    margin-top: 0;
+  }
+  .linkset-btn {
+    display: block;
+    padding: 6px 10px;
+    margin-bottom: 5px;
+    background: #ddd;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .linkset-btn.active {
+    background: #4a90e2;
+    color: white;
+  }
+  svg {
+    flex: 1;
+    border: 1px solid #ccc;
+  }
+  .group-rect {
+    fill-opacity: 0.05;
+    stroke-width: 2px;
+    rx: 10;
+    ry: 10;
+  }
+  .region { fill: lightblue; stroke: steelblue; }
+  .zone { fill: lightgreen; stroke: green; }
+  .subnet { fill: lightpink; stroke: deeppink; }
+  .node rect {
+    fill: #ffe0b2;
+    stroke: #e65100;
+    stroke-width: 1.5px;
+    rx: 8;
+    ry: 8;
+    filter: drop-shadow(2px 2px 2px #aaa);
+  }
+  .node text {
+    pointer-events: none;
+    font-size: 12px;
+    fill: #000;
+  }
+  .link {
+    stroke: #999;
+    stroke-width: 2px;
+    opacity: 0.8;
+  }
+</style>
+
+<div id="sidebar">
+  <h3>Linksets</h3>
+  <button class="linkset-btn" data-set="all">All</button>
+  <button class="linkset-btn" data-set="compute">Compute</button>
+  <button class="linkset-btn" data-set="storage">Storage</button>
+  <button class="linkset-btn" data-set="network">Network</button>
+</div>
+<svg width="900" height="600"></svg>
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+const width = 900, height = 600;
+const svg = d3.select("svg");
+
+const allNodes = [
+  { id: "vm1", label: "VM Instance", url: "https://cloud.google.com/compute", group: "subnet-a", type: "compute" },
+  { id: "vm2", label: "Preemptible VM", url: "https://cloud.google.com/compute/docs/instances/preemptible", group: "subnet-b", type: "compute" },
+  { id: "gcs", label: "Cloud Storage", url: "https://cloud.google.com/storage", group: "subnet-a", type: "storage" },
+  { id: "vpc", label: "VPC Network", url: "https://cloud.google.com/vpc", group: "subnet-b", type: "network" }
+];
+
+const allLinks = [
+  { source: "vm1", target: "gcs", type: "storage" },
+  { source: "vm1", target: "vpc", type: "network" },
+  { source: "vm2", target: "vpc", type: "network" }
+];
+
+const groupHierarchy = {
+  name: "region-a",
+  type: "region",
+  children: [
+    {
+      name: "zone-a",
+      type: "zone",
+      children: [
+        { name: "subnet-a", type: "subnet" }
+      ]
+    },
+    {
+      name: "zone-b",
+      type: "zone",
+      children: [
+        { name: "subnet-b", type: "subnet" }
+      ]
+    }
+  ]
+};
+
+const nodeMap = new Map();
+allNodes.forEach(d => nodeMap.set(d.id, d));
+
+const simulation = d3.forceSimulation(allNodes)
+  .force("link", d3.forceLink(allLinks).id(d => d.id).distance(150))
+  .force("charge", d3.forceManyBody().strength(-500))
+  .force("center", d3.forceCenter(width / 2, height / 2))
+  .on("tick", ticked);
+
+const groupG = svg.append("g");
+const linkG = svg.append("g");
+const nodeG = svg.append("g");
+
+function drawGroups(hierarchy) {
+  const groupRects = [];
+  const layout = {
+    "region-a": { x: 50, y: 50, w: 800, h: 500 },
+    "zone-a": { x: 70, y: 80, w: 350, h: 200 },
+    "zone-b": { x: 430, y: 80, w: 350, h: 200 },
+    "subnet-a": { x: 90, y: 110, w: 300, h: 140 },
+    "subnet-b": { x: 450, y: 110, w: 300, h: 140 }
+  };
+
+  function recurse(g) {
+    const l = layout[g.name];
+    groupRects.push({ id: g.name, type: g.type, ...l });
+    if (g.children) g.children.forEach(recurse);
+  }
+  recurse(hierarchy);
+
+  groupG.selectAll("rect")
+    .data(groupRects)
+    .enter()
+    .append("rect")
+    .attr("class", d => `group-rect ${d.type}`)
+    .attr("x", d => d.x)
+    .attr("y", d => d.y)
+    .attr("width", d => d.w)
+    .attr("height", d => d.h);
+
+  groupG.selectAll("text")
+    .data(groupRects)
+    .enter()
+    .append("text")
+    .attr("x", d => d.x + 8)
+    .attr("y", d => d.y + 15)
+    .text(d => d.id)
+    .style("font-size", "10px")
+    .style("fill", "#555");
+}
+
+drawGroups(groupHierarchy);
+
+const link = linkG.selectAll("line")
+  .data(allLinks)
+  .enter().append("line")
+  .attr("class", "link");
+
+const node = nodeG.selectAll("g")
+  .data(allNodes)
+  .enter().append("g")
+  .attr("class", "node")
+  .call(d3.drag()
+    .on("start", dragstarted)
+    .on("drag", dragged)
+    .on("end", dragended));
+
+node.append("a")
+  .attr("xlink:href", d => d.url)
+  .attr("target", "_blank")
+  .append("rect")
+  .attr("width", 100)
+  .attr("height", 30)
+  .attr("x", -50)
+  .attr("y", -15);
+
+node.append("text")
+  .attr("dy", 4)
+  .attr("text-anchor", "middle")
+  .text(d => d.label);
+
+function ticked() {
+  link
+    .attr("x1", d => d.source.x)
+    .attr("y1", d => d.source.y)
+    .attr("x2", d => d.target.x)
+    .attr("y2", d => d.target.y);
+
+  node.attr("transform", d => `translate(${d.x},${d.y})`);
+}
+
+function dragstarted(event, d) {
+  if (!event.active) simulation.alphaTarget(0.3).restart();
+  d.fx = d.x;
+  d.fy = d.y;
+}
+function dragged(event, d) {
+  d.fx = event.x;
+  d.fy = event.y;
+}
+function dragended(event, d) {
+  if (!event.active) simulation.alphaTarget(0);
+  d.fx = null;
+  d.fy = null;
+}
+
+d3.selectAll(".linkset-btn").on("click", function () {
+  const type = this.getAttribute("data-set");
+  d3.selectAll(".linkset-btn").classed("active", false);
+  d3.select(this).classed("active", true);
+
+  node.style("display", d => (type === "all" || d.type === type) ? null : "none");
+  link.style("display", d => (type === "all" || d.type === type) ? null : "none");
+});
+</script>

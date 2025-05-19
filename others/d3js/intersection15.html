@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<meta charset="utf-8" />
+<title>D3.js GCP Architecture Diagram</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    display: flex;
+  }
+  #sidebar {
+    width: 200px;
+    background: #f5f5f5;
+    padding: 10px;
+    border-right: 1px solid #ccc;
+  }
+  #sidebar h3 {
+    margin-top: 0;
+  }
+  #sidebar ul {
+    list-style: none;
+    padding: 0;
+  }
+  #sidebar li {
+    cursor: pointer;
+    padding: 6px;
+    margin: 4px 0;
+    background: #ddd;
+    border-radius: 4px;
+    transition: background 0.3s;
+  }
+  #sidebar li:hover {
+    background: #bbb;
+  }
+  svg {
+    flex-grow: 1;
+    height: 100vh;
+  }
+  .group-rect {
+    fill-opacity: 0.05;
+    stroke-width: 2px;
+    rx: 10;
+    ry: 10;
+  }
+  .compute { fill: #d1e8ff; stroke: #3399ff; }
+  .storage { fill: #fce4ec; stroke: #f06292; }
+  .network { fill: #e8f5e9; stroke: #66bb6a; }
+  .security { fill: #fff3e0; stroke: #ffb74d; }
+  .ml { fill: #f3e5f5; stroke: #ba68c8; }
+  .analytics { fill: #e3f2fd; stroke: #42a5f5; }
+  .database { fill: #ede7f6; stroke: #7e57c2; }
+  rect.node {
+    fill: #ffcc80;
+    stroke: #333;
+    stroke-width: 1.5px;
+    cursor: pointer;
+    rx: 6;
+    ry: 6;
+  }
+  text {
+    font-size: 12px;
+    pointer-events: none;
+  }
+  line.link {
+    stroke: #999;
+    stroke-width: 2px;
+  }
+</style>
+<body>
+  <div id="sidebar">
+    <h3>Linksets</h3>
+    <ul>
+      <li onclick="filterBy('compute')">Compute</li>
+      <li onclick="filterBy('storage')">Storage</li>
+      <li onclick="filterBy('network')">Network</li>
+      <li onclick="filterBy('security')">Security</li>
+      <li onclick="filterBy('ml')">ML</li>
+      <li onclick="filterBy('analytics')">Analytics</li>
+      <li onclick="filterBy('database')">Database</li>
+      <li onclick="filterBy(null)">Show All</li>
+    </ul>
+  </div>
+  <svg></svg>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script>
+    const svg = d3.select("svg");
+    const width = window.innerWidth - 200;
+    const height = window.innerHeight;
+    svg.attr("width", width).attr("height", height);
+
+    const nodeData = [
+      { id: "vm", label: "Compute Engine", group: "compute", url: "https://cloud.google.com/compute" },
+      { id: "gke", label: "Kubernetes Engine", group: "compute", url: "https://cloud.google.com/kubernetes-engine" },
+      { id: "storage", label: "Cloud Storage", group: "storage", url: "https://cloud.google.com/storage" },
+      { id: "filestore", label: "Filestore", group: "storage", url: "https://cloud.google.com/filestore" },
+      { id: "vpc", label: "VPC Network", group: "network", url: "https://cloud.google.com/vpc" },
+      { id: "clouddns", label: "Cloud DNS", group: "network", url: "https://cloud.google.com/dns" },
+      { id: "iam", label: "IAM", group: "security", url: "https://cloud.google.com/iam" },
+      { id: "kms", label: "Cloud KMS", group: "security", url: "https://cloud.google.com/kms" },
+      { id: "bigquery", label: "BigQuery", group: "analytics", url: "https://cloud.google.com/bigquery" },
+      { id: "dataproc", label: "Dataproc", group: "analytics", url: "https://cloud.google.com/dataproc" },
+      { id: "vertex", label: "Vertex AI", group: "ml", url: "https://cloud.google.com/vertex-ai" },
+      { id: "mlengine", label: "ML Engine", group: "ml", url: "https://cloud.google.com/ml-engine" },
+      { id: "sql", label: "Cloud SQL", group: "database", url: "https://cloud.google.com/sql" },
+      { id: "spanner", label: "Cloud Spanner", group: "database", url: "https://cloud.google.com/spanner" }
+    ];
+
+    const linkData = [
+      { source: "vm", target: "vpc" },
+      { source: "gke", target: "vpc" },
+      { source: "storage", target: "vm" },
+      { source: "filestore", target: "gke" },
+      { source: "bigquery", target: "dataproc" },
+      { source: "vertex", target: "bigquery" },
+      { source: "mlengine", target: "vertex" },
+      { source: "sql", target: "vm" },
+      { source: "spanner", target: "gke" },
+      { source: "iam", target: "vm" },
+      { source: "kms", target: "storage" },
+    ];
+
+    const groups = d3.groups(nodeData, d => d.group);
+
+    const simulation = d3.forceSimulation(nodeData)
+      .force("link", d3.forceLink(linkData).id(d => d.id).distance(150))
+      .force("charge", d3.forceManyBody().strength(-500))
+      .force("center", d3.forceCenter(width / 2, height / 2))
+      .on("tick", ticked);
+
+    const link = svg.append("g")
+      .attr("stroke", "#999")
+      .selectAll("line")
+      .data(linkData)
+      .join("line")
+      .attr("class", "link");
+
+    const groupRects = svg.append("g")
+      .selectAll("rect")
+      .data(groups)
+      .join("rect")
+      .attr("class", d => `group-rect ${d[0]}`);
+
+    const node = svg.append("g")
+      .selectAll("a")
+      .data(nodeData)
+      .join("a")
+      .attr("xlink:href", d => d.url)
+      .attr("target", "_blank")
+      .append("g")
+      .call(drag(simulation));
+
+    node.append("rect")
+      .attr("width", 120)
+      .attr("height", 30)
+      .attr("class", "node")
+      .attr("x", -60)
+      .attr("y", -15);
+
+    node.append("text")
+      .attr("text-anchor", "middle")
+      .attr("dy", 4)
+      .text(d => d.label);
+
+    function ticked() {
+      node.attr("transform", d => `translate(${d.x},${d.y})`);
+      link
+        .attr("x1", d => d.source.x)
+        .attr("y1", d => d.source.y)
+        .attr("x2", d => d.target.x)
+        .attr("y2", d => d.target.y);
+
+      groups.forEach(([group, nodes], i) => {
+        const minX = d3.min(nodes, d => d.x) - 80;
+        const maxX = d3.max(nodes, d => d.x) + 80;
+        const minY = d3.min(nodes, d => d.y) - 40;
+        const maxY = d3.max(nodes, d => d.y) + 40;
+
+        d3.select(groupRects.nodes()[i])
+          .attr("x", minX)
+          .attr("y", minY)
+          .attr("width", maxX - minX)
+          .attr("height", maxY - minY);
+      });
+    }
+
+    function drag(simulation) {
+      function dragstarted(event, d) {
+        if (!event.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+      }
+      function dragged(event, d) {
+        d.fx = event.x;
+        d.fy = event.y;
+      }
+      function dragended(event, d) {
+        if (!event.active) simulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+      }
+      return d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended);
+    }
+
+    function filterBy(group) {
+      svg.selectAll(".node").attr("visibility", d => group === null || d.group === group ? "visible" : "hidden");
+      svg.selectAll(".group-rect").attr("visibility", d => group === null || d[0] === group ? "visible" : "hidden");
+      svg.selectAll(".link").attr("visibility", d => {
+        return group === null || (d.source.group === group || d.target.group === group) ? "visible" : "hidden";
+      });
+    }
+  </script>
+</body>
