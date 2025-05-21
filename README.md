@@ -1,4 +1,6 @@
 # GCPPCA.html
+- https://www.reddit.com/r/learnpython/comments/zb92nc/good_python_exercises/
+
 - https://www.splunk.com/en_us/blog/learn/site-reliability-engineer-interview.html
 - https://github.com/rr948/sre-interview-prep-guide
 - https://www.reddit.com/r/googlecloud/comments/1g2stqf/creating_gcp_architecture_diagrams/?rdt=45254
@@ -29,3 +31,5 @@
 - https://github.com/Ulminator/gcp-certification-notes/tree/master
 - https://github.com/arjunvish30/edureka-GCP-PCA25-notes-Public/tree/main
 - https://github.com/priyankavergadia/GCPSketchnote
+
+
